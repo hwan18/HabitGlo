@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "package": {
+    "productName": "HabitGlo",
+    "version": "0.1.0"
+  },
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist"
+  },
+  "tauri": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "HabitGlo Vault",
+        "width": 1280,
+        "height": 860,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true
+      },
+      {
+        "label": "overlay",
+        "title": "HabitGlo Overlay",
+        "width": 1600,
+        "height": 96,
+        "resizable": true,
+        "visible": true,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "focus": false,
+        "skipTaskbar": true,
+        "url": "overlay.html"
+      }
+    ],
+    "bundle": {
+      "identifier": "com.habitglo.app",
+      "icon": []
+    },
+    "security": {
+      "csp": "default-src 'self' tauri://* data: blob: filesystem: ws: http://localhost:* https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://* ws://localhost:*"
+    },
+    "allowlist": {
+      "all": true
+    }
+  }
+}

@@ -1,0 +1,10 @@
+#root {
+  min-height: 100vh;
+}
+
+.led-text {
+  letter-spacing: 0.3em;
+  text-shadow:
+    0 0 6px rgba(255, 90, 217, 0.65),
+    0 0 18px rgba(54, 210, 255, 0.45);
+}

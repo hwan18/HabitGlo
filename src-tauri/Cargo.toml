@@ -1,0 +1,31 @@
+[package]
+name = "habitglo"
+version = "0.1.0"
+description = "HabitGlo desktop shell"
+authors = ["HabitGlo"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.6", features = [] }
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri = { version = "1.6", features = [
+    "macos-private-api",
+    "dialog-open",
+    "shell-open",
+    "window-create",
+    "window-set-always-on-top",
+    "window-set-ignore-cursor-events",
+    "window-set-position",
+    "window-set-size",
+    "window-set-min-size",
+    "window-set-max-size",
+    "window-set-resizable",
+    "window-show",
+    "window-hide",
+    "window-start-dragging",
+    "window-request-user-attention",
+    "window-current-monitor"
+] }

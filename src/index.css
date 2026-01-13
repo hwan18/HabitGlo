@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  background-color: #050505;
+  color: #f6f7fb;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #050505;
+}
+
+#root,
+#overlay-root {
+  min-height: 100vh;
+}
+
+.burnin {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.07) 1px, transparent 0);
+  background-size: 3px 3px;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
