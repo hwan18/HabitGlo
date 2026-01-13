@@ -11,7 +11,7 @@ export default defineConfig({
   },
   envPrefix: ['VITE_', 'TAURI_'],
   server: {
-    port: 1420,
+    port: 4173,
     strictPort: true,
     hmr: {
       overlay: false,
