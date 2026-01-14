@@ -3,7 +3,6 @@ import { AuthPanel } from './components/AuthPanel'
 import { HabitForm } from './components/HabitForm'
 import { HabitList } from './components/HabitList'
 import { SettingsPanel } from './components/SettingsPanel'
-import { BulkImport } from './components/BulkImport'
 import { useHabitsStore } from './stores/useHabitsStore'
 import { Marquee } from './overlay/Marquee'
 import { Button } from './components/Button'
@@ -51,7 +50,6 @@ function App() {
         <div className="md:col-span-2 flex flex-col gap-4">
           <AuthPanel />
           <HabitForm />
-          <BulkImport />
           <HabitList />
         </div>
         <div className="flex flex-col gap-4">

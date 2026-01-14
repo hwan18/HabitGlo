@@ -1,6 +1,6 @@
 import { useHabitsStore, palettesList } from '@/stores/useHabitsStore'
 import { Button } from './Button'
-import { MonitorSmartphone, MousePointerClick, PinIcon, MoveUpRight } from 'lucide-react'
+import { MonitorSmartphone, MousePointerClick, PinIcon, MoveUpRight, MoveDownRight } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/tauri'
 import { WebviewWindow } from '@tauri-apps/api/window'
 
@@ -18,14 +18,20 @@ export function SettingsPanel() {
     }
   }
 
-  const applyClickThrough = (value: boolean) => {
+  const applyClickThrough = async (value: boolean) => {
     setOverlay({ clickThrough: value })
-    invoke('set_click_through', { enabled: value }).catch(() => {})
+    const overlayWindow = WebviewWindow.getByLabel('overlay')
+    if (overlayWindow) {
+      await overlayWindow.setIgnoreCursorEvents(value).catch(() => {})
+    }
   }
 
-  const applyAlwaysOnTop = (value: boolean) => {
+  const applyAlwaysOnTop = async (value: boolean) => {
     setOverlay({ alwaysOnTop: value })
-    invoke('set_always_on_top', { enabled: value }).catch(() => {})
+    const overlayWindow = WebviewWindow.getByLabel('overlay')
+    if (overlayWindow) {
+      await overlayWindow.setAlwaysOnTop(value).catch(() => {})
+    }
   }
 
   return (
@@ -75,15 +81,26 @@ export function SettingsPanel() {
           </div>
           <input type="checkbox" checked={overlay.alwaysOnTop} onChange={(e) => applyAlwaysOnTop(e.target.checked)} />
         </label>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex items-center gap-2"
-          onClick={() => invoke('snap_to_top').catch(() => {})}
-        >
-          <MoveUpRight size={14} />
-          Snap to top edge
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 flex-1"
+            onClick={() => invoke('snap_to_top').catch(() => {})}
+          >
+            <MoveUpRight size={14} />
+            Snap to top
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 flex-1"
+            onClick={() => invoke('snap_to_bottom').catch(() => {})}
+          >
+            <MoveDownRight size={14} />
+            Snap to bottom
+          </Button>
+        </div>
       </div>
       <div className="mt-4 border-t border-white/10 pt-4">
         <p className="text-sm font-semibold text-white">Aesthetic Suite</p>

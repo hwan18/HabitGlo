@@ -6,11 +6,10 @@ authors = ["HabitGlo"]
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "1.6", features = [] }
+tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tauri = { version = "1.6", features = [ "api-all",
-    "window-current-monitor"
-] }
+tauri = { version = "1.5", features = [ "api-all" ] }
+winapi = { version = "0.3", features = ["winuser"] }
