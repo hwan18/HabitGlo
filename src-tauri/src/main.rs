@@ -4,6 +4,7 @@ mod commands;
 
 fn main() {
     tauri::Builder::default()
+        .manage(commands::SnapState::default())
         .invoke_handler(tauri::generate_handler![
             commands::set_click_through,
             commands::set_always_on_top,

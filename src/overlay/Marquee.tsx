@@ -2,7 +2,6 @@ import { motion, useAnimationControls } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useMarqueeConfig } from './useMarqueeConfig'
-import { useHabitsStore } from '@/stores/useHabitsStore'
 
 const useMeasureWidth = () => {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -52,8 +51,6 @@ export function Marquee() {
       ref={containerRef}
       className="relative flex h-full items-center overflow-hidden bg-black/60 backdrop-blur-xl"
       style={{ opacity: theme.opacity, borderRadius: 8 }}
-      onMouseEnter={() => useHabitsStore.getState().setOverlay({ paused: true })}
-      onMouseLeave={() => useHabitsStore.getState().setOverlay({ paused: false })}
     >
       <div className="absolute inset-0 burnin opacity-70" />
       <motion.div
