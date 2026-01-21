@@ -18,7 +18,7 @@ export function Marquee() {
     })
     observer.observe(copyRef.current)
     return () => observer.disconnect()
-  }, [])
+  }, [habits.length])
 
   useEffect(() => {
     if (!copyWidth) return
@@ -40,12 +40,13 @@ export function Marquee() {
     x.set(next)
   })
 
-  const text = habits.join(' • ')
+  const separator = '\u00A0\u00A0•\u00A0\u00A0'
+  const text = habits.length > 0 ? habits.join(separator) + separator : ''
   const copies = useMemo(() => {
-    if (!copyWidth) return 2
+    if (!copyWidth || habits.length === 0) return 2
     const minWidth = containerWidth || 0
     return Math.max(2, Math.ceil(minWidth / (copyWidth + gap)) + 1)
-  }, [copyWidth, containerWidth, gap])
+  }, [copyWidth, containerWidth, gap, habits.length])
 
   return (
     <div
@@ -57,28 +58,30 @@ export function Marquee() {
       }}
     >
       <div className="absolute inset-0 burnin opacity-70" />
-      <motion.div
-        className={clsx(
-          'led-font flex items-center whitespace-nowrap font-normal tracking-[0.3em]',
-          'drop-shadow-[0_0_12px_rgba(255,99,132,0.55)]',
-        )}
-        style={{
-          x,
-          color: theme.primary,
-          textShadow: `0 0 ${18 * theme.glow}px ${theme.primary}, 0 0 ${16 * theme.glow}px ${theme.secondary}`,
-          fontSize,
-        }}
-      >
-        {Array.from({ length: copies }).map((_, idx) => (
-          <span
-            key={idx}
-            ref={idx === 0 ? copyRef : null}
-            style={idx < copies - 1 ? { marginRight: gap } : undefined}
-          >
-            {text}
-          </span>
-        ))}
-      </motion.div>
+      {habits.length > 0 && (
+        <motion.div
+          className={clsx(
+            'led-font flex items-center whitespace-nowrap font-normal tracking-[0.3em]',
+            'drop-shadow-[0_0_12px_rgba(255,99,132,0.55)]',
+          )}
+          style={{
+            x,
+            color: theme.primary,
+            textShadow: `0 0 ${18 * theme.glow}px ${theme.primary}, 0 0 ${16 * theme.glow}px ${theme.secondary}`,
+            fontSize,
+          }}
+        >
+          {Array.from({ length: copies }).map((_, idx) => (
+            <span
+              key={idx}
+              ref={idx === 0 ? copyRef : null}
+              style={idx < copies - 1 ? { marginRight: gap } : undefined}
+            >
+              {text}
+            </span>
+          ))}
+        </motion.div>
+      )}
     </div>
   )
 }

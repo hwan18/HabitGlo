@@ -54,7 +54,7 @@ export function SettingsPanel() {
           <input
             type="range"
             min={10}
-            max={360}
+            max={800}
             value={overlay.speed}
             onChange={(e) => setOverlay({ speed: Number(e.target.value) })}
             className="w-full"
@@ -98,14 +98,14 @@ export function SettingsPanel() {
       </div>
       <div className="mt-4 border-t border-white/10 pt-4">
         <p className="text-sm font-semibold text-white">Aesthetic Suite</p>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {palettesList.map((p) => (
             <button
               key={p.id}
               onClick={() => setTheme({ palette: p.id as any })}
               className="rounded-lg border border-white/10 bg-black/40 p-2 text-left text-xs text-white/70 hover:border-glow-blue"
             >
-              <div className="mb-1 text-white font-semibold">{p.label}</div>
+              <div className="mb-1 text-white font-semibold text-[11px]">{p.label}</div>
               <div className="flex gap-1">
                 <span className="h-4 w-4 rounded" style={{ background: p.colors.primary }} />
                 <span className="h-4 w-4 rounded" style={{ background: p.colors.secondary }} />
