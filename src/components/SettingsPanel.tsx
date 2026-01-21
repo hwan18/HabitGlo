@@ -1,6 +1,12 @@
 import { useHabitsStore, palettesList } from '@/stores/useHabitsStore'
 import { Button } from './Button'
-import { MonitorSmartphone, MousePointerClick, PinIcon, MoveUpRight, MoveDownRight } from 'lucide-react'
+import {
+  MonitorSmartphone,
+  MousePointerClick,
+  PinIcon,
+  MoveUpRight,
+  MoveDownRight,
+} from 'lucide-react'
 import { invoke } from '@tauri-apps/api/tauri'
 import { WebviewWindow } from '@tauri-apps/api/window'
 
@@ -48,24 +54,12 @@ export function SettingsPanel() {
           <input
             type="range"
             min={10}
-            max={120}
+            max={360}
             value={overlay.speed}
             onChange={(e) => setOverlay({ speed: Number(e.target.value) })}
             className="w-full"
           />
           <span className="w-14 text-right">{overlay.speed.toFixed(0)} px/s</span>
-        </label>
-        <label className="flex items-center gap-3 text-xs text-white/70">
-          Gap / padding
-          <input
-            type="range"
-            min={60}
-            max={320}
-            value={overlay.gap}
-            onChange={(e) => setOverlay({ gap: Number(e.target.value) })}
-            className="w-full"
-          />
-          <span className="w-14 text-right">{overlay.gap.toFixed(0)} px</span>
         </label>
         <label className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2">
           <div className="flex items-center gap-2">
@@ -104,7 +98,7 @@ export function SettingsPanel() {
       </div>
       <div className="mt-4 border-t border-white/10 pt-4">
         <p className="text-sm font-semibold text-white">Aesthetic Suite</p>
-        <div className="mt-2 grid grid-cols-3 gap-2">
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           {palettesList.map((p) => (
             <button
               key={p.id}
@@ -134,7 +128,7 @@ export function SettingsPanel() {
           <span className="w-10 text-right">{Math.round(theme.glow * 100)}%</span>
         </label>
         <label className="mt-2 flex items-center gap-3 text-xs text-white/70">
-          Panel opacity
+          Text glow opacity
           <input
             type="range"
             min={0.2}

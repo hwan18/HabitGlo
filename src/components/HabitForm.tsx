@@ -13,7 +13,16 @@ export function HabitForm() {
 
   const updateHabit = (index: number, value: string) => {
     const updated = [...habits]
-    updated[index] = value.slice(0, 140)
+    updated[index] = value.slice(0, 220)
+    setHabits(updated)
+  }
+
+  const addSingleHabit = async (index: number) => {
+    const text = habits[index]?.trim()
+    if (!text) return
+    await addHabit(text)
+    const updated = [...habits]
+    updated[index] = ''
     setHabits(updated)
   }
 
@@ -37,23 +46,19 @@ export function HabitForm() {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-white">Add Habits</p>
-          <span className="text-xs text-white/50">140 chars max each</span>
+          <span className="text-xs text-white/50">220 chars max each</span>
         </div>
         <div className="flex flex-col gap-2">
           {habits.map((habit, index) => (
             <div key={index} className="flex items-center gap-2">
               <input
                 value={habit}
-                maxLength={140}
+                maxLength={220}
                 onChange={(e) => updateHabit(index, e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
-                    if (index === habits.length - 1) {
-                      addTextBox()
-                    } else {
-                      document.querySelectorAll<HTMLInputElement>('input[type="text"]')[index + 1]?.focus()
-                    }
+                    void addSingleHabit(index)
                   }
                   if (e.key === 'Backspace' && habit === '' && habits.length > 1) {
                     removeTextBox(index)

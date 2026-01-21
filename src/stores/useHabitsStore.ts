@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { reorderHabits, listHabits, upsertHabit, setHabitActive, deleteHabit, subscribeHabits } from '@/lib/db'
+import { reorderHabits, listHabits, upsertHabit, setHabitActive, deleteHabit, subscribeHabits, logHabit } from '@/lib/db'
 import { hasSupabase } from '@/lib/supabaseClient'
 import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
 import type { User } from '@supabase/supabase-js'
@@ -9,7 +9,14 @@ import { nanoid } from 'nanoid/non-secure'
 const palettes: Record<ThemeSettings['palette'], { primary: string; secondary: string; accent: string }> = {
   classic: { primary: '#ff3131', secondary: '#ffb000', accent: '#6bff6b' },
   synthwave: { primary: '#ff5ad9', secondary: '#36d2ff', accent: '#f5ff6b' },
-  custom: { primary: '#ff5ad9', secondary: '#36d2ff', accent: '#f5ff6b' },
+  focus: { primary: '#64B5F6', secondary: '#90CAF9', accent: '#BBDEFB' },
+  warmAmber: { primary: '#FFB74D', secondary: '#FFCC80', accent: '#FFE0B2' },
+  forest: { primary: '#81C784', secondary: '#A5D6A7', accent: '#C8E6C9' },
+  lavender: { primary: '#B39DDB', secondary: '#CE93D8', accent: '#E1BEE7' },
+  minimal: { primary: '#B0BEC5', secondary: '#CFD8DC', accent: '#ECEFF1' },
+  sunrise: { primary: '#FF8A65', secondary: '#FFAB91', accent: '#FFF176' },
+  ocean: { primary: '#4DD0E1', secondary: '#80DEEA', accent: '#B2EBF2' },
+  nightOwl: { primary: '#7986CB', secondary: '#9FA8DA', accent: '#5C6BC0' },
 }
 
 type StoreState = {
@@ -41,7 +48,7 @@ const defaultTheme: ThemeSettings = {
 
 const defaultOverlay: OverlaySettings = {
   speed: 40,
-  gap: 120,
+  gap: 0,
   clickThrough: false,
   alwaysOnTop: true,
   paused: false,
@@ -136,9 +143,10 @@ export const useHabitsStore = create<StoreState>()(
         const userId = get().user?.id
         const found = get().habits.find((h) => h.id === id)
         if (found) {
-          await upsertHabit({ ...found, last_done_at: new Date().toISOString(), user_id: userId })
+          const loggedAt = new Date().toISOString()
+          await logHabit(id, userId)
           set((state) => ({
-            habits: state.habits.map((h) => (h.id === id ? { ...h, last_done_at: new Date().toISOString() } : h)),
+            habits: state.habits.map((h) => (h.id === id ? { ...h, last_done_at: loggedAt } : h)),
           }))
         }
       },
@@ -157,5 +165,12 @@ export const useHabitsStore = create<StoreState>()(
 export const palettesList = [
   { id: 'classic', label: 'Classic', colors: palettes.classic },
   { id: 'synthwave', label: 'Synthwave', colors: palettes.synthwave },
-  { id: 'custom', label: 'Custom', colors: palettes.custom },
+  { id: 'focus', label: 'Focus', colors: palettes.focus },
+  { id: 'warmAmber', label: 'Warm Amber', colors: palettes.warmAmber },
+  { id: 'forest', label: 'Forest', colors: palettes.forest },
+  { id: 'lavender', label: 'Lavender', colors: palettes.lavender },
+  { id: 'minimal', label: 'Minimal', colors: palettes.minimal },
+  { id: 'sunrise', label: 'Sunrise', colors: palettes.sunrise },
+  { id: 'ocean', label: 'Ocean', colors: palettes.ocean },
+  { id: 'nightOwl', label: 'Night Owl', colors: palettes.nightOwl },
 ] as const

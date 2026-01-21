@@ -1,73 +1,83 @@
-import { motion, useAnimationControls } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { motion, useAnimationFrame, useMotionValue } from 'framer-motion'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useMarqueeConfig } from './useMarqueeConfig'
 
-const useMeasureWidth = () => {
-  const ref = useRef<HTMLDivElement | null>(null)
-  const [width, setWidth] = useState(0)
+export function Marquee() {
+  const { ref: containerRef, gap, speed, habits, overlay, theme, fontSize, containerWidth } = useMarqueeConfig()
+  const loopWidthRef = useRef(0)
+  const x = useMotionValue(0)
+  const copyRef = useRef<HTMLSpanElement | null>(null)
+  const [copyWidth, setCopyWidth] = useState(0)
 
   useEffect(() => {
-    if (!ref.current) return
+    if (!copyRef.current) return
     const observer = new ResizeObserver((entries) => {
       const w = entries[0]?.contentRect.width
-      if (w) setWidth(w)
+      if (w) setCopyWidth(w)
     })
-    observer.observe(ref.current)
+    observer.observe(copyRef.current)
     return () => observer.disconnect()
   }, [])
 
-  return { ref, width }
-}
-
-export function Marquee() {
-  const { ref: containerRef, gap, speed, habits, overlay, theme } = useMarqueeConfig()
-  const { ref: contentRef, width: contentWidth } = useMeasureWidth()
-  const controls = useAnimationControls()
-
   useEffect(() => {
-    if (!contentWidth) return
+    if (!copyWidth) return
+    const loopWidth = copyWidth + gap
+    loopWidthRef.current = loopWidth
+    x.set(0)
+  }, [copyWidth, gap, x])
+
+  useAnimationFrame((_t, delta) => {
+    if (overlay.paused) return
+    const loopWidth = loopWidthRef.current
+    if (!loopWidth) return
     const pxPerSec = Math.max(1, speed / 2)
-    const loopWidth = contentWidth + gap
-    const nextDuration = loopWidth / pxPerSec
-    if (!overlay.paused) {
-      controls.start({
-        x: [0, -loopWidth],
-        transition: { duration: nextDuration, ease: 'linear', repeat: Infinity },
-      })
+    const deltaPx = (pxPerSec * delta) / 1000
+    let next = x.get() - deltaPx
+    if (next <= -loopWidth) {
+      next += loopWidth
     }
-  }, [contentWidth, gap, speed, controls, overlay.paused])
+    x.set(next)
+  })
 
-  useEffect(() => {
-    if (overlay.paused) {
-      controls.stop()
-    }
-  }, [overlay.paused, controls])
-
-  const text = habits.join(' • ') || 'Add your first habit'
+  const text = habits.join(' • ')
+  const copies = useMemo(() => {
+    if (!copyWidth) return 2
+    const minWidth = containerWidth || 0
+    return Math.max(2, Math.ceil(minWidth / (copyWidth + gap)) + 1)
+  }, [copyWidth, containerWidth, gap])
 
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full items-center overflow-hidden bg-black/60 backdrop-blur-xl"
-      style={{ opacity: theme.opacity, borderRadius: 8 }}
+      className="led-panel relative flex h-full items-center overflow-hidden px-8"
+      style={{
+        opacity: theme.opacity,
+        borderRadius: 8,
+      }}
     >
       <div className="absolute inset-0 burnin opacity-70" />
       <motion.div
-        ref={contentRef}
         className={clsx(
-          'flex items-center whitespace-nowrap px-8 text-4xl font-semibold tracking-[0.3em]',
+          'led-font flex items-center whitespace-nowrap font-normal tracking-[0.3em]',
           'drop-shadow-[0_0_12px_rgba(255,99,132,0.55)]',
         )}
-        animate={controls}
         style={{
+          x,
           color: theme.primary,
           textShadow: `0 0 ${18 * theme.glow}px ${theme.primary}, 0 0 ${16 * theme.glow}px ${theme.secondary}`,
+          fontSize,
         }}
       >
-        {text}
-        <span style={{ paddingLeft: gap }} />
-        {text}
+        {Array.from({ length: copies }).map((_, idx) => (
+          <span
+            key={idx}
+            ref={idx === 0 ? copyRef : null}
+            style={idx < copies - 1 ? { marginRight: gap } : undefined}
+          >
+            {text}
+          </span>
+        ))}
       </motion.div>
     </div>
   )

@@ -104,6 +104,26 @@ export const deleteHabit = async (habitId: string, userId?: string) => {
   writeLocal(habits)
 }
 
+export const logHabit = async (habitId: string, userId?: string) => {
+  const loggedAt = new Date().toISOString()
+  if (isSupabaseReady() && userId) {
+    const { error: logError } = await supabase!
+      .from('habit_logs')
+      .insert({ habit_id: habitId, user_id: userId, logged_at: loggedAt })
+    if (logError) throw logError
+
+    const { error: updateError } = await supabase!
+      .from('habits')
+      .update({ last_done_at: loggedAt })
+      .eq('id', habitId)
+    if (updateError) throw updateError
+    return
+  }
+
+  const habits = readLocal().map((h) => (h.id === habitId ? { ...h, last_done_at: loggedAt } : h))
+  writeLocal(habits)
+}
+
 export const subscribeHabits = (userId: string, onChange: () => void) => {
   if (!isSupabaseReady() || !userId) return () => {}
   const channel = supabase!

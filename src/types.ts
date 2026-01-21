@@ -1,4 +1,14 @@
-export type Palette = 'classic' | 'synthwave' | 'custom'
+export type Palette =
+  | 'classic'
+  | 'synthwave'
+  | 'focus'
+  | 'warmAmber'
+  | 'forest'
+  | 'lavender'
+  | 'minimal'
+  | 'sunrise'
+  | 'ocean'
+  | 'nightOwl'
 export type LedShape = 'dot' | 'square' | 'scanline'
 
 export type Habit = {
