@@ -27,7 +27,7 @@
         "width": 1600,
         "height": 96,
         "resizable": true,
-        "visible": true,
+        "visible": false,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,

@@ -51,6 +51,7 @@ const defaultOverlay: OverlaySettings = {
   gap: 0,
   clickThrough: false,
   alwaysOnTop: true,
+  reserveSpace: false,
   paused: false,
 }
 

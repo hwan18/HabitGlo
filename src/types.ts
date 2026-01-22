@@ -38,6 +38,7 @@ export type OverlaySettings = {
   gap: number
   clickThrough: boolean
   alwaysOnTop: boolean
+  reserveSpace: boolean
   paused: boolean
   monitorIndex?: number
 }

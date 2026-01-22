@@ -10,6 +10,7 @@ fn main() {
             commands::set_always_on_top,
             commands::snap_to_top,
             commands::snap_to_bottom,
+            commands::set_reserve_space,
             commands::set_overlay_size
         ])
         .setup(|_app| Ok(()))

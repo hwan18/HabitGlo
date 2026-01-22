@@ -40,6 +40,11 @@ export function SettingsPanel() {
     }
   }
 
+  const applyReserveSpace = async (value: boolean) => {
+    setOverlay({ reserveSpace: value })
+    await invoke('set_reserve_space', { enabled: value }).catch(() => {})
+  }
+
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
       <div className="mb-3 flex items-center justify-between">
@@ -74,6 +79,12 @@ export function SettingsPanel() {
             <span>Always on top</span>
           </div>
           <input type="checkbox" checked={overlay.alwaysOnTop} onChange={(e) => applyAlwaysOnTop(e.target.checked)} />
+        </label>
+        <label className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span>Reserve screen space</span>
+          </div>
+          <input type="checkbox" checked={overlay.reserveSpace} onChange={(e) => applyReserveSpace(e.target.checked)} />
         </label>
         <div className="flex gap-2">
           <Button
