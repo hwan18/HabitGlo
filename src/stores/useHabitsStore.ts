@@ -154,7 +154,10 @@ export const useHabitsStore = create<StoreState>()(
     {
       name: 'habitglo-store',
       partialize: (state) => ({
-        habits: hasSupabase ? [] : state.habits,
+        user: state.user,
+        // Always persist habits to localStorage so overlay window can read them
+        // (overlay can't share Supabase auth session with dashboard)
+        habits: state.habits,
         theme: state.theme,
         overlay: state.overlay,
       }),

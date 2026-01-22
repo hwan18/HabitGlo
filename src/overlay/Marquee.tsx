@@ -9,16 +9,21 @@ export function Marquee() {
   const x = useMotionValue(0)
   const copyRef = useRef<HTMLSpanElement | null>(null)
   const [copyWidth, setCopyWidth] = useState(0)
+  const separator = '\u00A0\u00A0•\u00A0\u00A0'
+  const text = habits.length > 0 ? habits.join(separator) + separator : ''
 
   useEffect(() => {
-    if (!copyRef.current) return
-    const observer = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width
+    const el = copyRef.current
+    if (!el) return
+    const measure = () => {
+      const w = el.getBoundingClientRect().width
       if (w) setCopyWidth(w)
-    })
-    observer.observe(copyRef.current)
+    }
+    measure()
+    const observer = new ResizeObserver(() => measure())
+    observer.observe(el)
     return () => observer.disconnect()
-  }, [habits.length])
+  }, [fontSize, text])
 
   useEffect(() => {
     if (!copyWidth) return
@@ -40,8 +45,6 @@ export function Marquee() {
     x.set(next)
   })
 
-  const separator = '\u00A0\u00A0•\u00A0\u00A0'
-  const text = habits.length > 0 ? habits.join(separator) + separator : ''
   const copies = useMemo(() => {
     if (!copyWidth || habits.length === 0) return 2
     const minWidth = containerWidth || 0
@@ -75,6 +78,7 @@ export function Marquee() {
             <span
               key={idx}
               ref={idx === 0 ? copyRef : null}
+              className="inline-block"
               style={idx < copies - 1 ? { marginRight: gap } : undefined}
             >
               {text}

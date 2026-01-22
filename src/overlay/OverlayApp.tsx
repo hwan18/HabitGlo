@@ -6,13 +6,16 @@ import { WebviewWindow } from '@tauri-apps/api/window'
 export default function OverlayApp() {
   const overlay = useHabitsStore((s) => s.overlay)
   const setOverlay = useHabitsStore((s) => s.setOverlay)
-  const habits = useHabitsStore((s) => s.habits)
 
   useEffect(() => {
     const overlayWindow = WebviewWindow.getByLabel('overlay')
     overlayWindow?.setIgnoreCursorEvents(overlay.clickThrough)
     overlayWindow?.setAlwaysOnTop(overlay.alwaysOnTop)
   }, [overlay.clickThrough, overlay.alwaysOnTop])
+
+  // Note: Overlay window doesn't have direct Supabase auth access
+  // (Tauri webviews don't share localStorage/auth tokens)
+  // Instead, we sync user and habits from the dashboard via localStorage polling
 
   useEffect(() => {
     const syncFromStorage = () => {
@@ -31,8 +34,13 @@ export default function OverlayApp() {
           if (parsed.state?.theme && JSON.stringify(parsed.state.theme) !== JSON.stringify(currentState.theme)) {
             useHabitsStore.setState({ theme: parsed.state.theme })
           }
+
+          // Sync user state (without triggering hydrate - overlay reads habits from localStorage)
+          if (parsed.state?.user && parsed.state.user.id !== currentState.user?.id) {
+            useHabitsStore.setState({ user: parsed.state.user })
+          }
           
-          // Sync habits if not using Supabase (habits are persisted locally)
+          // Sync habits from dashboard (always persisted to localStorage for overlay)
           if (parsed.state?.habits && Array.isArray(parsed.state.habits)) {
             const currentHabits = currentState.habits
             // Only update if habits actually changed
@@ -55,11 +63,6 @@ export default function OverlayApp() {
       clearInterval(interval)
     }
   }, [setOverlay])
-  
-  // Also re-hydrate habits when component mounts
-  useEffect(() => {
-    useHabitsStore.getState().hydrate()
-  }, [])
 
   const handleMouseDown = async (e: React.MouseEvent) => {
     if (overlay.clickThrough) return
