@@ -3,9 +3,9 @@ use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, State, Window};
 #[cfg(windows)]
 use winapi::shared::windef::{HWND as WinapiHwnd, RECT};
 #[cfg(windows)]
-use winapi::um::winuser::{GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST};
+use winapi::um::winuser::{GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST, SetWindowPos, SWP_NOZORDER, SWP_NOACTIVATE, SWP_NOSIZE};
 #[cfg(windows)]
-use winapi::um::shellapi::{APPBARDATA, SHAppBarMessage, ABM_NEW, ABM_REMOVE, ABM_SETPOS, ABE_BOTTOM, ABE_TOP};
+use winapi::um::shellapi::{APPBARDATA, SHAppBarMessage, ABM_NEW, ABM_REMOVE, ABM_SETPOS, ABM_QUERYPOS, ABE_BOTTOM, ABE_TOP};
 #[cfg(target_os = "macos")]
 use cocoa::appkit::NSScreen;
 #[cfg(target_os = "macos")]
@@ -88,15 +88,6 @@ fn get_monitor_area_for_window(window: &Window) -> Option<WorkArea> {
 }
 
 #[cfg(windows)]
-fn get_snap_area_for_window(window: &Window, reserve_space: bool) -> Option<WorkArea> {
-    if reserve_space {
-        get_monitor_area_for_window(window)
-    } else {
-        get_work_area_for_window(window)
-    }
-}
-
-#[cfg(windows)]
 fn register_appbar(window: &Window, snap_state: &State<SnapState>) -> Result<(), String> {
     let mut registered = snap_state
         .appbar_registered
@@ -137,10 +128,30 @@ fn remove_appbar(window: &Window, snap_state: &State<SnapState>) -> Result<(), S
 }
 
 #[cfg(windows)]
-fn set_appbar_for_edge(window: &Window, snap_state: &State<SnapState>, edge: SnapEdge, height: i32) -> Result<(), String> {
-    register_appbar(window, snap_state)?;
-    let work = get_monitor_area_for_window(window).ok_or("Monitor area not available")?;
+fn set_appbar_for_edge(window: &Window, snap_state: &State<SnapState>, edge: SnapEdge, height: i32) -> Result<WorkArea, String> {
+    let monitor = get_monitor_area_for_window(window).ok_or("Monitor area not available")?;
     let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+
+    // IMPORTANT: First move window to the full monitor edge BEFORE registering appbar.
+    // This ensures Windows calculates the correct appbar position.
+    unsafe {
+        let target_y = match edge {
+            SnapEdge::Top => monitor.top,
+            SnapEdge::Bottom => monitor.bottom - height,
+        };
+        SetWindowPos(
+            hwnd.0 as WinapiHwnd,
+            std::ptr::null_mut(),
+            monitor.left,
+            target_y,
+            0, 0,
+            SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE,
+        );
+    }
+
+    // Now register the appbar
+    register_appbar(window, snap_state)?;
+
     unsafe {
         let mut data: APPBARDATA = std::mem::zeroed();
         data.cbSize = std::mem::size_of::<APPBARDATA>() as u32;
@@ -149,21 +160,60 @@ fn set_appbar_for_edge(window: &Window, snap_state: &State<SnapState>, edge: Sna
             SnapEdge::Top => ABE_TOP,
             SnapEdge::Bottom => ABE_BOTTOM,
         };
-        data.rc.left = work.left;
-        data.rc.right = work.right;
+
+        // Set initial requested rectangle at full monitor edge
+        data.rc.left = monitor.left;
+        data.rc.right = monitor.right;
         match edge {
             SnapEdge::Top => {
-                data.rc.top = work.top;
-                data.rc.bottom = work.top + height;
+                data.rc.top = monitor.top;
+                data.rc.bottom = monitor.top + height;
             }
             SnapEdge::Bottom => {
-                data.rc.bottom = work.bottom;
-                data.rc.top = work.bottom - height;
+                data.rc.bottom = monitor.bottom;
+                data.rc.top = monitor.bottom - height;
             }
         }
+
+        // Step 1: Query position - Windows may adjust based on other appbars
+        SHAppBarMessage(ABM_QUERYPOS, &mut data);
+
+        // Step 2: Adjust our requested size based on what Windows returned
+        match edge {
+            SnapEdge::Top => {
+                data.rc.bottom = data.rc.top + height;
+            }
+            SnapEdge::Bottom => {
+                data.rc.top = data.rc.bottom - height;
+            }
+        }
+
+        // Step 3: Set the final position - this reserves the screen space
         SHAppBarMessage(ABM_SETPOS, &mut data);
+
+        let final_rect = WorkArea {
+            left: data.rc.left,
+            top: data.rc.top,
+            right: data.rc.right,
+            bottom: data.rc.bottom,
+        };
+
+        // For top edge, force the window to the final appbar rectangle so it
+        // doesn't drift with resized apps after toggling reserve space.
+        if edge == SnapEdge::Top {
+            SetWindowPos(
+                hwnd.0 as WinapiHwnd,
+                std::ptr::null_mut(),
+                final_rect.left,
+                final_rect.top,
+                final_rect.right - final_rect.left,
+                final_rect.bottom - final_rect.top,
+                SWP_NOZORDER | SWP_NOACTIVATE,
+            );
+        }
+
+        Ok(final_rect)
     }
-    Ok(())
 }
 
 #[cfg(target_os = "macos")]
@@ -235,14 +285,28 @@ pub fn snap_to_top(app: AppHandle, snap_state: State<SnapState>) -> Result<(), S
             .reserve_space
             .lock()
             .map_err(|_| "snap state poisoned")?;
-        if let Some(work) = get_snap_area_for_window(&overlay_window, reserve_space) {
+        
+        if reserve_space {
+            // Reserve screen space using AppBar API
+            let appbar_rect = set_appbar_for_edge(&overlay_window, &snap_state, SnapEdge::Top, win_size.height as i32)?;
+            
+            // Position and size window to fill the reserved area
+            overlay_window
+                .set_position(PhysicalPosition { x: appbar_rect.left, y: appbar_rect.top })
+                .map_err(|e| e.to_string())?;
+            overlay_window
+                .set_size(PhysicalSize { 
+                    width: (appbar_rect.right - appbar_rect.left) as u32, 
+                    height: (appbar_rect.bottom - appbar_rect.top) as u32 
+                })
+                .map_err(|e| e.to_string())?;
+            return Ok(());
+        } else if let Some(work) = get_work_area_for_window(&overlay_window) {
+            // No reservation - just snap to top of work area
             let x = work.left + (work.right - work.left - win_size.width as i32) / 2;
             overlay_window
                 .set_position(PhysicalPosition { x, y: work.top })
                 .map_err(|e| e.to_string())?;
-            if reserve_space {
-                set_appbar_for_edge(&overlay_window, &snap_state, SnapEdge::Top, win_size.height as i32)?;
-            }
             return Ok(());
         }
     }
@@ -264,16 +328,6 @@ pub fn snap_to_top(app: AppHandle, snap_state: State<SnapState>) -> Result<(), S
         overlay_window
             .set_position(PhysicalPosition { x, y })
             .map_err(|e| e.to_string())?;
-        #[cfg(windows)]
-        {
-            let reserve_space = *snap_state
-                .reserve_space
-                .lock()
-                .map_err(|_| "snap state poisoned")?;
-            if reserve_space {
-                set_appbar_for_edge(&overlay_window, &snap_state, SnapEdge::Top, win_size.height as i32)?;
-            }
-        }
     }
     Ok(())
 }
@@ -295,17 +349,30 @@ pub fn snap_to_bottom(app: AppHandle, snap_state: State<SnapState>) -> Result<()
             .reserve_space
             .lock()
             .map_err(|_| "snap state poisoned")?;
-        if let Some(work) = get_snap_area_for_window(&overlay_window, reserve_space) {
+        
+        if reserve_space {
+            // Reserve screen space using AppBar API
+            let appbar_rect = set_appbar_for_edge(&overlay_window, &snap_state, SnapEdge::Bottom, win_size.height as i32)?;
+            
+            // Position and size window to fill the reserved area
+            overlay_window
+                .set_position(PhysicalPosition { x: appbar_rect.left, y: appbar_rect.top })
+                .map_err(|e| e.to_string())?;
+            overlay_window
+                .set_size(PhysicalSize { 
+                    width: (appbar_rect.right - appbar_rect.left) as u32, 
+                    height: (appbar_rect.bottom - appbar_rect.top) as u32 
+                })
+                .map_err(|e| e.to_string())?;
+            return Ok(());
+        } else if let Some(work) = get_work_area_for_window(&overlay_window) {
+            // No reservation - just snap to bottom of work area
             let x = work.left + (work.right - work.left - win_size.width as i32) / 2;
             let y = work.bottom - (win_size.height as i32);
             let y = y.max(work.top);
-
             overlay_window
                 .set_position(PhysicalPosition { x, y })
                 .map_err(|e| e.to_string())?;
-            if reserve_space {
-                set_appbar_for_edge(&overlay_window, &snap_state, SnapEdge::Bottom, win_size.height as i32)?;
-            }
             return Ok(());
         }
     }
@@ -332,16 +399,6 @@ pub fn snap_to_bottom(app: AppHandle, snap_state: State<SnapState>) -> Result<()
         overlay_window
             .set_position(PhysicalPosition { x, y })
             .map_err(|e| e.to_string())?;
-        #[cfg(windows)]
-        {
-            let reserve_space = *snap_state
-                .reserve_space
-                .lock()
-                .map_err(|_| "snap state poisoned")?;
-            if reserve_space {
-                set_appbar_for_edge(&overlay_window, &snap_state, SnapEdge::Bottom, win_size.height as i32)?;
-            }
-        }
     }
     Ok(())
 }
@@ -358,6 +415,8 @@ pub fn set_reserve_space(app: AppHandle, snap_state: State<SnapState>, enabled: 
 
     #[cfg(windows)]
     {
+        let overlay_window = app.get_window("overlay").ok_or("Overlay window not found")?;
+        
         if enabled {
             let snapped = *snap_state.snapped.lock().map_err(|_| "snap state poisoned")?;
             if let Some(edge) = snapped {
@@ -369,8 +428,28 @@ pub fn set_reserve_space(app: AppHandle, snap_state: State<SnapState>, enabled: 
                 }
             }
         } else {
-            let overlay_window = app.get_window("overlay").ok_or("Overlay window not found")?;
+            // Get current window size and snap edge before removing appbar
+            let win_size = overlay_window.outer_size().map_err(|e| e.to_string())?;
+            let snapped = *snap_state.snapped.lock().map_err(|_| "snap state poisoned")?;
+            
+            // Remove appbar registration first
             remove_appbar(&overlay_window, &snap_state)?;
+            
+            // Reposition window to work area edge (respecting taskbar)
+            // We need to wait briefly for Windows to update the work area after removing appbar
+            std::thread::sleep(std::time::Duration::from_millis(50));
+            
+            if let Some(work) = get_work_area_for_window(&overlay_window) {
+                let x = work.left + (work.right - work.left - win_size.width as i32) / 2;
+                let y = match snapped {
+                    Some(SnapEdge::Top) => work.top,
+                    Some(SnapEdge::Bottom) => (work.bottom - win_size.height as i32).max(work.top),
+                    None => return Ok(()), // Not snapped, nothing to reposition
+                };
+                overlay_window
+                    .set_position(PhysicalPosition { x, y })
+                    .map_err(|e| e.to_string())?;
+            }
         }
     }
     Ok(())
