@@ -435,20 +435,59 @@ pub fn set_reserve_space(app: AppHandle, snap_state: State<SnapState>, enabled: 
             // Remove appbar registration first
             remove_appbar(&overlay_window, &snap_state)?;
             
-            // Reposition window to work area edge (respecting taskbar)
-            // We need to wait briefly for Windows to update the work area after removing appbar
-            std::thread::sleep(std::time::Duration::from_millis(50));
-            
-            if let Some(work) = get_work_area_for_window(&overlay_window) {
-                let x = work.left + (work.right - work.left - win_size.width as i32) / 2;
-                let y = match snapped {
-                    Some(SnapEdge::Top) => work.top,
-                    Some(SnapEdge::Bottom) => (work.bottom - win_size.height as i32).max(work.top),
-                    None => return Ok(()), // Not snapped, nothing to reposition
-                };
-                overlay_window
-                    .set_position(PhysicalPosition { x, y })
-                    .map_err(|e| e.to_string())?;
+            // Reposition window after Windows updates the work area.
+            // The work area can lag briefly, so poll it a few times.
+            let mut work = None;
+            for _ in 0..5 {
+                std::thread::sleep(std::time::Duration::from_millis(50));
+                work = get_work_area_for_window(&overlay_window);
+                if let Some(w) = work {
+                    let work_height = w.bottom - w.top;
+                    if work_height >= win_size.height as i32 {
+                        break;
+                    }
+                }
+            }
+
+            let monitor = get_monitor_area_for_window(&overlay_window).ok_or("Monitor area not available")?;
+            let x = monitor.left + (monitor.right - monitor.left - win_size.width as i32) / 2;
+            let y = match snapped {
+                Some(SnapEdge::Top) => {
+                    // Top has no taskbar; pin to monitor top to avoid drift.
+                    monitor.top
+                }
+                Some(SnapEdge::Bottom) => {
+                    // Always pin to monitor bottom to avoid jumping to top
+                    // while the work area is still updating.
+                    (monitor.bottom - win_size.height as i32).max(monitor.top)
+                }
+                None => return Ok(()), // Not snapped, nothing to reposition
+            };
+            let hwnd = overlay_window.hwnd().map_err(|e| e.to_string())?;
+            unsafe {
+                // Set position immediately after removing appbar.
+                SetWindowPos(
+                    hwnd.0 as WinapiHwnd,
+                    std::ptr::null_mut(),
+                    x,
+                    y,
+                    0,
+                    0,
+                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE,
+                );
+            }
+            // Re-assert position after a short delay to counter any OS adjustments.
+            std::thread::sleep(std::time::Duration::from_millis(80));
+            unsafe {
+                SetWindowPos(
+                    hwnd.0 as WinapiHwnd,
+                    std::ptr::null_mut(),
+                    x,
+                    y,
+                    0,
+                    0,
+                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE,
+                );
             }
         }
     }
