@@ -9,8 +9,31 @@ export function Marquee() {
   const x = useMotionValue(0)
   const copyRef = useRef<HTMLSpanElement | null>(null)
   const [copyWidth, setCopyWidth] = useState(0)
+  const [showDefault, setShowDefault] = useState(false)
   const separator = '\u00A0\u00A0•\u00A0\u00A0'
-  const text = habits.length > 0 ? habits.join(separator) + separator : ''
+  const defaultMessage = 'Add your first habit or reminder in the dashboard.'
+  const text = habits.length > 0
+    ? habits.join(separator) + separator
+    : showDefault
+      ? defaultMessage + separator
+      : ''
+  const hasText = text.length > 0
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const key = 'habitglo-has-opened'
+    const alreadyOpened = window.localStorage.getItem(key)
+    if (!alreadyOpened) {
+      setShowDefault(true)
+      window.localStorage.setItem(key, '1')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (habits.length > 0 && showDefault) {
+      setShowDefault(false)
+    }
+  }, [habits.length, showDefault])
 
   useEffect(() => {
     const el = copyRef.current
@@ -46,10 +69,10 @@ export function Marquee() {
   })
 
   const copies = useMemo(() => {
-    if (!copyWidth || habits.length === 0) return 2
+    if (!copyWidth || !hasText) return 2
     const minWidth = containerWidth || 0
     return Math.max(2, Math.ceil(minWidth / (copyWidth + gap)) + 1)
-  }, [copyWidth, containerWidth, gap, habits.length])
+  }, [copyWidth, containerWidth, gap, hasText])
 
   return (
     <div
@@ -61,7 +84,7 @@ export function Marquee() {
       }}
     >
       <div className="absolute inset-0 burnin opacity-70" />
-      {habits.length > 0 && (
+      {hasText && (
         <motion.div
           className={clsx(
             'led-font flex items-center whitespace-nowrap font-normal tracking-[0.3em]',
