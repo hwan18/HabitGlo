@@ -1,6 +1,7 @@
 import { useHabitsStore, palettesList } from '@/stores/useHabitsStore'
 import { Button } from './Button'
 import {
+  ArrowUpDown,
   MonitorSmartphone,
   MousePointerClick,
   PinIcon,
@@ -66,6 +67,18 @@ export function SettingsPanel() {
           />
           <span className="w-14 text-right">{overlay.speed.toFixed(0)} px/s</span>
         </label>
+        <label className="flex items-center gap-3 text-xs text-white/70">
+          Spacing / frequency
+          <input
+            type="range"
+            min={0}
+            max={800}
+            value={overlay.spacing ?? 0}
+            onChange={(e) => setOverlay({ spacing: Number(e.target.value) })}
+            className="w-full"
+          />
+          <span className="w-14 text-right">{(overlay.spacing ?? 0).toFixed(0)} px</span>
+        </label>
         <label className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2">
           <div className="flex items-center gap-2">
             <MousePointerClick size={16} />
@@ -82,6 +95,7 @@ export function SettingsPanel() {
         </label>
         <label className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2">
           <div className="flex items-center gap-2">
+            <ArrowUpDown size={16} />
             <span>Reserve screen space</span>
           </div>
           <input type="checkbox" checked={overlay.reserveSpace} onChange={(e) => applyReserveSpace(e.target.checked)} />

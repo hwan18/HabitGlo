@@ -19,8 +19,14 @@ create table if not exists habits (
   is_active boolean default true,
   priority integer default 0,
   created_at timestamptz default now(),
-  last_done_at timestamptz
+  last_done_at timestamptz,
+  streak_current integer default 0,
+  streak_best integer default 0
 );
+
+-- Migration: Add streak columns to existing habits table (run if table already exists)
+-- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_current integer default 0;
+-- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_best integer default 0;
 
 create table if not exists habit_logs (
   id uuid primary key default gen_random_uuid(),

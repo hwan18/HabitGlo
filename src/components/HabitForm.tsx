@@ -45,7 +45,7 @@ export function HabitForm() {
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-white">Add Habits</p>
+          <p className="text-sm font-semibold text-white">Add habits and reminders</p>
           <span className="text-xs text-white/50">220 chars max each</span>
         </div>
         <div className="flex flex-col gap-2">

@@ -44,6 +44,8 @@ export const upsertHabit = async (habit: Partial<Habit> & { text: string; user_i
       priority: habit.priority ?? 0,
       user_id: habit.user_id,
       last_done_at: habit.last_done_at ?? null,
+      streak_current: habit.streak_current ?? 0,
+      streak_best: habit.streak_best ?? 0,
     }
     const { data, error } = await supabase!.from('habits').upsert(record).select().single()
     if (error) throw error
@@ -53,10 +55,13 @@ export const upsertHabit = async (habit: Partial<Habit> & { text: string; user_i
     id: habit.id ?? nanoid(),
     text: habit.text,
     color: habit.color ?? '#ff3131',
+    colorIndex: habit.colorIndex,
     speed: habit.speed ?? 40,
     is_active: habit.is_active ?? true,
     priority: habit.priority ?? 0,
     last_done_at: habit.last_done_at ?? null,
+    streak_current: habit.streak_current ?? 0,
+    streak_best: habit.streak_best ?? 0,
   }
   const existing = readLocal()
   const idx = existing.findIndex((h) => h.id === next.id)
@@ -104,8 +109,84 @@ export const deleteHabit = async (habitId: string, userId?: string) => {
   writeLocal(habits)
 }
 
-export const logHabit = async (habitId: string, userId?: string) => {
+// Helper to get local date string (YYYY-MM-DD) for a given timestamp
+const toLocalDateString = (isoString: string | null | undefined): string | null => {
+  if (!isoString) return null
+  const d = new Date(isoString)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Compute streak based on last_done_at
+export const computeStreak = (
+  lastDoneAt: string | null | undefined,
+  currentStreak: number = 0,
+  bestStreak: number = 0
+): { streak_current: number; streak_best: number; alreadyLoggedToday: boolean } => {
+  const now = new Date()
+  const todayStr = toLocalDateString(now.toISOString())
+  const lastDoneStr = toLocalDateString(lastDoneAt)
+
+  // If already logged today, no change
+  if (lastDoneStr === todayStr) {
+    return { streak_current: currentStreak, streak_best: bestStreak, alreadyLoggedToday: true }
+  }
+
+  // Check if last log was yesterday
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = toLocalDateString(yesterday.toISOString())
+
+  let newStreak: number
+  if (lastDoneStr === yesterdayStr) {
+    // Continue streak
+    newStreak = currentStreak + 1
+  } else {
+    // Reset streak (first log or missed days)
+    newStreak = 1
+  }
+
+  const newBest = Math.max(bestStreak, newStreak)
+  return { streak_current: newStreak, streak_best: newBest, alreadyLoggedToday: false }
+}
+
+export const logHabit = async (
+  habitId: string,
+  userId?: string,
+  currentHabit?: { last_done_at?: string | null; streak_current?: number; streak_best?: number }
+): Promise<{ streak_current: number; streak_best: number; alreadyLoggedToday: boolean }> => {
   const loggedAt = new Date().toISOString()
+
+  // Get current habit data if not provided
+  let lastDoneAt = currentHabit?.last_done_at
+  let streakCurrent = currentHabit?.streak_current ?? 0
+  let streakBest = currentHabit?.streak_best ?? 0
+
+  if (!currentHabit) {
+    if (isSupabaseReady() && userId) {
+      const { data } = await supabase!.from('habits').select('last_done_at, streak_current, streak_best').eq('id', habitId).single()
+      if (data) {
+        lastDoneAt = data.last_done_at
+        streakCurrent = data.streak_current ?? 0
+        streakBest = data.streak_best ?? 0
+      }
+    } else {
+      const habits = readLocal()
+      const found = habits.find((h) => h.id === habitId)
+      if (found) {
+        lastDoneAt = found.last_done_at
+        streakCurrent = found.streak_current ?? 0
+        streakBest = found.streak_best ?? 0
+      }
+    }
+  }
+
+  // Compute new streak values
+  const { streak_current, streak_best, alreadyLoggedToday } = computeStreak(lastDoneAt, streakCurrent, streakBest)
+
+  if (alreadyLoggedToday) {
+    return { streak_current, streak_best, alreadyLoggedToday: true }
+  }
+
   if (isSupabaseReady() && userId) {
     const { error: logError } = await supabase!
       .from('habit_logs')
@@ -114,14 +195,17 @@ export const logHabit = async (habitId: string, userId?: string) => {
 
     const { error: updateError } = await supabase!
       .from('habits')
-      .update({ last_done_at: loggedAt })
+      .update({ last_done_at: loggedAt, streak_current, streak_best })
       .eq('id', habitId)
     if (updateError) throw updateError
-    return
+    return { streak_current, streak_best, alreadyLoggedToday: false }
   }
 
-  const habits = readLocal().map((h) => (h.id === habitId ? { ...h, last_done_at: loggedAt } : h))
+  const habits = readLocal().map((h) =>
+    h.id === habitId ? { ...h, last_done_at: loggedAt, streak_current, streak_best } : h
+  )
   writeLocal(habits)
+  return { streak_current, streak_best, alreadyLoggedToday: false }
 }
 
 export const subscribeHabits = (userId: string, onChange: () => void) => {

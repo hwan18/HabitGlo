@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { useMarqueeConfig } from './useMarqueeConfig'
 
 export function Marquee() {
-  const { ref: containerRef, gap, speed, habits, overlay, theme, fontSize, containerWidth } = useMarqueeConfig()
+  const { ref: containerRef, gap, spacing, speed, habits, overlay, theme, fontSize, containerWidth } = useMarqueeConfig()
   const loopWidthRef = useRef(0)
   const x = useMotionValue(0)
   const copyRef = useRef<HTMLSpanElement | null>(null)
@@ -12,12 +12,16 @@ export function Marquee() {
   const [showDefault, setShowDefault] = useState(false)
   const separator = '\u00A0\u00A0•\u00A0\u00A0'
   const defaultMessage = 'Add your first habit or reminder in the dashboard.'
-  const text = habits.length > 0
-    ? habits.join(separator) + separator
-    : showDefault
-      ? defaultMessage + separator
-      : ''
-  const hasText = text.length > 0
+  const segments = useMemo(() => {
+    if (habits.length > 0) {
+      return habits
+    }
+    if (showDefault) {
+      return [{ text: defaultMessage, color: theme.primary }]
+    }
+    return []
+  }, [habits, showDefault, theme.primary])
+  const hasText = segments.length > 0
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -46,7 +50,7 @@ export function Marquee() {
     const observer = new ResizeObserver(() => measure())
     observer.observe(el)
     return () => observer.disconnect()
-  }, [fontSize, text])
+  }, [fontSize, segments, separator, spacing])
 
   useEffect(() => {
     if (!copyWidth) return
@@ -92,8 +96,6 @@ export function Marquee() {
           )}
           style={{
             x,
-            color: theme.primary,
-            textShadow: `0 0 ${18 * theme.glow}px ${theme.primary}, 0 0 ${16 * theme.glow}px ${theme.secondary}`,
             fontSize,
           }}
         >
@@ -101,10 +103,33 @@ export function Marquee() {
             <span
               key={idx}
               ref={idx === 0 ? copyRef : null}
-              className="inline-block"
+              className="inline-flex items-center"
               style={idx < copies - 1 ? { marginRight: gap } : undefined}
             >
-              {text}
+              {segments.map((segment, segIdx) => (
+                <span key={`${idx}-${segIdx}`} className="inline-flex items-center">
+                  <span
+                    className="inline-block"
+                    style={{
+                      color: segment.color,
+                      textShadow: `0 0 ${18 * theme.glow}px ${segment.color}, 0 0 ${16 * theme.glow}px ${theme.secondary}`,
+                    }}
+                  >
+                    {segment.text}
+                  </span>
+                  <span
+                    className="inline-block"
+                    style={{
+                      color: '#c83b3b',
+                      textShadow: `0 0 ${12 * theme.glow}px rgba(200,59,59,0.6)`,
+                      marginLeft: spacing > 0 ? spacing / 2 : undefined,
+                      marginRight: spacing > 0 ? spacing / 2 : undefined,
+                    }}
+                  >
+                    {separator}
+                  </span>
+                </span>
+              ))}
             </span>
           ))}
         </motion.div>

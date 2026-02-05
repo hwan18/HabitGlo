@@ -16,11 +16,14 @@ export type Habit = {
   user_id?: string
   text: string
   color?: string
+  colorIndex?: number
   speed?: number
   is_active: boolean
   priority: number
   created_at?: string
   last_done_at?: string | null
+  streak_current?: number
+  streak_best?: number
 }
 
 export type ThemeSettings = {
@@ -36,6 +39,7 @@ export type ThemeSettings = {
 export type OverlaySettings = {
   speed: number
   gap: number
+  spacing: number
   clickThrough: boolean
   alwaysOnTop: boolean
   reserveSpace: boolean

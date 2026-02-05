@@ -1,18 +1,89 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Check, GripVertical, Pause, Play, Trash } from 'lucide-react'
+import { Check, GripVertical, Pause, Play, Trash, Flame } from 'lucide-react'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { Button } from './Button'
 import type { Habit } from '@/types'
+
+// Check if habit was logged today (local timezone)
+const isLoggedToday = (lastDoneAt: string | null | undefined): boolean => {
+  if (!lastDoneAt) return false
+  const lastDone = new Date(lastDoneAt)
+  const now = new Date()
+  return (
+    lastDone.getFullYear() === now.getFullYear() &&
+    lastDone.getMonth() === now.getMonth() &&
+    lastDone.getDate() === now.getDate()
+  )
+}
+
+// Get milestone badge if applicable
+const getMilestoneBadge = (streak: number): string | null => {
+  if (streak >= 36500) return '🧬' // 100 years
+  if (streak >= 18250) return '👑' // 50 years
+  if (streak >= 14600) return '🏛️' // 40 years
+  if (streak >= 10950) return '🏔️' // 30 years
+  if (streak >= 7300) return '🌍' // 20 years
+  if (streak >= 5000) return '🔱' // 5000 days
+  if (streak >= 3650) return '💎' // 10 years
+  if (streak >= 1825) return '🏅' // 5 years
+  if (streak >= 1460) return '🎖️' // 4 years
+  if (streak >= 1000) return '🏆' // 1000 days
+  if (streak >= 730) return '🦁' // 2 years
+  if (streak >= 500) return '🚀' // 500 days
+  if (streak >= 400) return '🛡️' // 400 days
+  if (streak >= 365) return '🎉' // 1 year
+  if (streak >= 300) return '🌟' // 300 days
+  if (streak >= 270) return '🍂' // 9 months
+  if (streak >= 240) return '🍁' // 8 months
+  if (streak >= 200) return '⚡' // 200 days
+  if (streak >= 180) return '🔥' // half-year
+  if (streak >= 150) return '🔆' // 5 months
+  if (streak >= 120) return '🌤️' // 4 months
+  if (streak >= 100) return '💯' // 100 days
+  if (streak >= 90) return '🌙' // 3 months
+  if (streak >= 75) return '🥈' // 75 days
+  if (streak >= 60) return '🧭' // 2 months
+  if (streak >= 50) return '🏅' // 50 days
+  if (streak >= 45) return '🎯' // 6 weeks
+  if (streak >= 30) return '⭐' // 1 month
+  if (streak >= 21) return '🧠' // habit forming
+  if (streak >= 14) return '💪' // 2 weeks
+  if (streak >= 10) return '🔟' // double digits
+  if (streak >= 7) return '✨' // 1 week
+  if (streak >= 3) return '🌱' // spark
+  if (streak >= 1) return '🟢' // first step
+  return null
+}
 
 const HabitCard = ({ habit }: { habit: Habit }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: habit.id })
   const toggleHabit = useHabitsStore((s) => s.toggleHabit)
   const removeHabit = useHabitsStore((s) => s.removeHabit)
   const markDone = useHabitsStore((s) => s.markDone)
+  const setHabitColor = useHabitsStore((s) => s.setHabitColor)
   const theme = useHabitsStore((s) => s.theme)
+  const paletteColors = [theme.primary, theme.secondary, theme.accent]
+  const normalizedColor = habit.color?.toLowerCase()
+  const inferredIndex =
+    habit.colorIndex ?? paletteColors.findIndex((color) => color.toLowerCase() === normalizedColor)
+  const colorIndex = inferredIndex >= 0 ? inferredIndex : 0
+  const displayColor = paletteColors[colorIndex] ?? theme.primary
+
+  const [showSuccess, setShowSuccess] = useState(false)
+  const loggedToday = isLoggedToday(habit.last_done_at)
+  const streak = habit.streak_current ?? 0
+  const milestoneBadge = getMilestoneBadge(streak)
+
+  const handleLog = async () => {
+    if (loggedToday) return
+    await markDone(habit.id)
+    // Show success animation
+    setShowSuccess(true)
+    setTimeout(() => setShowSuccess(false), 1500)
+  }
 
   return (
     <div
@@ -21,7 +92,13 @@ const HabitCard = ({ habit }: { habit: Habit }) => {
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className="flex items-center justify-between rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm text-white/80 shadow-inner shadow-black/60"
+      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm text-white/80 shadow-inner shadow-black/60 transition-all duration-300 ${
+        showSuccess
+          ? 'border-green-500/50 bg-green-900/30'
+          : loggedToday
+          ? 'border-green-500/20 bg-black/40'
+          : 'border-white/10 bg-black/50'
+      }`}
     >
       <div className="flex items-center gap-2">
         <button
@@ -33,18 +110,33 @@ const HabitCard = ({ habit }: { habit: Habit }) => {
           <GripVertical size={14} />
         </button>
         <span className="font-medium text-white">{habit.text}</span>
+        {/* Streak display */}
+        {streak > 0 && (
+          <span className="flex items-center gap-1 rounded-full bg-orange-500/20 px-2 py-0.5 text-[11px] text-orange-300">
+            <Flame size={10} className="text-orange-400" />
+            {streak}
+            {milestoneBadge && <span className="ml-0.5">{milestoneBadge}</span>}
+          </span>
+        )}
+        {/* Success feedback */}
+        {showSuccess && (
+          <span className="animate-pulse rounded-full bg-green-500/30 px-2 py-0.5 text-[11px] text-green-300">
+            +1 day
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] text-white/60">#{habit.priority + 1}</span>
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => markDone(habit.id)}
-          title="Mark as done"
-          className="flex items-center gap-1"
+          onClick={handleLog}
+          disabled={loggedToday}
+          title={loggedToday ? 'Already logged today' : 'Mark as done'}
+          className={`flex items-center gap-1 ${loggedToday ? 'cursor-not-allowed opacity-50' : ''}`}
         >
           <Check size={12} />
-          Log
+          {loggedToday ? 'Done' : 'Log'}
         </Button>
         <Button
           size="sm"
@@ -64,10 +156,16 @@ const HabitCard = ({ habit }: { habit: Habit }) => {
           <Trash size={12} />
           Delete
         </Button>
-        <span
+        <button
+          type="button"
           className="h-6 w-6 rounded-full border border-white/10"
-          style={{ backgroundColor: habit.color ?? theme.primary }}
-          title="Color"
+          style={{ backgroundColor: displayColor }}
+          title="Cycle color"
+          aria-label="Cycle habit color"
+          onClick={() => {
+            const nextIndex = (colorIndex + 1) % 3
+            void setHabitColor(habit.id, nextIndex)
+          }}
         />
       </div>
     </div>

@@ -23,27 +23,29 @@ export const useMarqueeConfig = () => {
   }, [])
 
   const gap = useMemo(() => Math.max(0, overlay.gap), [overlay.gap])
+  const spacing = useMemo(() => Math.max(0, overlay.spacing ?? 0), [overlay.spacing])
   const speed = overlay.speed
   const fontSize = useMemo(() => {
     const size = Math.floor(containerHeight * 0.6)
     return Math.max(14, Math.min(64, size))
   }, [containerHeight])
 
-  const marqueeText = useMemo(() => {
+  const marqueeHabits = useMemo(() => {
     const active = habitsRaw.filter((h) => h.is_active)
     if (active.length === 0) return []
     return [...active]
       .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-      .map((h) => h.text)
-      .filter(Boolean)
-  }, [habitsRaw])
+      .map((h) => ({ text: h.text, color: h.color ?? theme.primary }))
+      .filter((h) => Boolean(h.text))
+  }, [habitsRaw, theme.primary])
 
   return {
     ref,
     gap,
+    spacing,
     speed,
     fontSize,
-    habits: marqueeText,
+    habits: marqueeHabits,
     overlay,
     theme,
     setOverlay,
