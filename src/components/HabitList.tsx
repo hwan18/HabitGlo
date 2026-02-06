@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Check, GripVertical, Pause, Play, Trash, Flame } from 'lucide-react'
+import { Check, GripVertical, Pause, Play, Trash, Trash2, Flame } from 'lucide-react'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { Button } from './Button'
 import type { Habit } from '@/types'
@@ -175,6 +175,7 @@ const HabitCard = ({ habit }: { habit: Habit }) => {
 export function HabitList() {
   const rawHabits = useHabitsStore((s) => s.habits)
   const reorder = useHabitsStore((s) => s.reorder)
+  const clearAllHabits = useHabitsStore((s) => s.clearAllHabits)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const habits = useMemo(() => [...rawHabits].sort((a, b) => a.priority - b.priority), [rawHabits])
 
@@ -190,8 +191,21 @@ export function HabitList() {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-white">Active cycle</p>
-        <span className="text-xs text-white/50">{habits.length} habits</span>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-white">Active cycle</p>
+          <span className="text-xs text-white/50">{habits.length} habits</span>
+        </div>
+        {habits.length > 0 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => clearAllHabits()}
+            className="flex items-center gap-1 text-red-300 hover:border-red-500/60"
+          >
+            <Trash2 size={12} />
+            Delete All
+          </Button>
+        )}
       </div>
       {habits.length === 0 ? (
         <p className="text-sm text-white/60">Add a habit to start the scroll.</p>

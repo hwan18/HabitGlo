@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { HabitForm } from './components/HabitForm'
+import { HabitPacks } from './components/HabitPacks'
 import { HabitList } from './components/HabitList'
 import { SettingsPanel } from './components/SettingsPanel'
 import { useHabitsStore } from './stores/useHabitsStore'
@@ -70,6 +71,7 @@ function App() {
             <AuthPanel />
             <HabitForm />
             <HabitList />
+            <HabitPacks />
           </div>
           <div className="flex flex-col gap-4">
             <SettingsPanel />

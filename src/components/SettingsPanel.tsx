@@ -49,7 +49,7 @@ export function SettingsPanel() {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-white">Overlay Settings</p>
+        <p className="text-sm font-semibold text-white">App Overlay Settings</p>
         <Button size="sm" variant="ghost" onClick={toggleOverlayVisibility}>
           <MonitorSmartphone size={14} className="mr-1" /> Toggle overlay
         </Button>

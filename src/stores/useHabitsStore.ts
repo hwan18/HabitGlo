@@ -42,6 +42,7 @@ type StoreState = {
   toggleHabit: (id: string, active: boolean) => Promise<void>
   setHabitColor: (id: string, colorIndex: number) => Promise<void>
   removeHabit: (id: string) => Promise<void>
+  clearAllHabits: () => Promise<void>
   reorder: (ids: string[]) => Promise<void>
   hydrate: () => Promise<void>
   setTheme: (input: Partial<ThemeSettings>) => void
@@ -156,6 +157,15 @@ export const useHabitsStore = create<StoreState>()(
         const userId = get().user?.id
         await deleteHabit(id, userId)
         set((state) => ({ habits: state.habits.filter((h) => h.id !== id) }))
+      },
+
+      clearAllHabits: async () => {
+        const userId = get().user?.id
+        const all = get().habits
+        for (const habit of all) {
+          await deleteHabit(habit.id, userId)
+        }
+        set({ habits: [] })
       },
 
       reorder: async (ids) => {
