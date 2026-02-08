@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid/non-secure'
 import { supabase, hasSupabase } from './supabaseClient'
-import type { Habit } from '@/types'
+import type { Habit, ThemeSettings, OverlaySettings, PersonalLeaderboardEntry, GlobalLeaderboardEntry, MyGlobalRank } from '@/types'
 
 const LOCAL_KEY = 'habitglo_local_habits'
 
@@ -28,7 +28,10 @@ export const listHabits = async (userId?: string): Promise<Habit[]> => {
       .eq('user_id', userId)
       .order('priority', { ascending: true })
     if (error) throw error
-    return data as Habit[]
+    return (data ?? []).map((h: any) => ({
+      ...h,
+      colorIndex: h.color_index ?? h.colorIndex ?? 0,
+    })) as Habit[]
   }
   return readLocal()
 }
@@ -39,7 +42,7 @@ export const upsertHabit = async (habit: Partial<Habit> & { text: string; user_i
       id: habit.id ?? nanoid(),
       text: habit.text,
       color: habit.color ?? '#ff3131',
-      speed: habit.speed ?? 40,
+      color_index: habit.colorIndex ?? 0,
       is_active: habit.is_active ?? true,
       priority: habit.priority ?? 0,
       user_id: habit.user_id,
@@ -49,14 +52,13 @@ export const upsertHabit = async (habit: Partial<Habit> & { text: string; user_i
     }
     const { data, error } = await supabase!.from('habits').upsert(record).select().single()
     if (error) throw error
-    return data as Habit
+    return { ...data, colorIndex: data.color_index ?? 0 } as Habit
   }
   const next: Habit = {
     id: habit.id ?? nanoid(),
     text: habit.text,
     color: habit.color ?? '#ff3131',
-    colorIndex: habit.colorIndex,
-    speed: habit.speed ?? 40,
+    colorIndex: habit.colorIndex ?? 0,
     is_active: habit.is_active ?? true,
     priority: habit.priority ?? 0,
     last_done_at: habit.last_done_at ?? null,
@@ -83,9 +85,18 @@ export const setHabitActive = async (habitId: string, isActive: boolean, userId?
 
 export const reorderHabits = async (orderedIds: string[], userId?: string) => {
   if (isSupabaseReady() && userId) {
-    const updates = orderedIds.map((id, index) => ({ id, priority: index }))
-    const { error } = await supabase!.from('habits').upsert(updates)
-    if (error) throw error
+    // Use per-row updates instead of partial upsert to avoid NOT NULL constraint
+    // violations and RLS issues. Each update only touches the priority column.
+    const promises = orderedIds.map((id, index) =>
+      supabase!
+        .from('habits')
+        .update({ priority: index })
+        .eq('id', id)
+        .eq('user_id', userId)
+    )
+    const results = await Promise.all(promises)
+    const failed = results.find((r) => r.error)
+    if (failed?.error) throw failed.error
     return
   }
   const habits = readLocal()
@@ -221,4 +232,78 @@ export const subscribeHabits = (userId: string, onChange: () => void) => {
   return () => {
     supabase!.removeChannel(channel)
   }
+}
+
+// ── Settings sync (theme + overlay → profiles.settings) ───────────
+
+export const loadSettings = async (
+  userId: string
+): Promise<{ theme?: ThemeSettings; overlay?: OverlaySettings } | null> => {
+  if (!isSupabaseReady()) return null
+  const { data, error } = await supabase!
+    .from('profiles')
+    .select('settings')
+    .eq('user_id', userId)
+    .single()
+  if (error || !data?.settings) return null
+  const s = data.settings as Record<string, unknown>
+  return {
+    theme: s.theme as ThemeSettings | undefined,
+    overlay: s.overlay as OverlaySettings | undefined,
+  }
+}
+
+export const saveSettings = async (
+  userId: string,
+  settings: { theme: ThemeSettings; overlay: OverlaySettings }
+): Promise<void> => {
+  if (!isSupabaseReady()) return
+  const { error } = await supabase!
+    .from('profiles')
+    .update({ settings: { theme: settings.theme, overlay: settings.overlay } })
+    .eq('user_id', userId)
+  if (error) {
+    console.warn('Failed to save settings to Supabase:', error.message)
+  }
+}
+
+// ── Leaderboard queries (call Supabase RPC functions) ─────────
+
+export const getPersonalLeaderboard = async (
+  userId: string,
+  limit = 5
+): Promise<PersonalLeaderboardEntry[]> => {
+  if (!isSupabaseReady() || !userId) return []
+  const { data, error } = await supabase!.rpc('get_personal_leaderboard', { lim: limit })
+  if (error) {
+    console.warn('Failed to fetch personal leaderboard:', error.message)
+    return []
+  }
+  return (data ?? []) as PersonalLeaderboardEntry[]
+}
+
+export const getGlobalLeaderboard = async (
+  limit = 5
+): Promise<GlobalLeaderboardEntry[]> => {
+  if (!isSupabaseReady()) return []
+  const { data, error } = await supabase!.rpc('get_global_leaderboard', { lim: limit })
+  if (error) {
+    console.warn('Failed to fetch global leaderboard:', error.message)
+    return []
+  }
+  return (data ?? []) as GlobalLeaderboardEntry[]
+}
+
+export const getMyGlobalRank = async (
+  userId: string
+): Promise<MyGlobalRank> => {
+  if (!isSupabaseReady() || !userId) return { rank: null, habit_text: null, streak_days: 0 }
+  const { data, error } = await supabase!.rpc('get_my_global_rank')
+  if (error) {
+    console.warn('Failed to fetch global rank:', error.message)
+    return { rank: null, habit_text: null, streak_days: 0 }
+  }
+  if (!data || data.length === 0) return { rank: null, habit_text: null, streak_days: 0 }
+  const row = data[0]
+  return { rank: row.rank, habit_text: row.habit_text ?? null, streak_days: row.streak_days }
 }

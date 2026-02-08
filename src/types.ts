@@ -16,8 +16,7 @@ export type Habit = {
   user_id?: string
   text: string
   color?: string
-  colorIndex?: number
-  speed?: number
+  colorIndex: number
   is_active: boolean
   priority: number
   created_at?: string
@@ -45,4 +44,23 @@ export type OverlaySettings = {
   reserveSpace: boolean
   paused: boolean
   monitorIndex?: number
+}
+
+export type PersonalLeaderboardEntry = {
+  rank: number
+  habit_text: string
+  streak_days: number
+}
+
+export type GlobalLeaderboardEntry = {
+  rank: number
+  username: string
+  habit_text: string
+  streak_days: number
+}
+
+export type MyGlobalRank = {
+  rank: number | null
+  habit_text: string | null
+  streak_days: number
 }

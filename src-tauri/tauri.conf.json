@@ -45,6 +45,10 @@
     },
     "allowlist": {
       "all": true
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": false
     }
   }
 }

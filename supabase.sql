@@ -5,8 +5,10 @@ create extension if not exists pgcrypto;
 
 create table if not exists profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  display_name text,
   subscription_status text default 'free',
-  theme_preferences jsonb default '{}'::jsonb,
+  settings jsonb default '{}'::jsonb,
   created_at timestamptz default now()
 );
 
@@ -15,7 +17,7 @@ create table if not exists habits (
   user_id uuid not null references auth.users(id) on delete cascade,
   text text not null,
   color text,
-  speed integer,
+  color_index integer default 0,
   is_active boolean default true,
   priority integer default 0,
   created_at timestamptz default now(),
@@ -23,10 +25,6 @@ create table if not exists habits (
   streak_current integer default 0,
   streak_best integer default 0
 );
-
--- Migration: Add streak columns to existing habits table (run if table already exists)
--- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_current integer default 0;
--- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_best integer default 0;
 
 create table if not exists habit_logs (
   id uuid primary key default gen_random_uuid(),
@@ -92,12 +90,12 @@ create policy "Habit logs are deletable by owner"
   on habit_logs for delete
   using (auth.uid() = user_id);
 
--- Auto-create profile on signup
+-- Auto-create profile on signup (captures email from auth.users)
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (user_id)
-  values (new.id)
+  insert into public.profiles (user_id, email)
+  values (new.id, new.email)
   on conflict (user_id) do nothing;
   return new;
 end;
@@ -107,3 +105,86 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute procedure public.handle_new_user();
+
+-- ============================================================
+-- Leaderboard RPC functions (SECURITY DEFINER to bypass RLS)
+-- ============================================================
+
+-- Personal top N habits by streak for the calling user
+create or replace function public.get_personal_leaderboard(lim integer default 5)
+returns table (
+  rank bigint,
+  habit_text text,
+  streak_days integer
+) as $$
+  select
+    row_number() over (
+      order by h.streak_current desc, h.last_done_at desc nulls last, h.created_at asc, h.id asc
+    ) as rank,
+    h.text as habit_text,
+    h.streak_current as streak_days
+  from habits h
+  where h.user_id = auth.uid()
+    and h.streak_current > 0
+  order by h.streak_current desc, h.last_done_at desc nulls last, h.created_at asc, h.id asc
+  limit lim;
+$$ language sql security definer stable;
+
+-- Global top N habits by streak across all users
+create or replace function public.get_global_leaderboard(lim integer default 5)
+returns table (
+  rank bigint,
+  username text,
+  habit_text text,
+  streak_days integer
+) as $$
+  select
+    row_number() over (
+      order by h.streak_current desc, h.last_done_at desc nulls last, h.created_at asc, h.id asc
+    ) as rank,
+    coalesce(p.display_name, split_part(p.email, '@', 1), 'Anonymous') as username,
+    h.text as habit_text,
+    h.streak_current as streak_days
+  from habits h
+  left join profiles p on p.user_id = h.user_id
+  where h.streak_current > 0
+  order by h.streak_current desc, h.last_done_at desc nulls last, h.created_at asc, h.id asc
+  limit lim;
+$$ language sql security definer stable;
+
+-- Current user's global rank (best habit)
+create or replace function public.get_my_global_rank()
+returns table (
+  rank bigint,
+  habit_text text,
+  streak_days integer
+) as $$
+  with ranked as (
+    select
+      h.user_id,
+      h.text,
+      h.streak_current,
+      row_number() over (
+        order by h.streak_current desc, h.last_done_at desc nulls last, h.created_at asc, h.id asc
+      ) as rk
+    from habits h
+    where h.streak_current > 0
+  )
+  select rk as rank, text as habit_text, streak_current as streak_days
+  from ranked
+  where user_id = auth.uid()
+  order by rk asc
+  limit 1;
+$$ language sql security definer stable;
+
+-- ============================================================
+-- Migration helpers (run these if your tables already exist)
+-- ============================================================
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS display_name text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS settings jsonb default '{}'::jsonb;
+-- ALTER TABLE profiles DROP COLUMN IF EXISTS theme_preferences;
+-- ALTER TABLE habits ADD COLUMN IF NOT EXISTS color_index integer default 0;
+-- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_current integer default 0;
+-- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_best integer default 0;
+-- ALTER TABLE habits DROP COLUMN IF EXISTS speed;

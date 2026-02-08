@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { reorderHabits, listHabits, upsertHabit, setHabitActive, deleteHabit, subscribeHabits, logHabit } from '@/lib/db'
+import { reorderHabits, listHabits, upsertHabit, setHabitActive, deleteHabit, subscribeHabits, logHabit, loadSettings, saveSettings } from '@/lib/db'
 import { hasSupabase } from '@/lib/supabaseClient'
+import { useLeaderboardStore } from './useLeaderboardStore'
 import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
 import type { User } from '@supabase/supabase-js'
 import { nanoid } from 'nanoid/non-secure'
@@ -87,6 +88,16 @@ export const useHabitsStore = create<StoreState>()(
       hydrate: async () => {
         const userId = get().user?.id
         set({ loading: true })
+
+        // Load settings from Supabase if available (cross-device sync)
+        if (userId) {
+          const remote = await loadSettings(userId)
+          if (remote) {
+            if (remote.theme) set({ theme: { ...get().theme, ...remote.theme } })
+            if (remote.overlay) set({ overlay: { ...get().overlay, ...remote.overlay } })
+          }
+        }
+
         const habits = await listHabits(userId ?? undefined)
         const sorted = habits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
         const theme = get().theme
@@ -94,11 +105,13 @@ export const useHabitsStore = create<StoreState>()(
         set({ habits: normalized, loading: false })
         if (userId) {
           subscribeHabits(userId, async () => {
-            const remote = await listHabits(userId)
-            const sortedRemote = remote.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+            const remoteHabits = await listHabits(userId)
+            const sortedRemote = remoteHabits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
             const theme = get().theme
             set({ habits: sortedRemote.map((habit) => normalizeHabitColor(habit, theme)) })
           })
+          // Refresh leaderboards after hydration
+          void useLeaderboardStore.getState().refresh(userId)
         }
       },
 
@@ -115,7 +128,6 @@ export const useHabitsStore = create<StoreState>()(
           text,
           color: resolvedColor,
           colorIndex,
-          speed: options?.speed ?? get().overlay.speed,
           is_active: options?.is_active ?? true,
           priority: options?.priority ?? get().habits.length,
           user_id: userId,
@@ -170,15 +182,26 @@ export const useHabitsStore = create<StoreState>()(
 
       reorder: async (ids) => {
         const userId = get().user?.id
-        await reorderHabits(ids, userId)
-        set((state) => ({
+        const prevHabits = get().habits
+
+        // Optimistic update: reorder immediately in UI
+        set({
           habits: ids
             .map((id, idx) => {
-              const found = state.habits.find((h) => h.id === id)
+              const found = prevHabits.find((h) => h.id === id)
               return found ? { ...found, priority: idx } : null
             })
             .filter(Boolean) as Habit[],
-        }))
+        })
+
+        // Persist to backend
+        try {
+          await reorderHabits(ids, userId)
+        } catch (err) {
+          console.error('Failed to persist reorder:', err)
+          // Rollback to previous order on failure
+          set({ habits: prevHabits })
+        }
       },
 
       setTheme: (input) => {
@@ -205,9 +228,21 @@ export const useHabitsStore = create<StoreState>()(
         updatedHabits.forEach((habit) => {
           void upsertHabit({ ...habit, user_id: userId, text: habit.text, color: habit.color })
         })
+        // Sync settings to Supabase
+        if (userId) {
+          void saveSettings(userId, { theme: nextTheme, overlay: get().overlay })
+        }
       },
 
-      setOverlay: (input) => set((state) => ({ overlay: { ...state.overlay, ...input } })),
+      setOverlay: (input) => {
+        const nextOverlay = { ...get().overlay, ...input }
+        set({ overlay: nextOverlay })
+        // Sync settings to Supabase
+        const userId = get().user?.id
+        if (userId) {
+          void saveSettings(userId, { theme: get().theme, overlay: nextOverlay })
+        }
+      },
 
       markDone: async (id) => {
         const userId = get().user?.id
@@ -228,6 +263,10 @@ export const useHabitsStore = create<StoreState>()(
               h.id === id ? { ...h, last_done_at: loggedAt, streak_current, streak_best } : h
             ),
           }))
+          // Refresh leaderboards after logging a habit
+          if (userId) {
+            void useLeaderboardStore.getState().refresh(userId)
+          }
         }
       },
     }),

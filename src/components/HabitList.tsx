@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Check, GripVertical, Pause, Play, Trash, Trash2, Flame } from 'lucide-react'
 import { useHabitsStore } from '@/stores/useHabitsStore'
@@ -179,13 +179,13 @@ export function HabitList() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const habits = useMemo(() => [...rawHabits].sort((a, b) => a.priority - b.priority), [rawHabits])
 
-  const onDragEnd = async (event: any) => {
+  const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
     const oldIndex = habits.findIndex((h) => h.id === active.id)
     const newIndex = habits.findIndex((h) => h.id === over.id)
     const sorted = arrayMove(habits, oldIndex, newIndex)
-    await reorder(sorted.map((h) => h.id))
+    void reorder(sorted.map((h) => h.id))
   }
 
   return (
@@ -211,7 +211,7 @@ export function HabitList() {
         <p className="text-sm text-white/60">Add a habit to start the scroll.</p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={habits.map((h) => h.id)} strategy={horizontalListSortingStrategy}>
+          <SortableContext items={habits.map((h) => h.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-2">
               {habits.map((habit) => (
                 <HabitCard key={habit.id} habit={habit} />

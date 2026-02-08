@@ -4,6 +4,7 @@ import { HabitForm } from './components/HabitForm'
 import { HabitPacks } from './components/HabitPacks'
 import { HabitList } from './components/HabitList'
 import { SettingsPanel } from './components/SettingsPanel'
+import { Leaderboard } from './components/Leaderboard'
 import { useHabitsStore } from './stores/useHabitsStore'
 import { Marquee } from './overlay/Marquee'
 import { Button } from './components/Button'
@@ -75,6 +76,7 @@ function App() {
           </div>
           <div className="flex flex-col gap-4">
             <SettingsPanel />
+            <Leaderboard />
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
               <p className="text-sm font-semibold text-white">Tips</p>
               <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
