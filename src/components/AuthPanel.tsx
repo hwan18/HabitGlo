@@ -69,6 +69,18 @@ export function AuthPanel() {
     setUser(null)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (mode === 'magic') {
+        void sendMagicLink()
+      } else if (mode === 'signup') {
+        void signUpWithPassword()
+      } else {
+        void signInWithPassword()
+      }
+    }
+  }
+
   if (!hasSupabase) {
     return (
       <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
@@ -124,6 +136,7 @@ export function AuthPanel() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
             {mode !== 'magic' && (
               <input
@@ -132,6 +145,7 @@ export function AuthPanel() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
             )}
           </div>

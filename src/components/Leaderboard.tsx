@@ -6,6 +6,8 @@ import { Button } from './Button'
 
 export function Leaderboard() {
   const user = useHabitsStore((s) => s.user)
+  const habits = useHabitsStore((s) => s.habits)
+  const toggleLeaderboardSharing = useHabitsStore((s) => s.toggleLeaderboardSharing)
   const personal = useLeaderboardStore((s) => s.personal)
   const global = useLeaderboardStore((s) => s.global)
   const myRank = useLeaderboardStore((s) => s.myRank)
@@ -13,6 +15,7 @@ export function Leaderboard() {
   const error = useLeaderboardStore((s) => s.error)
   const refresh = useLeaderboardStore((s) => s.refresh)
   const [tab, setTab] = useState<'personal' | 'global'>('personal')
+  const leaderboardSharingEnabled = habits.some((h) => h.show_on_leaderboard)
 
   if (!user) return null
 
@@ -38,6 +41,16 @@ export function Leaderboard() {
           Refresh
         </Button>
       </div>
+
+      {/* Opt-in checkbox */}
+      <label className="mb-3 flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2">
+        <span className="text-xs text-white/70">Share my habits on global leaderboard</span>
+        <input
+          type="checkbox"
+          checked={leaderboardSharingEnabled}
+          onChange={(e) => toggleLeaderboardSharing(e.target.checked)}
+        />
+      </label>
 
       {/* Tabs */}
       <div className="mb-3 flex gap-1 rounded-lg border border-white/10 bg-black/40 p-1">

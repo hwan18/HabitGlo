@@ -49,6 +49,7 @@ export const upsertHabit = async (habit: Partial<Habit> & { text: string; user_i
       last_done_at: habit.last_done_at ?? null,
       streak_current: habit.streak_current ?? 0,
       streak_best: habit.streak_best ?? 0,
+      show_on_leaderboard: habit.show_on_leaderboard ?? false,
     }
     const { data, error } = await supabase!.from('habits').upsert(record).select().single()
     if (error) throw error
@@ -64,6 +65,7 @@ export const upsertHabit = async (habit: Partial<Habit> & { text: string; user_i
     last_done_at: habit.last_done_at ?? null,
     streak_current: habit.streak_current ?? 0,
     streak_best: habit.streak_best ?? 0,
+    show_on_leaderboard: habit.show_on_leaderboard ?? false,
   }
   const existing = readLocal()
   const idx = existing.findIndex((h) => h.id === next.id)

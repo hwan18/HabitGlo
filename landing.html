@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HabitGlo — Ambient reminders in your periphery</title>
+  <meta name="description" content="Always-on-top LED ticker overlay that scrolls your habits across your screen all day. Click-through mode, neon themes, streak tracking, and curated habit packs." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            glow: { pink: '#ff5ad9', blue: '#36d2ff', green: '#6bff6b', amber: '#ffb000' },
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Marquee animation */
+    @keyframes marquee-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .marquee-track { animation: marquee-scroll 20s linear infinite; }
+    .marquee-track:hover { animation-play-state: paused; }
+
+    /* Glow effects */
+    .glow-text { text-shadow: 0 0 20px rgba(255, 90, 217, 0.6), 0 0 40px rgba(255, 90, 217, 0.3); }
+    .glow-text-blue { text-shadow: 0 0 20px rgba(54, 210, 255, 0.6), 0 0 40px rgba(54, 210, 255, 0.3); }
+    .glow-box { box-shadow: 0 0 30px rgba(255, 90, 217, 0.15), 0 0 60px rgba(255, 90, 217, 0.05); }
+    .glow-box-blue { box-shadow: 0 0 30px rgba(54, 210, 255, 0.15), 0 0 60px rgba(54, 210, 255, 0.05); }
+    .glow-box-green { box-shadow: 0 0 30px rgba(107, 255, 107, 0.15), 0 0 60px rgba(107, 255, 107, 0.05); }
+
+    /* Gradient border trick */
+    .gradient-border {
+      position: relative;
+      background: rgba(255,255,255,0.03);
+    }
+    .gradient-border::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,90,217,0.3), rgba(54,210,255,0.1), rgba(107,255,107,0.2));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* Pricing popular badge glow */
+    .popular-glow {
+      box-shadow: 0 0 40px rgba(255, 90, 217, 0.2), 0 0 80px rgba(255, 90, 217, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* Palette swatch animation */
+    .palette-swatch { transition: transform 0.2s, box-shadow 0.2s; }
+    .palette-swatch:hover { transform: scale(1.1); box-shadow: 0 0 16px currentColor; }
+
+    /* FAQ toggle */
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details[open] summary .faq-arrow { transform: rotate(180deg); }
+    .faq-arrow { transition: transform 0.2s; }
+
+    /* Smooth fade-in */
+    .fade-section { opacity: 0; transform: translateY(24px); transition: opacity 0.6s, transform 0.6s; }
+    .fade-section.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="bg-black text-white font-sans antialiased overflow-x-hidden">
+
+  <!-- ============================================ -->
+  <!-- NAV -->
+  <!-- ============================================ -->
+  <nav class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <div class="flex items-center gap-2">
+        <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-glow-pink to-glow-blue flex items-center justify-center text-sm font-bold">H</div>
+        <span class="text-lg font-bold tracking-tight">HabitGlo</span>
+      </div>
+      <div class="hidden md:flex items-center gap-8 text-sm text-white/60">
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
+        <a href="#packs" class="hover:text-white transition-colors">Habit Packs</a>
+        <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+        <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
+      </div>
+      <a href="#pricing" class="rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow">
+        Download Free
+      </a>
+    </div>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- HERO -->
+  <!-- ============================================ -->
+  <section class="relative pt-32 pb-20 px-6">
+    <!-- Background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-b from-glow-pink/5 via-transparent to-transparent pointer-events-none"></div>
+    <div class="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-glow-pink/5 blur-[120px] pointer-events-none"></div>
+
+    <div class="relative mx-auto max-w-4xl text-center">
+      <div class="inline-block mb-6 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs tracking-widest uppercase text-white/60">
+        Peripheral Productivity
+      </div>
+      <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
+        Ambient reminders<br />
+        <span class="glow-text bg-gradient-to-r from-glow-pink via-glow-blue to-glow-green bg-clip-text text-transparent">in your periphery.</span>
+      </h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-white/60 leading-relaxed">
+        An always-on-top LED ticker that scrolls your habits across your screen all day.
+        Click-through mode, neon themes, streak tracking, and curated habit packs.
+        No popups. No notifications. Just a constant ambient whisper.
+      </p>
+      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#pricing" class="rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 px-8 py-3.5 text-base font-semibold shadow-xl shadow-glow-pink/25 hover:shadow-glow-pink/40 transition-all hover:-translate-y-0.5">
+          Download for Windows — Free
+        </a>
+        <a href="#features" class="rounded-xl border border-white/10 bg-white/5 px-8 py-3.5 text-base font-medium text-white/80 hover:bg-white/10 transition-colors">
+          See Features
+        </a>
+      </div>
+      <p class="mt-4 text-xs text-white/40">Windows 10+ &middot; Free tier available &middot; No credit card required</p>
+    </div>
+
+    <!-- Live Marquee Demo -->
+    <div class="relative mx-auto mt-16 max-w-5xl">
+      <div class="rounded-2xl border border-white/10 bg-black/60 p-1 glow-box">
+        <div class="rounded-xl bg-black/80 overflow-hidden h-16 flex items-center">
+          <div class="marquee-track whitespace-nowrap flex items-center text-2xl font-bold tracking-[0.25em]">
+            <span class="text-[#ff3131] mx-6" style="text-shadow: 0 0 14px #ff3131, 0 0 28px rgba(255,49,49,0.3)">ONE TASK AT A TIME</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#ffb000] mx-6" style="text-shadow: 0 0 14px #ffb000, 0 0 28px rgba(255,176,0,0.3)">CLOSE YOUR TABS</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#6bff6b] mx-6" style="text-shadow: 0 0 14px #6bff6b, 0 0 28px rgba(107,255,107,0.3)">PHONE IN THE OTHER ROOM</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#ff3131] mx-6" style="text-shadow: 0 0 14px #ff3131, 0 0 28px rgba(255,49,49,0.3)">IS THIS DEEP WORK?</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#ffb000] mx-6" style="text-shadow: 0 0 14px #ffb000, 0 0 28px rgba(255,176,0,0.3)">TONGUE ON ROOF OF MOUTH</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#6bff6b] mx-6" style="text-shadow: 0 0 14px #6bff6b, 0 0 28px rgba(107,255,107,0.3)">HYDRATE + ELECTROLYTES</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <!-- duplicate for seamless loop -->
+            <span class="text-[#ff3131] mx-6" style="text-shadow: 0 0 14px #ff3131, 0 0 28px rgba(255,49,49,0.3)">ONE TASK AT A TIME</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#ffb000] mx-6" style="text-shadow: 0 0 14px #ffb000, 0 0 28px rgba(255,176,0,0.3)">CLOSE YOUR TABS</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#6bff6b] mx-6" style="text-shadow: 0 0 14px #6bff6b, 0 0 28px rgba(107,255,107,0.3)">PHONE IN THE OTHER ROOM</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#ff3131] mx-6" style="text-shadow: 0 0 14px #ff3131, 0 0 28px rgba(255,49,49,0.3)">IS THIS DEEP WORK?</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#ffb000] mx-6" style="text-shadow: 0 0 14px #ffb000, 0 0 28px rgba(255,176,0,0.3)">TONGUE ON ROOF OF MOUTH</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+            <span class="text-[#6bff6b] mx-6" style="text-shadow: 0 0 14px #6bff6b, 0 0 28px rgba(107,255,107,0.3)">HYDRATE + ELECTROLYTES</span>
+            <span class="text-[#c83b3b] mx-2">&bull;</span>
+          </div>
+        </div>
+      </div>
+      <p class="mt-3 text-center text-xs text-white/30">Live preview &mdash; this is what the overlay looks like on your screen</p>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SOCIAL PROOF BAR -->
+  <!-- ============================================ -->
+  <section class="border-y border-white/5 bg-white/[0.02] py-8 px-6">
+    <div class="mx-auto max-w-4xl flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-sm text-white/40">
+      <span>Built with <strong class="text-white/60">Tauri + React</strong></span>
+      <span class="hidden sm:inline text-white/10">|</span>
+      <span><strong class="text-white/60">10</strong> neon palettes</span>
+      <span class="hidden sm:inline text-white/10">|</span>
+      <span><strong class="text-white/60">5</strong> curated habit packs</span>
+      <span class="hidden sm:inline text-white/10">|</span>
+      <span><strong class="text-white/60">30+</strong> milestone badges</span>
+      <span class="hidden sm:inline text-white/10">|</span>
+      <span>Cloud sync via <strong class="text-white/60">Supabase</strong></span>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- FEATURES -->
+  <!-- ============================================ -->
+  <section id="features" class="py-24 px-6 fade-section">
+    <div class="mx-auto max-w-6xl">
+      <div class="text-center mb-16">
+        <p class="text-xs uppercase tracking-[0.3em] text-glow-pink/80 mb-3">Features</p>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">Everything you need to<br /><span class="glow-text-blue text-glow-blue">stay on track.</span></h2>
+      </div>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Feature 1 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-glow-pink/10 text-glow-pink">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2">LED Marquee Overlay</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Always-on-top scrolling ticker with neon glow. Adjustable scroll speed, spacing, and dot separators between habits.</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-glow-blue/10 text-glow-blue">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Click-Through Mode</h3>
+          <p class="text-sm text-white/50 leading-relaxed">The overlay becomes invisible to your mouse. Code, browse, and click through it as if it isn't there. Perfect for deep work.</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-glow-green/10 text-glow-green">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2">10 Neon Palettes</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Classic, Synthwave, Focus, Warm Amber, Forest, Lavender, Minimal, Sunrise, Ocean, Night Owl. Plus adjustable glow bloom.</p>
+        </div>
+        <!-- Feature 4 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Streak Tracking</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Log habits daily and build consecutive-day streaks. 30+ milestone badges from first step to legendary. Never break the chain.</p>
+        </div>
+        <!-- Feature 5 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Global Leaderboard</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Compete with the community. Opt-in to share your streaks globally. Privacy-first — your habits are hidden by default.</p>
+        </div>
+        <!-- Feature 6 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Cloud Sync</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Sign in with email or magic link. Habits, streaks, themes, and settings sync across devices in real-time via Supabase.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- HABIT PACKS -->
+  <!-- ============================================ -->
+  <section id="packs" class="py-24 px-6 bg-gradient-to-b from-transparent via-glow-blue/[0.03] to-transparent fade-section">
+    <div class="mx-auto max-w-6xl">
+      <div class="text-center mb-16">
+        <p class="text-xs uppercase tracking-[0.3em] text-glow-blue/80 mb-3">Curated Presets</p>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">Habit Packs for<br /><span class="glow-text-blue text-glow-blue">every lifestyle.</span></h2>
+        <p class="mt-4 text-white/50 max-w-xl mx-auto">One-click apply. Professionally curated sets of reminders designed for specific goals. No setup required.</p>
+      </div>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Pack 1 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-lg">&#x1F3AF;</div>
+            <div>
+              <h3 class="font-semibold">The Deep Flow Protocol</h3>
+              <p class="text-xs text-white/40">4 habits &middot; For engineers & writers</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">ONE TASK AT A TIME</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">CLOSE YOUR TABS</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">PHONE IN THE OTHER ROOM</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">IS THIS DEEP WORK?</span>
+          </div>
+        </div>
+        <!-- Pack 2 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 text-lg">&#x1F9EC;</div>
+            <div>
+              <h3 class="font-semibold">The Biohacker's Baseline</h3>
+              <p class="text-xs text-white/40">5 habits &middot; Energy & metabolic health</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">NOSE BREATHING ONLY</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">VIEW SUNLIGHT NOW</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">SHOULDERS BACK / CHEST OUT</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">HYDRATE + ELECTROLYTES</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">BLINK OFTEN - EYES DRY</span>
+          </div>
+        </div>
+        <!-- Pack 3 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="h-10 w-10 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-400 text-lg">&#x2728;</div>
+            <div>
+              <h3 class="font-semibold">The Looksmaxxing Pack</h3>
+              <p class="text-xs text-white/40">5 habits &middot; Posture & oral posture</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">TONGUE ON ROOF OF MOUTH</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">CHIN TUCK NOW</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">NO MOUTH BREATHING</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">SWALLOW CORRECTLY</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">RELAX JAW MUSCLES</span>
+          </div>
+        </div>
+        <!-- Pack 4 -->
+        <div class="gradient-border rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-lg">&#x1F3DB;</div>
+            <div>
+              <h3 class="font-semibold">The Stoic Resilience Pack</h3>
+              <p class="text-xs text-white/40">4 habits &middot; Mental models</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">CONTROL THE CONTROLLABLE</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">AMOR FATI - LOVE YOUR FATE</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">NOTHING IS AS IT SEEMS</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">THE OBSTACLE IS THE WAY</span>
+          </div>
+        </div>
+        <!-- Pack 5 -->
+        <div class="gradient-border rounded-2xl p-6 md:col-span-2 lg:col-span-2">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="h-10 w-10 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-400 text-lg">&#x1F54A;</div>
+            <div>
+              <h3 class="font-semibold">The Awareness & Freedom Pack</h3>
+              <p class="text-xs text-white/40">5 habits &middot; For BFRBs (skin picking, nail biting, hair pulling)</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">HANDS IN YOUR LAP</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">RELAX YOUR SHOULDERS</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">TAKE A DEEP EXHALE</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">THIS URGE WILL PASS</span>
+            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">SOFTEN YOUR GAZE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- PALETTE SHOWCASE -->
+  <!-- ============================================ -->
+  <section class="py-24 px-6 fade-section">
+    <div class="mx-auto max-w-4xl text-center">
+      <p class="text-xs uppercase tracking-[0.3em] text-glow-green/80 mb-3">Aesthetic Suite</p>
+      <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">10 neon palettes.<br />Your vibe, your glow.</h2>
+      <p class="text-white/50 max-w-lg mx-auto mb-12">Each palette themes your entire overlay with matching primary, secondary, and accent colors. Plus adjustable glow bloom and opacity.</p>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 max-w-2xl mx-auto">
+        <!-- Palettes -->
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ff3131; color:#ff3131;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ffb000; color:#ffb000;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#6bff6b; color:#6bff6b;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Classic</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ff5ad9; color:#ff5ad9;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#36d2ff; color:#36d2ff;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#f5ff6b; color:#f5ff6b;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Synthwave</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#64B5F6; color:#64B5F6;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#90CAF9; color:#90CAF9;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#BBDEFB; color:#BBDEFB;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Focus</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFB74D; color:#FFB74D;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFCC80; color:#FFCC80;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFE0B2; color:#FFE0B2;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Warm Amber</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#81C784; color:#81C784;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#A5D6A7; color:#A5D6A7;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#C8E6C9; color:#C8E6C9;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Forest</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#B39DDB; color:#B39DDB;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#CE93D8; color:#CE93D8;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#E1BEE7; color:#E1BEE7;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Lavender</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#B0BEC5; color:#B0BEC5;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#CFD8DC; color:#CFD8DC;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ECEFF1; color:#ECEFF1;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Minimal</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FF8A65; color:#FF8A65;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFAB91; color:#FFAB91;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFF176; color:#FFF176;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Sunrise</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#4DD0E1; color:#4DD0E1;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#80DEEA; color:#80DEEA;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#B2EBF2; color:#B2EBF2;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Ocean</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <div class="flex justify-center gap-1.5 mb-2">
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#7986CB; color:#7986CB;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#9FA8DA; color:#9FA8DA;"></span>
+            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#5C6BC0; color:#5C6BC0;"></span>
+          </div>
+          <p class="text-[11px] font-semibold text-white/70">Night Owl</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- PRICING -->
+  <!-- ============================================ -->
+  <section id="pricing" class="py-24 px-6 bg-gradient-to-b from-transparent via-glow-pink/[0.03] to-transparent fade-section">
+    <div class="mx-auto max-w-5xl">
+      <div class="text-center mb-16">
+        <p class="text-xs uppercase tracking-[0.3em] text-glow-amber/80 mb-3">Pricing</p>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">Start free.<br /><span class="glow-text bg-gradient-to-r from-glow-pink to-glow-blue bg-clip-text text-transparent">Upgrade when ready.</span></h2>
+        <p class="mt-4 text-white/50 max-w-lg mx-auto">No credit card required. Use the free tier forever or unlock advanced features with Pro.</p>
+      </div>
+      <div class="grid gap-8 md:grid-cols-3 items-start">
+        <!-- Free -->
+        <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+          <div class="mb-6">
+            <h3 class="text-lg font-bold">Free</h3>
+            <p class="text-xs text-white/40 mt-1">Perfect to get started</p>
+          </div>
+          <div class="mb-6">
+            <span class="text-5xl font-black">$0</span>
+            <span class="text-white/40 text-sm">/forever</span>
+          </div>
+          <ul class="space-y-3 text-sm text-white/60 mb-8">
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              LED marquee overlay
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Up to 5 habits
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Click-through mode
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              3 color palettes
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Basic streak tracking
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Local storage only
+            </li>
+          </ul>
+          <a href="#" class="block w-full rounded-xl border border-white/10 bg-white/5 py-3 text-center text-sm font-semibold hover:bg-white/10 transition-colors">
+            Download Free
+          </a>
+        </div>
+
+        <!-- Pro (Popular) -->
+        <div class="relative rounded-2xl border border-glow-pink/30 bg-white/[0.05] p-8 popular-glow scale-[1.03]">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-glow-pink to-glow-blue px-4 py-1 text-xs font-bold tracking-wide uppercase">
+            Most Popular
+          </div>
+          <div class="mb-6">
+            <h3 class="text-lg font-bold">Pro</h3>
+            <p class="text-xs text-white/40 mt-1">For serious habit builders</p>
+          </div>
+          <div class="mb-6">
+            <span class="text-5xl font-black">$4</span>
+            <span class="text-white/40 text-sm">/month</span>
+          </div>
+          <ul class="space-y-3 text-sm text-white/60 mb-8">
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-white">Unlimited</strong> habits</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>All <strong class="text-white">10 neon palettes</strong></span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>All <strong class="text-white">5 Habit Packs</strong></span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-white">Cloud sync</strong> across devices</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-white">Global leaderboard</strong> access</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Advanced <strong class="text-white">streak badges</strong> (30+)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Glow &amp; bloom controls
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Priority support
+            </li>
+          </ul>
+          <a href="#" class="block w-full rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 py-3 text-center text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow">
+            Start Pro &mdash; $4/mo
+          </a>
+        </div>
+
+        <!-- Lifetime -->
+        <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+          <div class="mb-6">
+            <h3 class="text-lg font-bold">Lifetime</h3>
+            <p class="text-xs text-white/40 mt-1">One payment, forever yours</p>
+          </div>
+          <div class="mb-6">
+            <span class="text-5xl font-black">$29</span>
+            <span class="text-white/40 text-sm">/once</span>
+          </div>
+          <ul class="space-y-3 text-sm text-white/60 mb-8">
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-white">Everything in Pro</strong></span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <strong class="text-white">Lifetime</strong> access
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              All future updates included
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              All future habit packs
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-glow-green shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Early access to new features
+            </li>
+          </ul>
+          <a href="#" class="block w-full rounded-xl border border-white/10 bg-white/5 py-3 text-center text-sm font-semibold hover:bg-white/10 transition-colors">
+            Get Lifetime &mdash; $29
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- FAQ -->
+  <!-- ============================================ -->
+  <section id="faq" class="py-24 px-6 fade-section">
+    <div class="mx-auto max-w-2xl">
+      <div class="text-center mb-16">
+        <p class="text-xs uppercase tracking-[0.3em] text-white/40 mb-3">FAQ</p>
+        <h2 class="text-4xl font-bold tracking-tight">Common questions.</h2>
+      </div>
+      <div class="space-y-3">
+        <details class="group rounded-xl border border-white/10 bg-white/[0.03]">
+          <summary class="flex items-center justify-between px-6 py-4 text-sm font-medium">
+            What exactly is HabitGlo?
+            <span class="faq-arrow text-white/40">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </span>
+          </summary>
+          <div class="px-6 pb-4 text-sm text-white/50 leading-relaxed">
+            HabitGlo is a desktop app that puts a sleek LED-style scrolling ticker on your screen. Your habits and reminders scroll continuously in your peripheral vision. The overlay is always-on-top but supports click-through mode so it never blocks your workflow.
+          </div>
+        </details>
+        <details class="group rounded-xl border border-white/10 bg-white/[0.03]">
+          <summary class="flex items-center justify-between px-6 py-4 text-sm font-medium">
+            Does the overlay block my mouse or keyboard?
+            <span class="faq-arrow text-white/40">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </span>
+          </summary>
+          <div class="px-6 pb-4 text-sm text-white/50 leading-relaxed">
+            No! With click-through mode enabled, the overlay is completely invisible to your mouse. You can code, browse, and click through it as if it isn't there. Toggle it on/off anytime from the dashboard.
+          </div>
+        </details>
+        <details class="group rounded-xl border border-white/10 bg-white/[0.03]">
+          <summary class="flex items-center justify-between px-6 py-4 text-sm font-medium">
+            Does it work without an internet connection?
+            <span class="faq-arrow text-white/40">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </span>
+          </summary>
+          <div class="px-6 pb-4 text-sm text-white/50 leading-relaxed">
+            Yes. HabitGlo works fully offline using local storage. Cloud sync is optional — sign in to sync habits, streaks, and settings across devices.
+          </div>
+        </details>
+        <details class="group rounded-xl border border-white/10 bg-white/[0.03]">
+          <summary class="flex items-center justify-between px-6 py-4 text-sm font-medium">
+            Is my data private on the leaderboard?
+            <span class="faq-arrow text-white/40">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </span>
+          </summary>
+          <div class="px-6 pb-4 text-sm text-white/50 leading-relaxed">
+            Absolutely. Your habits are private by default and never appear on the global leaderboard unless you explicitly opt in with the "Share my habits" checkbox. You control what's visible.
+          </div>
+        </details>
+        <details class="group rounded-xl border border-white/10 bg-white/[0.03]">
+          <summary class="flex items-center justify-between px-6 py-4 text-sm font-medium">
+            What platforms are supported?
+            <span class="faq-arrow text-white/40">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </span>
+          </summary>
+          <div class="px-6 pb-4 text-sm text-white/50 leading-relaxed">
+            Currently Windows 10+ as a native desktop app. Mac and Linux support is planned. A web-based browser mode is also on the roadmap for users who can't install the desktop app.
+          </div>
+        </details>
+        <details class="group rounded-xl border border-white/10 bg-white/[0.03]">
+          <summary class="flex items-center justify-between px-6 py-4 text-sm font-medium">
+            Can I cancel my Pro subscription?
+            <span class="faq-arrow text-white/40">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </span>
+          </summary>
+          <div class="px-6 pb-4 text-sm text-white/50 leading-relaxed">
+            Yes, cancel anytime. You'll keep Pro features until the end of your billing period, then revert to the Free tier. Your habits and streak data are never deleted.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- FINAL CTA -->
+  <!-- ============================================ -->
+  <section class="py-24 px-6 fade-section">
+    <div class="mx-auto max-w-3xl text-center">
+      <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+        Your habits deserve<br />
+        <span class="glow-text bg-gradient-to-r from-glow-pink to-glow-blue bg-clip-text text-transparent">to be seen.</span>
+      </h2>
+      <p class="text-white/50 mb-10 text-lg">Stop forgetting. Start glowing. Download HabitGlo and let your habits whisper to you all day.</p>
+      <a href="#pricing" class="inline-block rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 px-10 py-4 text-lg font-semibold shadow-xl shadow-glow-pink/25 hover:shadow-glow-pink/40 transition-all hover:-translate-y-0.5">
+        Get Started Free
+      </a>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- FOOTER -->
+  <!-- ============================================ -->
+  <footer class="border-t border-white/5 py-12 px-6">
+    <div class="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-2">
+        <div class="h-7 w-7 rounded-lg bg-gradient-to-br from-glow-pink to-glow-blue flex items-center justify-center text-xs font-bold">H</div>
+        <span class="font-bold tracking-tight">HabitGlo</span>
+        <span class="text-white/30 text-xs ml-2">v0.1.0</span>
+      </div>
+      <div class="flex items-center gap-6 text-xs text-white/40">
+        <a href="#" class="hover:text-white/70 transition-colors">Twitter</a>
+        <a href="#" class="hover:text-white/70 transition-colors">GitHub</a>
+        <a href="#" class="hover:text-white/70 transition-colors">Discord</a>
+        <a href="#" class="hover:text-white/70 transition-colors">Privacy</a>
+        <a href="#" class="hover:text-white/70 transition-colors">Terms</a>
+      </div>
+      <p class="text-xs text-white/30">Built with Tauri, React, and too much caffeine.</p>
+    </div>
+  </footer>
+
+  <!-- Fade-in on scroll -->
+  <script>
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    document.querySelectorAll('.fade-section').forEach((el) => observer.observe(el));
+  </script>
+</body>
+</html>

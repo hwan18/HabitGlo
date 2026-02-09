@@ -49,6 +49,7 @@ type StoreState = {
   setTheme: (input: Partial<ThemeSettings>) => void
   setOverlay: (input: Partial<OverlaySettings>) => void
   markDone: (id: string) => Promise<void>
+  toggleLeaderboardSharing: (enabled: boolean) => Promise<void>
 }
 
 const defaultTheme: ThemeSettings = {
@@ -267,6 +268,20 @@ export const useHabitsStore = create<StoreState>()(
           if (userId) {
             void useLeaderboardStore.getState().refresh(userId)
           }
+        }
+      },
+
+      toggleLeaderboardSharing: async (enabled) => {
+        const userId = get().user?.id
+        const updatedHabits = get().habits.map((h) => ({ ...h, show_on_leaderboard: enabled }))
+        set({ habits: updatedHabits })
+        // Persist to database
+        for (const habit of updatedHabits) {
+          await upsertHabit({ ...habit, user_id: userId, text: habit.text })
+        }
+        // Refresh leaderboard after toggling
+        if (userId) {
+          void useLeaderboardStore.getState().refresh(userId)
         }
       },
     }),

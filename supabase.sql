@@ -23,7 +23,8 @@ create table if not exists habits (
   created_at timestamptz default now(),
   last_done_at timestamptz,
   streak_current integer default 0,
-  streak_best integer default 0
+  streak_best integer default 0,
+  show_on_leaderboard boolean default false
 );
 
 create table if not exists habit_logs (
@@ -148,6 +149,7 @@ returns table (
   from habits h
   left join profiles p on p.user_id = h.user_id
   where h.streak_current > 0
+    and h.show_on_leaderboard = true
   order by h.streak_current desc, h.last_done_at desc nulls last, h.created_at asc, h.id asc
   limit lim;
 $$ language sql security definer stable;
@@ -169,6 +171,7 @@ returns table (
       ) as rk
     from habits h
     where h.streak_current > 0
+      and h.show_on_leaderboard = true
   )
   select rk as rank, text as habit_text, streak_current as streak_days
   from ranked
@@ -187,4 +190,5 @@ $$ language sql security definer stable;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS color_index integer default 0;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_current integer default 0;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_best integer default 0;
+-- ALTER TABLE habits ADD COLUMN IF NOT EXISTS show_on_leaderboard boolean default false;
 -- ALTER TABLE habits DROP COLUMN IF EXISTS speed;

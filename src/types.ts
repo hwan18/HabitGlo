@@ -23,6 +23,7 @@ export type Habit = {
   last_done_at?: string | null
   streak_current?: number
   streak_best?: number
+  show_on_leaderboard?: boolean
 }
 
 export type ThemeSettings = {
