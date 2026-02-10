@@ -32,9 +32,17 @@ const normalizeHabitColor = (habit: Habit, theme: ThemeSettings) => {
   return { ...habit, colorIndex, color }
 }
 
+type CompletedEntry = {
+  id: string
+  text: string
+  streak: number
+  loggedAt: string
+}
+
 type StoreState = {
   user: User | null
   habits: Habit[]
+  completedToday: CompletedEntry[]
   loading: boolean
   theme: ThemeSettings
   overlay: OverlaySettings
@@ -72,11 +80,21 @@ const defaultOverlay: OverlaySettings = {
   paused: false,
 }
 
+const isDateToday = (isoStr: string): boolean => {
+  const d = new Date(isoStr)
+  const now = new Date()
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+}
+
+const pruneStaleCompleted = (entries: CompletedEntry[]): CompletedEntry[] =>
+  entries.filter((e) => isDateToday(e.loggedAt))
+
 export const useHabitsStore = create<StoreState>()(
   persist(
     (set, get) => ({
       user: null,
       habits: [],
+      completedToday: [],
       loading: false,
       theme: defaultTheme,
       overlay: defaultOverlay,
@@ -255,7 +273,6 @@ export const useHabitsStore = create<StoreState>()(
             streak_best: found.streak_best ?? 0,
           })
           if (alreadyLoggedToday) {
-            // Already logged today, no state change needed
             return
           }
           const loggedAt = new Date().toISOString()
@@ -263,6 +280,10 @@ export const useHabitsStore = create<StoreState>()(
             habits: state.habits.map((h) =>
               h.id === id ? { ...h, last_done_at: loggedAt, streak_current, streak_best } : h
             ),
+            completedToday: pruneStaleCompleted([
+              ...state.completedToday,
+              { id: found.id, text: found.text, streak: streak_current, loggedAt },
+            ]),
           }))
           // Refresh leaderboards after logging a habit
           if (userId) {
@@ -292,6 +313,7 @@ export const useHabitsStore = create<StoreState>()(
         // Always persist habits to localStorage so overlay window can read them
         // (overlay can't share Supabase auth session with dashboard)
         habits: state.habits,
+        completedToday: pruneStaleCompleted(state.completedToday),
         theme: state.theme,
         overlay: state.overlay,
       }),

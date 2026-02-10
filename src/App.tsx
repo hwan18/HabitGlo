@@ -2,18 +2,20 @@ import { useEffect } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { HabitForm } from './components/HabitForm'
 import { HabitPacks } from './components/HabitPacks'
+import { CompletedToday } from './components/CompletedToday'
 import { HabitList } from './components/HabitList'
 import { SettingsPanel } from './components/SettingsPanel'
 import { Leaderboard } from './components/Leaderboard'
 import { useHabitsStore } from './stores/useHabitsStore'
 import { Marquee } from './overlay/Marquee'
 import { Button } from './components/Button'
-import { Play, Rocket } from 'lucide-react'
+import { Pause, Play, Rocket } from 'lucide-react'
 import { hasSupabase } from './lib/supabaseClient'
 import './App.css'
 
 function App() {
   const setOverlay = useHabitsStore((s) => s.setOverlay)
+  const paused = useHabitsStore((s) => s.overlay.paused)
   const user = useHabitsStore((s) => s.user)
 
   useEffect(() => {
@@ -33,12 +35,21 @@ function App() {
           </p>
           {!requiresAuth && (
             <div className="mt-4 flex gap-2">
-              <Button onClick={() => setOverlay({ paused: false })} className="flex items-center gap-2">
+              <Button
+                variant={paused ? 'primary' : 'ghost'}
+                onClick={() => setOverlay({ paused: false })}
+                className="flex items-center gap-2"
+              >
                 <Play size={16} />
                 Start Glo
               </Button>
-              <Button variant="ghost" onClick={() => setOverlay({ paused: true })}>
-                Pause overlay
+              <Button
+                variant={paused ? 'ghost' : 'primary'}
+                onClick={() => setOverlay({ paused: true })}
+                className="flex items-center gap-2"
+              >
+                <Pause size={16} />
+                Pause Glo
               </Button>
             </div>
           )}
@@ -73,6 +84,7 @@ function App() {
             <HabitForm />
             <HabitList />
             <HabitPacks />
+            <CompletedToday />
           </div>
           <div className="flex flex-col gap-4">
             <SettingsPanel />
