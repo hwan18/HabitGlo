@@ -29,9 +29,9 @@ function App() {
       <header className="mx-auto flex max-w-6xl flex-col gap-4 pt-8 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Ambient reminders in your periphery.</h1>
+          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Ambient reminders on your screen.</h1>
           <p className="mt-2 max-w-xl text-sm text-white/70">
-            Always-on-top LED ticker with click-through mode, Supabase sync, and themeable glow. Set your habits once and let the overlay whisper them all day.
+            Keep your habits and reminders visible—all day, on your screen.
           </p>
           {!requiresAuth && (
             <div className="mt-4 flex gap-2">
