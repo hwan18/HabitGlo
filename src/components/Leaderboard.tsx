@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useLeaderboardStore } from '@/stores/useLeaderboardStore'
 import { useHabitsStore } from '@/stores/useHabitsStore'
-import { Flame, Trophy, RefreshCw, Globe, User } from 'lucide-react'
+import { Flame, Trophy, RefreshCw, Globe, User, Monitor } from 'lucide-react'
 import { Button } from './Button'
+import { isTauri } from '@/lib/platform'
 
 export function Leaderboard() {
   const user = useHabitsStore((s) => s.user)
@@ -16,6 +17,77 @@ export function Leaderboard() {
   const refresh = useLeaderboardStore((s) => s.refresh)
   const [tab, setTab] = useState<'personal' | 'global'>('personal')
   const leaderboardSharingEnabled = habits.some((h) => h.show_on_leaderboard)
+
+  // In browser mode, show a blurred preview with desktop app CTA
+  if (!isTauri) {
+    return (
+      <div className="relative rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80 overflow-hidden">
+        {/* Blurred placeholder content */}
+        <div className="select-none blur-[3px] pointer-events-none">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Trophy size={16} className="text-yellow-400" />
+              <p className="text-sm font-semibold text-white">Habit Leaderboards</p>
+            </div>
+          </div>
+          <div className="mb-3 flex gap-1 rounded-lg border border-white/10 bg-black/40 p-1">
+            <div className="flex flex-1 items-center justify-center gap-1 rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium text-white">
+              <User size={12} /> My Top 5
+            </div>
+            <div className="flex flex-1 items-center justify-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-white/50">
+              <Globe size={12} /> Global Top 5
+            </div>
+          </div>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-white/10 text-white/50">
+                <th className="py-1.5 text-left font-medium w-10">#</th>
+                <th className="py-1.5 text-left font-medium">Habit</th>
+                <th className="py-1.5 text-right font-medium w-20">Streak</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { rank: 1, text: 'NOSE BREATHING ONLY', streak: 42 },
+                { rank: 2, text: 'ONE TASK AT A TIME', streak: 28 },
+                { rank: 3, text: 'HYDRATE + ELECTROLYTES', streak: 15 },
+                { rank: 4, text: 'TONGUE ON ROOF OF MOUTH', streak: 7 },
+                { rank: 5, text: 'CONTROL THE CONTROLLABLE', streak: 3 },
+              ].map((entry) => (
+                <tr key={entry.rank} className="border-b border-white/5">
+                  <td className="py-1.5 text-white/60">{entry.rank}</td>
+                  <td className="py-1.5 text-white">{entry.text}</td>
+                  <td className="py-1.5 text-right">
+                    <span className="inline-flex items-center gap-1 text-orange-300">
+                      <Flame size={10} />
+                      {entry.streak}d
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Desktop app overlay */}
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-black/50">
+          <div className="flex items-center gap-2 rounded-full border border-glow-blue/30 bg-glow-blue/10 px-4 py-1.5">
+            <Monitor size={14} className="text-glow-blue" />
+            <span className="text-xs font-semibold text-glow-blue/90">Desktop app</span>
+          </div>
+          <p className="mt-2 text-xs text-white/50 text-center max-w-[200px]">
+            Streak leaderboards are available with the desktop app.
+          </p>
+          <a
+            href="/#pricing"
+            className="mt-3 flex items-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-xs font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
+          >
+            Get HabitGlo
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   if (!user) return null
 

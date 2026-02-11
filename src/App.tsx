@@ -9,8 +9,9 @@ import { Leaderboard } from './components/Leaderboard'
 import { useHabitsStore } from './stores/useHabitsStore'
 import { Marquee } from './overlay/Marquee'
 import { Button } from './components/Button'
-import { Pause, Play, Rocket } from 'lucide-react'
+import { Pause, Play, Rocket, Download, Monitor } from 'lucide-react'
 import { hasSupabase } from './lib/supabaseClient'
+import { isTauri } from './lib/platform'
 import './App.css'
 
 function App() {
@@ -22,10 +23,35 @@ function App() {
     document.body.classList.add('bg-slate-950')
   }, [])
 
-  const requiresAuth = hasSupabase && !user
+  // In browser mode, never require auth — let users try freely with local storage
+  const requiresAuth = isTauri && hasSupabase && !user
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-slate-950 px-6 pb-10 text-white">
+      {/* Browser trial banner */}
+      {!isTauri && (
+        <div className="mx-auto mt-4 max-w-6xl rounded-xl border border-glow-pink/20 bg-gradient-to-r from-glow-pink/10 via-glow-blue/10 to-glow-green/10 px-5 py-3">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <div className="flex items-center gap-3">
+              <Monitor size={18} className="text-glow-blue" />
+              <div>
+                <p className="text-sm font-semibold text-white">Browser Preview — Try HabitGlo</p>
+                <p className="text-xs text-white/50">
+                  Add habits, choose themes, and preview the overlay. Get the desktop app for always-on-top, click-through mode, and cloud sync.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/#pricing"
+              className="flex shrink-0 items-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
+            >
+              <Download size={14} />
+              Get HabitGlo
+            </a>
+          </div>
+        </div>
+      )}
+
       <header className="mx-auto flex max-w-6xl flex-col gap-4 pt-8 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
@@ -80,7 +106,7 @@ function App() {
       ) : (
         <main className="mx-auto mt-8 grid max-w-6xl gap-4 md:grid-cols-3">
           <div className="md:col-span-2 flex flex-col gap-4">
-            <AuthPanel />
+            {isTauri && <AuthPanel />}
             <HabitForm />
             <HabitList />
             <HabitPacks />
@@ -97,12 +123,30 @@ function App() {
                 <li>Use Synthwave palette + high glow for neon effect.</li>
               </ul>
             </div>
+            {/* Browser-only download CTA card */}
+            {!isTauri && (
+              <div className="rounded-xl border border-glow-pink/20 bg-gradient-to-br from-glow-pink/10 to-glow-blue/10 p-4 text-sm">
+                <p className="font-semibold text-white">Want the full experience?</p>
+                <p className="mt-1 text-xs text-white/50">
+                  The desktop app adds always-on-top overlay, click-through mode, cloud sync, streak leaderboards, and more.
+                </p>
+                <a
+                  href="/#pricing"
+                  className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2.5 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
+                >
+                  <Download size={14} />
+                  Get HabitGlo
+                </a>
+              </div>
+            )}
           </div>
         </main>
       )}
 
       <footer className="mx-auto mt-8 max-w-6xl border-t border-white/10 pt-4 text-xs text-white/50">
-        Sync ready: Supabase Realtime. Overlay: Tauri always-on-top with click-through toggle.
+        {isTauri
+          ? 'Sync ready: Supabase Realtime. Overlay: Tauri always-on-top with click-through toggle.'
+          : 'Browser preview mode — Download the desktop app for the full always-on-top overlay experience.'}
       </footer>
     </div>
   )

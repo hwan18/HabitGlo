@@ -88,7 +88,7 @@ export function HabitForm() {
             className="flex items-center gap-1 text-xs"
           >
             <Plus size={14} />
-            Add Textbox
+            Add Habit/Reminder
           </Button>
           <Button onClick={handleAddAll} disabled={habits.every((h) => !h.trim())} className="flex-1">
             Add All Habits
