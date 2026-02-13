@@ -2,6 +2,7 @@ import { motion, useAnimationFrame, useMotionValue } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useMarqueeConfig } from './useMarqueeConfig'
+import { getFontClassForScript, getLedLatinFontClass, splitScriptRuns } from './fontRouting'
 
 export function Marquee() {
   const { ref: containerRef, gap, spacing, speed, habits, overlay, theme, fontSize, containerWidth } = useMarqueeConfig()
@@ -10,7 +11,8 @@ export function Marquee() {
   const copyRef = useRef<HTMLSpanElement | null>(null)
   const [copyWidth, setCopyWidth] = useState(0)
   const [showDefault, setShowDefault] = useState(false)
-  const separator = '\u00A0\u00A0•\u00A0\u00A0'
+  const showSeparator = theme.showSeparator ?? true
+  const separator = showSeparator ? '\u00A0\u00A0•\u00A0\u00A0' : '\u00A0\u00A0\u00A0\u00A0'
   const defaultMessage = 'Add your first habit or reminder in the dashboard.'
   const segments = useMemo(() => {
     if (habits.length > 0) {
@@ -22,6 +24,11 @@ export function Marquee() {
     return []
   }, [habits, showDefault, theme.primary])
   const hasText = segments.length > 0
+  const ledFontClass = getLedLatinFontClass(theme.ledFont)
+  const segmentsWithRuns = useMemo(
+    () => segments.map((segment) => ({ ...segment, runs: splitScriptRuns(segment.text) })),
+    [segments],
+  )
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -50,7 +57,7 @@ export function Marquee() {
     const observer = new ResizeObserver(() => measure())
     observer.observe(el)
     return () => observer.disconnect()
-  }, [fontSize, segments, separator, spacing])
+  }, [fontSize, segmentsWithRuns, separator, spacing, theme.ledFont])
 
   useEffect(() => {
     if (!copyWidth) return
@@ -91,7 +98,7 @@ export function Marquee() {
       {hasText && (
         <motion.div
           className={clsx(
-            'led-font flex items-center whitespace-nowrap font-normal tracking-[0.3em]',
+            `${ledFontClass} flex items-center whitespace-nowrap font-normal tracking-[0.3em]`,
             'drop-shadow-[0_0_12px_rgba(255,99,132,0.55)]',
           )}
           style={{
@@ -106,7 +113,7 @@ export function Marquee() {
               className="inline-flex items-center"
               style={idx < copies - 1 ? { marginRight: gap } : undefined}
             >
-              {segments.map((segment, segIdx) => (
+              {segmentsWithRuns.map((segment, segIdx) => (
                 <span key={`${idx}-${segIdx}`} className="inline-flex items-center">
                   <span
                     className="inline-block"
@@ -115,13 +122,20 @@ export function Marquee() {
                       textShadow: `0 0 ${18 * theme.glow}px ${segment.color}, 0 0 ${16 * theme.glow}px ${theme.secondary}`,
                     }}
                   >
-                    {segment.text}
+                    {segment.runs.map((run, runIdx) => (
+                      <span
+                        key={`${idx}-${segIdx}-${runIdx}`}
+                        className={clsx('inline-block', getFontClassForScript(run.script, ledFontClass))}
+                      >
+                        {run.text}
+                      </span>
+                    ))}
                   </span>
                   <span
                     className="inline-block"
                     style={{
-                      color: '#c83b3b',
-                      textShadow: `0 0 ${12 * theme.glow}px rgba(200,59,59,0.6)`,
+                      color: showSeparator ? '#c83b3b' : 'transparent',
+                      textShadow: showSeparator ? `0 0 ${12 * theme.glow}px rgba(200,59,59,0.6)` : 'none',
                       marginLeft: spacing > 0 ? spacing / 2 : undefined,
                       marginRight: spacing > 0 ? spacing / 2 : undefined,
                     }}

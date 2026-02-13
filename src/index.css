@@ -1,8 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DotGothic16&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: 'Galmuri9Local';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/galmuri9.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'FusionPixelLocal';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/fusion-pixel.ttf') format('truetype');
+}
 
 :root {
   font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -47,7 +61,48 @@ body {
     inset 0 0 10px rgba(255, 255, 255, 0.08);
 }
 
-.led-font {
-  font-family: 'DotGothic16', 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+.led-font,
+.led-font-dot {
+  font-family: 'DotGothic16', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 400;
+}
+
+.led-font-silk {
+  font-family: 'Silkscreen', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 400;
+}
+
+.led-font-press {
+  font-family: 'Press Start 2P', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 400;
+}
+
+.led-font-vt323 {
+  font-family: 'VT323', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 400;
+}
+
+.led-font-ko {
+  font-family: 'Galmuri9Local', 'Galmuri9', 'NeoDunggeunmo Pro', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-weight: 400;
+}
+
+.led-font-ja {
+  font-family: 'DotGothic16', 'Noto Sans', 'MS Gothic', sans-serif;
+  font-weight: 400;
+}
+
+.led-font-zh {
+  font-family: 'FusionPixelLocal', 'Fusion Pixel', 'Noto Sans SC', 'Noto Sans TC', 'Microsoft YaHei', 'Microsoft JhengHei', sans-serif;
+  font-weight: 400;
+}
+
+.led-font-cygr {
+  font-family: 'DotGothic16', 'Noto Sans', 'DejaVu Sans Mono', monospace;
+  font-weight: 400;
+}
+
+.led-font-fallback {
+  font-family: 'Noto Sans', 'Segoe UI', sans-serif;
   font-weight: 400;
 }

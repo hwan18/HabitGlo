@@ -1,4 +1,4 @@
-import { useHabitsStore, palettesList } from '@/stores/useHabitsStore'
+import { ledFontList, useHabitsStore, palettesList } from '@/stores/useHabitsStore'
 import { Button } from './Button'
 import {
   ArrowUpDown,
@@ -37,7 +37,11 @@ export function SettingsPanel() {
     const win = await getTauriOverlayWindow()
     if (win) {
       const visible = await win.isVisible()
-      visible ? await win.hide() : await win.show()
+      if (visible) {
+        await win.hide()
+      } else {
+        await win.show()
+      }
     }
   }
 
@@ -163,7 +167,7 @@ export function SettingsPanel() {
             return (
               <button
                 key={p.id}
-                onClick={() => !locked && setTheme({ palette: p.id as any })}
+                onClick={() => !locked && setTheme({ palette: p.id })}
                 disabled={locked}
                 className={`relative rounded-lg border p-2 text-left text-xs transition-colors ${
                   locked
@@ -187,6 +191,28 @@ export function SettingsPanel() {
             )
           })}
         </div>
+        <label className="mt-3 flex flex-col gap-2 text-xs text-white/70">
+          LED Font
+          <select
+            value={theme.ledFont}
+            onChange={(e) => setTheme({ ledFont: e.target.value as (typeof ledFontList)[number]['id'] })}
+            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm font-semibold text-white outline-none transition-colors focus:border-glow-blue"
+          >
+            {ledFontList.map((font) => (
+              <option key={font.id} value={font.id}>
+                {font.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="mt-2 flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70">
+          <span>Show dot separator</span>
+          <input
+            type="checkbox"
+            checked={theme.showSeparator ?? true}
+            onChange={(e) => setTheme({ showSeparator: e.target.checked })}
+          />
+        </label>
         <label className="mt-3 flex items-center gap-3 text-xs text-white/70">
           Glow / bloom
           <input

@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { reorderHabits, listHabits, upsertHabit, setHabitActive, deleteHabit, subscribeHabits, logHabit, loadSettings, saveSettings } from '@/lib/db'
-import { hasSupabase } from '@/lib/supabaseClient'
 import { useLeaderboardStore } from './useLeaderboardStore'
 import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
 import type { User } from '@supabase/supabase-js'
@@ -18,6 +17,13 @@ const palettes: Record<ThemeSettings['palette'], { primary: string; secondary: s
   sunrise: { primary: '#FF8A65', secondary: '#FFAB91', accent: '#FFF176' },
   ocean: { primary: '#4DD0E1', secondary: '#80DEEA', accent: '#B2EBF2' },
   nightOwl: { primary: '#7986CB', secondary: '#9FA8DA', accent: '#5C6BC0' },
+}
+
+const ledFonts: Record<ThemeSettings['ledFont'], { label: string; className: string; preview: string }> = {
+  dotGothic: { label: 'Dot Gothic', className: 'led-font-dot', preview: 'HABITGLO' },
+  silkscreen: { label: 'Silkscreen', className: 'led-font-silk', preview: 'HABITGLO' },
+  pressStart: { label: 'Press Start', className: 'led-font-press', preview: 'HABITGLO' },
+  vt323: { label: 'VT323', className: 'led-font-vt323', preview: 'HABITGLO' },
 }
 
 const paletteColorsForTheme = (theme: ThemeSettings) => [theme.primary, theme.secondary, theme.accent]
@@ -68,6 +74,8 @@ const defaultTheme: ThemeSettings = {
   opacity: 0.9,
   glow: 0.65,
   ledShape: 'dot',
+  ledFont: 'dotGothic',
+  showSeparator: true,
 }
 
 const defaultOverlay: OverlaySettings = {
@@ -234,6 +242,7 @@ export const useHabitsStore = create<StoreState>()(
           secondary: input.secondary ?? paletteColors.secondary,
           accent: input.accent ?? paletteColors.accent,
           palette,
+          showSeparator: input.showSeparator ?? prevTheme.showSeparator ?? true,
         }
         const nextPaletteColors = paletteColorsForTheme(nextTheme)
         const updatedHabits = get().habits.map((habit) => {
@@ -317,6 +326,23 @@ export const useHabitsStore = create<StoreState>()(
         theme: state.theme,
         overlay: state.overlay,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<StoreState> | undefined
+        return {
+          ...currentState,
+          ...persisted,
+          completedToday: pruneStaleCompleted(persisted?.completedToday ?? []),
+          theme: {
+            ...currentState.theme,
+            ...persisted?.theme,
+            showSeparator: persisted?.theme?.showSeparator ?? currentState.theme.showSeparator,
+          },
+          overlay: {
+            ...currentState.overlay,
+            ...persisted?.overlay,
+          },
+        }
+      },
     },
   ),
 )
@@ -332,4 +358,11 @@ export const palettesList = [
   { id: 'sunrise', label: 'Sunrise', colors: palettes.sunrise },
   { id: 'ocean', label: 'Ocean', colors: palettes.ocean },
   { id: 'nightOwl', label: 'Night Owl', colors: palettes.nightOwl },
+] as const
+
+export const ledFontList = [
+  { id: 'dotGothic', ...ledFonts.dotGothic },
+  { id: 'silkscreen', ...ledFonts.silkscreen },
+  { id: 'pressStart', ...ledFonts.pressStart },
+  { id: 'vt323', ...ledFonts.vt323 },
 ] as const

@@ -10,6 +10,7 @@ export type Palette =
   | 'ocean'
   | 'nightOwl'
 export type LedShape = 'dot' | 'square' | 'scanline'
+export type LedFont = 'dotGothic' | 'silkscreen' | 'pressStart' | 'vt323'
 
 export type Habit = {
   id: string
@@ -34,6 +35,8 @@ export type ThemeSettings = {
   opacity: number
   glow: number
   ledShape: LedShape
+  ledFont: LedFont
+  showSeparator: boolean
 }
 
 export type OverlaySettings = {

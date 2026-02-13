@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { HabitForm } from './components/HabitForm'
 import { HabitPacks } from './components/HabitPacks'
@@ -8,11 +8,78 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { Leaderboard } from './components/Leaderboard'
 import { useHabitsStore } from './stores/useHabitsStore'
 import { Marquee } from './overlay/Marquee'
-import { Button } from './components/Button'
-import { Pause, Play, Rocket, Download, Monitor } from 'lucide-react'
+import { Rocket, Download, Monitor, Check } from 'lucide-react'
 import { hasSupabase } from './lib/supabaseClient'
 import { isTauri } from './lib/platform'
 import './App.css'
+
+type OverlayToggleButtonProps = {
+  paused: boolean
+  onToggle: () => void
+}
+
+function PlayGlyph() {
+  return (
+    <span
+      aria-hidden
+      className="block h-5 w-5 bg-black"
+      style={{ clipPath: 'polygon(24% 12%, 24% 88%, 88% 50%)' }}
+    />
+  )
+}
+
+function PauseGlyph() {
+  return (
+    <span aria-hidden className="flex h-5 w-5 items-center justify-center gap-[3px]">
+      <span className="h-4 w-[4px] rounded-sm bg-black" />
+      <span className="h-4 w-[4px] rounded-sm bg-black" />
+    </span>
+  )
+}
+
+function OverlayToggleButton({ paused, onToggle }: OverlayToggleButtonProps) {
+  const [showTick, setShowTick] = useState(false)
+  const [isPressed, setIsPressed] = useState(false)
+  const timeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current != null) {
+        window.clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
+  const label = paused ? 'Start Glo' : 'Pause Glo'
+
+  const handleClick = () => {
+    onToggle()
+    setShowTick(true)
+    if (timeoutRef.current != null) {
+      window.clearTimeout(timeoutRef.current)
+    }
+    timeoutRef.current = window.setTimeout(() => setShowTick(false), 110)
+  }
+
+  return (
+    <button
+      type="button"
+      onPointerDown={() => setIsPressed(true)}
+      onPointerUp={() => setIsPressed(false)}
+      onPointerLeave={() => setIsPressed(false)}
+      onPointerCancel={() => setIsPressed(false)}
+      onClick={handleClick}
+      title={label}
+      aria-label={label}
+      className={`group relative inline-flex h-14 w-20 items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 shadow-inner shadow-black/50 transition-all duration-100 ease-out hover:border-glow-pink/50 hover:bg-white/15 hover:shadow-[0_0_18px_rgba(255,90,217,0.3)] active:shadow-[0_0_14px_rgba(54,210,255,0.35)] ${isPressed ? 'scale-[0.96] brightness-110' : 'scale-100'}`}
+    >
+      <span className="sr-only">{label}</span>
+      <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-glow-pink to-glow-blue text-black shadow-[0_0_22px_rgba(255,90,217,0.35)] transition-transform duration-100 ease-out group-hover:scale-105 ${isPressed ? 'scale-90' : 'scale-100'}`}>
+        {showTick ? <Check size={20} strokeWidth={3} className="text-black" /> : paused ? <PlayGlyph /> : <PauseGlyph />}
+      </span>
+    </button>
+  )
+}
 
 function App() {
   const setOverlay = useHabitsStore((s) => s.setOverlay)
@@ -42,7 +109,7 @@ function App() {
               </div>
             </div>
             <a
-              href="/#pricing"
+              href="/landing.html#pricing"
               className="flex shrink-0 items-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
             >
               <Download size={14} />
@@ -52,43 +119,57 @@ function App() {
         </div>
       )}
 
-      <header className="mx-auto flex max-w-6xl flex-col gap-4 pt-8 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Ambient reminders on your screen.</h1>
-          <p className="mt-2 max-w-xl text-sm text-white/70">
-            Keep your habits and reminders visible—all day, on your screen.
-          </p>
-          {!requiresAuth && (
-            <div className="mt-4 flex gap-2">
-              <Button
-                variant={paused ? 'primary' : 'ghost'}
-                onClick={() => setOverlay({ paused: false })}
-                className="flex items-center gap-2"
-              >
-                <Play size={16} />
-                Start Glo
-              </Button>
-              <Button
-                variant={paused ? 'ghost' : 'primary'}
-                onClick={() => setOverlay({ paused: true })}
-                className="flex items-center gap-2"
-              >
-                <Pause size={16} />
-                Pause Glo
-              </Button>
+      <header className="mx-auto max-w-6xl pt-8">
+        {/* Desktop: message left, preview right (original layout) */}
+        {isTauri ? (
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
+              <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Ambient reminders on your screen.</h1>
+              <p className="mt-2 max-w-xl text-sm text-white/70">
+                Keep your habits and reminders visible—all day, on your screen.
+              </p>
+              {!requiresAuth && (
+                <div className="mt-4">
+                  <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-glow-pink/20">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
-            <Rocket size={14} />
-            Live Overlay Preview
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-glow-pink/20">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
+                <Rocket size={14} />
+                Live Overlay Preview
+              </div>
+              <div className="mt-2 h-24 w-[480px] max-w-full overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-inner shadow-black/70">
+                <Marquee />
+              </div>
+            </div>
           </div>
-          <div className="mt-2 h-24 w-[480px] max-w-full overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-inner shadow-black/70">
-            <Marquee />
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-glow-pink/20">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
+                <Rocket size={14} />
+                Live Overlay Preview
+              </div>
+              <div className="mt-2 h-24 w-full overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-inner shadow-black/70">
+                <Marquee />
+              </div>
+            </div>
+            <div className="mt-6">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
+              <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Ambient reminders on your screen.</h1>
+              <p className="mt-2 max-w-xl text-sm text-white/70">
+                Keep your habits and reminders visible—all day, on your screen.
+              </p>
+              {!requiresAuth && (
+                <div className="mt-4">
+                  <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </header>
 
       {requiresAuth ? (
@@ -106,11 +187,11 @@ function App() {
       ) : (
         <main className="mx-auto mt-8 grid max-w-6xl gap-4 md:grid-cols-3">
           <div className="md:col-span-2 flex flex-col gap-4">
-            {isTauri && <AuthPanel />}
             <HabitForm />
             <HabitList />
             <HabitPacks />
             <CompletedToday />
+            {isTauri && <AuthPanel />}
           </div>
           <div className="flex flex-col gap-4">
             <SettingsPanel />
@@ -131,7 +212,7 @@ function App() {
                   The desktop app adds always-on-top overlay, click-through mode, cloud sync, streak leaderboards, and more.
                 </p>
                 <a
-                  href="/#pricing"
+                  href="/landing.html#pricing"
                   className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2.5 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
                 >
                   <Download size={14} />
