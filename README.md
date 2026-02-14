@@ -2,6 +2,8 @@
 
 ## HabitGlo deployment notes
 
+(Demo branch edits.)
+
 - Website pricing/download flow doc: `docs/deployment-download-flow.md`
 - Website checkout/download config: `public/download/config.js`
 - Stripe setup doc: `docs/stripe-setup.md`
