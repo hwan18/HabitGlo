@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HabitGlo Windows Download</title>
+  <script src="/download/config.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05060a;
+      --panel: #121522;
+      --text: #eef2ff;
+      --muted: #9ea8c7;
+      --accent: #36d2ff;
+      --accent-2: #6bff6b;
+      --warn-bg: #2f2512;
+      --warn-border: #6f5a23;
+      --warn-text: #ffe4a6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, #112b19 0%, var(--bg) 52%);
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      color: var(--text);
+      padding: 24px;
+    }
+    .card {
+      width: min(820px, 100%);
+      border: 1px solid #2a2f42;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #161b2f, var(--panel));
+      padding: 24px;
+    }
+    h1 { margin: 0 0 10px; font-size: 1.8rem; }
+    p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
+    .meta {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 8px 12px;
+      margin-top: 14px;
+      margin-bottom: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #2a2f42;
+      background: #0f1426;
+      font-size: 0.95rem;
+    }
+    .meta dt {
+      color: #c8d1f0;
+      font-weight: 600;
+      margin: 0;
+    }
+    .meta dd {
+      margin: 0;
+      color: #e8ecff;
+      word-break: break-word;
+    }
+    .status {
+      margin-top: 8px;
+      border: 1px solid #2d3552;
+      border-radius: 10px;
+      background: #0f1426;
+      padding: 10px 12px;
+      color: #d4dbf7;
+      font-size: 0.95rem;
+    }
+    .status.warn {
+      border-color: var(--warn-border);
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+    a {
+      text-decoration: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 600;
+      border: 1px solid #2d3552;
+      color: var(--text);
+    }
+    .primary {
+      border: none;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2));
+      color: #03040a;
+    }
+    code {
+      background: #0d1120;
+      border: 1px solid #2a2f42;
+      border-radius: 6px;
+      padding: 2px 6px;
+      color: #d7deff;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Download HabitGlo for Windows</h1>
+    <p id="greeting">Install and run the latest desktop build.</p>
+    <p id="status" class="status">Loading download metadata...</p>
+    <dl class="meta">
+      <dt>Version</dt>
+      <dd id="version">-</dd>
+      <dt>File</dt>
+      <dd id="filename">-</dd>
+      <dt>Minimum OS</dt>
+      <dd id="min-os">-</dd>
+      <dt>SHA-256</dt>
+      <dd id="sha256">-</dd>
+    </dl>
+    <div class="actions">
+      <a id="download-link" class="primary" href="#">Download Installer</a>
+      <a id="release-link" href="#">Open Release Notes</a>
+      <a href="/pricing">Back to Pricing</a>
+      <a href="/app?demoReset=1">Try in Browser</a>
+    </div>
+  </main>
+  <script>
+    (function () {
+      const config = window.HABITGLO_WEBSITE_CONFIG || {};
+      const windows = config.download && config.download.windows ? config.download.windows : {};
+      const releasePageUrl = typeof windows.releasePageUrl === 'string' && windows.releasePageUrl.trim()
+        ? windows.releasePageUrl.trim()
+        : 'https://github.com/YOUR_ORG/YOUR_REPO/releases/latest';
+      const directUrl = typeof windows.directUrl === 'string' ? windows.directUrl.trim() : '';
+      const version = typeof windows.version === 'string' && windows.version.trim() ? windows.version.trim() : 'unknown';
+      const fileName = typeof windows.fileName === 'string' && windows.fileName.trim() ? windows.fileName.trim() : 'HabitGlo installer';
+      const minOs = typeof windows.minOs === 'string' && windows.minOs.trim() ? windows.minOs.trim() : 'Windows 10+';
+      const sha = typeof windows.sha256 === 'string' && windows.sha256.trim() ? windows.sha256.trim() : 'Not published';
+
+      const params = new URLSearchParams(window.location.search);
+      const plan = params.get('plan');
+      const greeting = document.getElementById('greeting');
+      if (plan === 'monthly') {
+        greeting.textContent = 'Thanks for subscribing. Download the latest Windows build below.';
+      } else if (plan === 'lifetime') {
+        greeting.textContent = 'Thanks for your lifetime purchase. Download the latest Windows build below.';
+      }
+
+      document.getElementById('version').textContent = version;
+      document.getElementById('filename').textContent = fileName;
+      document.getElementById('min-os').textContent = minOs;
+      document.getElementById('sha256').textContent = sha;
+
+      const downloadLink = document.getElementById('download-link');
+      const releaseLink = document.getElementById('release-link');
+      const status = document.getElementById('status');
+
+      releaseLink.href = releasePageUrl;
+
+      if (directUrl) {
+        downloadLink.href = directUrl;
+        status.textContent = 'Direct installer link is configured.';
+        return;
+      }
+
+      downloadLink.href = releasePageUrl;
+      downloadLink.textContent = 'Open Release Page';
+      status.classList.add('warn');
+      status.innerHTML = 'No direct installer URL configured. Set <code>download.windows.directUrl</code> in <code>public/download/config.js</code>.';
+    })();
+  </script>
+</body>
+</html>
+

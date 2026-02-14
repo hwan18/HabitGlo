@@ -8,6 +8,11 @@ create table if not exists profiles (
   email text,
   display_name text,
   subscription_status text default 'free',
+  subscription_plan text default 'free',
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  subscription_current_period_end timestamptz,
+  subscription_updated_at timestamptz default now(),
   settings jsonb default '{}'::jsonb,
   created_at timestamptz default now()
 );
@@ -34,49 +39,75 @@ create table if not exists habit_logs (
   logged_at timestamptz default now()
 );
 
+-- Backfill columns for existing projects created before newer schema fields
+alter table profiles add column if not exists email text;
+alter table profiles add column if not exists display_name text;
+alter table profiles add column if not exists subscription_status text default 'free';
+alter table profiles add column if not exists subscription_plan text default 'free';
+alter table profiles add column if not exists stripe_customer_id text;
+alter table profiles add column if not exists stripe_subscription_id text;
+alter table profiles add column if not exists subscription_current_period_end timestamptz;
+alter table profiles add column if not exists subscription_updated_at timestamptz default now();
+alter table profiles add column if not exists settings jsonb default '{}'::jsonb;
+
+alter table habits add column if not exists color_index integer default 0;
+alter table habits add column if not exists streak_current integer default 0;
+alter table habits add column if not exists streak_best integer default 0;
+alter table habits add column if not exists show_on_leaderboard boolean default false;
+
 create index if not exists habits_user_id_idx on habits(user_id);
 create index if not exists habit_logs_user_id_idx on habit_logs(user_id);
 create index if not exists habit_logs_habit_id_idx on habit_logs(habit_id);
+create unique index if not exists profiles_stripe_customer_id_idx on profiles(stripe_customer_id) where stripe_customer_id is not null;
 
 alter table profiles enable row level security;
 alter table habits enable row level security;
 alter table habit_logs enable row level security;
 
 -- Profiles policies
+drop policy if exists "Profiles are viewable by owner" on profiles;
 create policy "Profiles are viewable by owner"
   on profiles for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Profiles are insertable by owner" on profiles;
 create policy "Profiles are insertable by owner"
   on profiles for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Profiles are updatable by owner" on profiles;
 create policy "Profiles are updatable by owner"
   on profiles for update
   using (auth.uid() = user_id);
 
 -- Habits policies
+drop policy if exists "Habits are viewable by owner" on habits;
 create policy "Habits are viewable by owner"
   on habits for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Habits are insertable by owner" on habits;
 create policy "Habits are insertable by owner"
   on habits for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Habits are updatable by owner" on habits;
 create policy "Habits are updatable by owner"
   on habits for update
   using (auth.uid() = user_id);
 
+drop policy if exists "Habits are deletable by owner" on habits;
 create policy "Habits are deletable by owner"
   on habits for delete
   using (auth.uid() = user_id);
 
 -- Habit logs policies
+drop policy if exists "Habit logs are viewable by owner" on habit_logs;
 create policy "Habit logs are viewable by owner"
   on habit_logs for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Habit logs are insertable by owner" on habit_logs;
 create policy "Habit logs are insertable by owner"
   on habit_logs for insert
   with check (
@@ -87,6 +118,7 @@ create policy "Habit logs are insertable by owner"
     )
   );
 
+drop policy if exists "Habit logs are deletable by owner" on habit_logs;
 create policy "Habit logs are deletable by owner"
   on habit_logs for delete
   using (auth.uid() = user_id);
@@ -185,7 +217,14 @@ $$ language sql security definer stable;
 -- ============================================================
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email text;
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS display_name text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_status text default 'free';
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_plan text default 'free';
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_current_period_end timestamptz;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_updated_at timestamptz default now();
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS settings jsonb default '{}'::jsonb;
+-- CREATE UNIQUE INDEX IF NOT EXISTS profiles_stripe_customer_id_idx ON profiles(stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
 -- ALTER TABLE profiles DROP COLUMN IF EXISTS theme_preferences;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS color_index integer default 0;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_current integer default 0;

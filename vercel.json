@@ -1,0 +1,55 @@
+{
+  "redirects": [
+    {
+      "source": "/landing",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/landing.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/legal/terms.html",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/legal/privacy.html",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/legal/refund.html",
+      "destination": "/refund",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/landing.html"
+    },
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/pricing.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/legal/terms.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/legal/privacy.html"
+    },
+    {
+      "source": "/refund",
+      "destination": "/legal/refund.html"
+    }
+  ]
+}

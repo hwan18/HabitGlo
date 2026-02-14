@@ -2,14 +2,24 @@ import { useEffect, useState } from 'react'
 import { supabase, hasSupabase } from '@/lib/supabaseClient'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { Button } from './Button'
+import { createStripeCheckoutSession, createStripePortalSession, openExternalUrl } from '@/lib/billing'
 
 export function AuthPanel() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<'login' | 'signup' | 'magic'>('login')
   const [status, setStatus] = useState<string | null>(null)
+  const [billingBusy, setBillingBusy] = useState(false)
   const user = useHabitsStore((s) => s.user)
   const setUser = useHabitsStore((s) => s.setUser)
+  const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
+  const refreshSubscriptionStatus = useHabitsStore((s) => s.refreshSubscriptionStatus)
+
+  const isPaid =
+    subscriptionStatus === 'active' ||
+    subscriptionStatus === 'trialing' ||
+    subscriptionStatus === 'lifetime'
+  const isLifetime = subscriptionStatus === 'lifetime'
 
   useEffect(() => {
     const init = async () => {
@@ -67,6 +77,50 @@ export function AuthPanel() {
   const signOut = async () => {
     await supabase?.auth.signOut()
     setUser(null)
+  }
+
+  const startCheckout = async (plan: 'monthly' | 'lifetime') => {
+    try {
+      setBillingBusy(true)
+      setStatus('Opening Stripe checkout...')
+      const url = await createStripeCheckoutSession(plan)
+      await openExternalUrl(url)
+      setStatus('Checkout opened. Complete payment, then click "Refresh billing status".')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to start checkout'
+      setStatus(message)
+    } finally {
+      setBillingBusy(false)
+    }
+  }
+
+  const openPortal = async () => {
+    try {
+      setBillingBusy(true)
+      setStatus('Opening Stripe billing portal...')
+      const url = await createStripePortalSession()
+      await openExternalUrl(url)
+      setStatus('Billing portal opened.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to open billing portal'
+      setStatus(message)
+    } finally {
+      setBillingBusy(false)
+    }
+  }
+
+  const refreshBilling = async () => {
+    try {
+      setBillingBusy(true)
+      setStatus('Refreshing billing status...')
+      await refreshSubscriptionStatus()
+      setStatus('Billing status refreshed.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to refresh billing status'
+      setStatus(message)
+    } finally {
+      setBillingBusy(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -158,7 +212,37 @@ export function AuthPanel() {
           )}
         </div>
       ) : (
-        <div className="mt-3 text-xs text-white/70">Logged in as {user.email}</div>
+        <div className="mt-3 space-y-3 text-xs text-white/70">
+          <div>Logged in as {user.email}</div>
+          <div className="rounded-lg border border-white/10 bg-black/30 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-white/70">Subscription</span>
+              <span className="rounded bg-white/10 px-2 py-0.5 uppercase tracking-wide text-white">
+                {subscriptionStatus}
+              </span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {!isPaid && (
+                <>
+                  <Button size="sm" onClick={() => void startCheckout('monthly')} disabled={billingBusy}>
+                    Start Monthly
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => void startCheckout('lifetime')} disabled={billingBusy}>
+                    Buy Lifetime
+                  </Button>
+                </>
+              )}
+              {isPaid && !isLifetime && (
+                <Button size="sm" variant="ghost" onClick={() => void openPortal()} disabled={billingBusy}>
+                  Manage Billing
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={() => void refreshBilling()} disabled={billingBusy}>
+                Refresh Billing Status
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
       {status && <div className="mt-2 text-xs text-glow-amber">{status}</div>}
     </div>

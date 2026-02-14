@@ -79,7 +79,7 @@ export function Leaderboard() {
             Streak leaderboards are available with the desktop app.
           </p>
           <a
-            href="/landing.html#pricing"
+            href="/pricing"
             className="mt-3 flex items-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-xs font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
           >
             Get HabitGlo

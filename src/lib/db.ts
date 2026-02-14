@@ -6,6 +6,45 @@ const LOCAL_KEY = 'habitglo_local_habits'
 
 export const isSupabaseReady = () => hasSupabase && !!supabase
 
+export type SubscriptionStatus =
+  | 'free'
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'lifetime'
+
+const normalizeSubscriptionStatus = (value: unknown): SubscriptionStatus => {
+  switch (String(value ?? '').toLowerCase()) {
+    case 'trialing':
+      return 'trialing'
+    case 'active':
+      return 'active'
+    case 'past_due':
+      return 'past_due'
+    case 'canceled':
+      return 'canceled'
+    case 'lifetime':
+      return 'lifetime'
+    default:
+      return 'free'
+  }
+}
+
+export const getSubscriptionStatus = async (userId?: string): Promise<SubscriptionStatus> => {
+  if (!isSupabaseReady() || !userId) return 'free'
+  const { data, error } = await supabase!
+    .from('profiles')
+    .select('subscription_status')
+    .eq('user_id', userId)
+    .single()
+  if (error) {
+    console.warn('Failed to fetch subscription status:', error.message)
+    return 'free'
+  }
+  return normalizeSubscriptionStatus(data?.subscription_status)
+}
+
 const readLocal = (): Habit[] => {
   const raw = localStorage.getItem(LOCAL_KEY)
   if (!raw) return []

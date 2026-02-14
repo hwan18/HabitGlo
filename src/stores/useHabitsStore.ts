@@ -1,6 +1,18 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { reorderHabits, listHabits, upsertHabit, setHabitActive, deleteHabit, subscribeHabits, logHabit, loadSettings, saveSettings } from '@/lib/db'
+import {
+  reorderHabits,
+  listHabits,
+  upsertHabit,
+  setHabitActive,
+  deleteHabit,
+  subscribeHabits,
+  logHabit,
+  loadSettings,
+  saveSettings,
+  getSubscriptionStatus,
+  type SubscriptionStatus,
+} from '@/lib/db'
 import { useLeaderboardStore } from './useLeaderboardStore'
 import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
 import type { User } from '@supabase/supabase-js'
@@ -47,12 +59,15 @@ type CompletedEntry = {
 
 type StoreState = {
   user: User | null
+  subscriptionStatus: SubscriptionStatus
+  subscriptionLoading: boolean
   habits: Habit[]
   completedToday: CompletedEntry[]
   loading: boolean
   theme: ThemeSettings
   overlay: OverlaySettings
   setUser: (user: User | null) => Promise<void>
+  refreshSubscriptionStatus: () => Promise<void>
   addHabit: (text: string, options?: Partial<Habit>) => Promise<void>
   toggleHabit: (id: string, active: boolean) => Promise<void>
   setHabitColor: (id: string, colorIndex: number) => Promise<void>
@@ -101,6 +116,8 @@ export const useHabitsStore = create<StoreState>()(
   persist(
     (set, get) => ({
       user: null,
+      subscriptionStatus: 'free',
+      subscriptionLoading: false,
       habits: [],
       completedToday: [],
       loading: false,
@@ -109,7 +126,18 @@ export const useHabitsStore = create<StoreState>()(
 
       setUser: async (user) => {
         set({ user })
-        await get().hydrate()
+        await Promise.all([get().refreshSubscriptionStatus(), get().hydrate()])
+      },
+
+      refreshSubscriptionStatus: async () => {
+        const userId = get().user?.id
+        if (!userId) {
+          set({ subscriptionStatus: 'free', subscriptionLoading: false })
+          return
+        }
+        set({ subscriptionLoading: true })
+        const subscriptionStatus = await getSubscriptionStatus(userId)
+        set({ subscriptionStatus, subscriptionLoading: false })
       },
 
       hydrate: async () => {
@@ -319,6 +347,7 @@ export const useHabitsStore = create<StoreState>()(
       name: 'habitglo-store',
       partialize: (state) => ({
         user: state.user,
+        subscriptionStatus: state.subscriptionStatus,
         // Always persist habits to localStorage so overlay window can read them
         // (overlay can't share Supabase auth session with dashboard)
         habits: state.habits,
@@ -331,6 +360,7 @@ export const useHabitsStore = create<StoreState>()(
         return {
           ...currentState,
           ...persisted,
+          subscriptionStatus: persisted?.subscriptionStatus ?? currentState.subscriptionStatus,
           completedToday: pruneStaleCompleted(persisted?.completedToday ?? []),
           theme: {
             ...currentState.theme,

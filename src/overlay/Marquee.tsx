@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useMarqueeConfig } from './useMarqueeConfig'
 import { getFontClassForScript, getLedLatinFontClass, splitScriptRuns } from './fontRouting'
+import { isTauri } from '@/lib/platform'
 
 export function Marquee() {
   const { ref: containerRef, gap, spacing, speed, habits, overlay, theme, fontSize, containerWidth } = useMarqueeConfig()
@@ -13,16 +14,17 @@ export function Marquee() {
   const [showDefault, setShowDefault] = useState(false)
   const showSeparator = theme.showSeparator ?? true
   const separator = showSeparator ? '\u00A0\u00A0•\u00A0\u00A0' : '\u00A0\u00A0\u00A0\u00A0'
-  const defaultMessage = 'Add your first habit or reminder in the dashboard.'
+  const defaultMessage = 'Add your first habit/reminder'
+  const shouldShowDefault = habits.length === 0 && (!isTauri || showDefault)
   const segments = useMemo(() => {
     if (habits.length > 0) {
       return habits
     }
-    if (showDefault) {
+    if (shouldShowDefault) {
       return [{ text: defaultMessage, color: theme.primary }]
     }
     return []
-  }, [habits, showDefault, theme.primary])
+  }, [defaultMessage, habits, shouldShowDefault, theme.primary])
   const hasText = segments.length > 0
   const ledFontClass = getLedLatinFontClass(theme.ledFont)
   const segmentsWithRuns = useMemo(
@@ -32,6 +34,10 @@ export function Marquee() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    if (!isTauri) {
+      setShowDefault(true)
+      return
+    }
     const key = 'habitglo-has-opened'
     const alreadyOpened = window.localStorage.getItem(key)
     if (!alreadyOpened) {

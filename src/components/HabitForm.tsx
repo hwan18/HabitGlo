@@ -3,7 +3,11 @@ import { Button } from './Button'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { Plus } from 'lucide-react'
 
-export function HabitForm() {
+type HabitFormProps = {
+  highlighted?: boolean
+}
+
+export function HabitForm({ highlighted = false }: HabitFormProps) {
   const addHabit = useHabitsStore((s) => s.addHabit)
   const [habits, setHabits] = useState<string[]>([''])
   const [isAddAllPressed, setIsAddAllPressed] = useState(false)
@@ -43,7 +47,13 @@ export function HabitForm() {
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+    <div
+      className={`rounded-xl border bg-white/5 p-4 transition-all duration-300 ${
+        highlighted
+          ? 'border-glow-pink/60 ring-2 ring-glow-blue/30 shadow-[0_0_30px_rgba(54,210,255,0.22)]'
+          : 'border-white/10'
+      }`}
+    >
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-white">Add habits and reminders</p>

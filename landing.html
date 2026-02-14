@@ -75,17 +75,17 @@
     .fade-section.visible { opacity: 1; transform: translateY(0); }
   </style>
 </head>
-<body class="bg-black text-white font-sans antialiased overflow-x-hidden">
+<body id="top" class="bg-black text-white font-sans antialiased overflow-x-hidden">
 
   <!-- ============================================ -->
   <!-- NAV -->
   <!-- ============================================ -->
   <nav class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-xl">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-      <div class="flex items-center gap-2">
+      <a href="#top" class="flex items-center gap-2">
         <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-glow-pink to-glow-blue flex items-center justify-center text-sm font-bold">H</div>
         <span class="text-lg font-bold tracking-tight">HabitGlo</span>
-      </div>
+      </a>
       <div class="hidden md:flex items-center gap-8 text-sm text-white/60">
         <a href="#features" class="hover:text-white transition-colors">Features</a>
         <a href="#packs" class="hover:text-white transition-colors">Habit Packs</a>
@@ -93,7 +93,7 @@
         <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
       </div>
       <div class="flex items-center gap-3">
-        <a href="/app" class="rounded-lg border border-glow-blue/30 bg-glow-blue/10 px-4 py-2 text-sm font-medium text-white/80 hover:bg-glow-blue/20 transition-colors">
+        <a href="/app?demoReset=1" class="rounded-lg border border-glow-blue/30 bg-glow-blue/10 px-4 py-2 text-sm font-medium text-white/80 hover:bg-glow-blue/20 transition-colors">
           Try in Browser
         </a>
         <a href="#pricing" class="rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow">
@@ -126,11 +126,11 @@
         <a href="#pricing" class="rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 px-8 py-3.5 text-base font-semibold shadow-xl shadow-glow-pink/25 hover:shadow-glow-pink/40 transition-all hover:-translate-y-0.5">
           Get HabitGlo
         </a>
-        <a href="/app" class="group rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-8 py-3.5 text-base font-medium text-white/90 hover:bg-glow-blue/20 hover:border-glow-blue/50 transition-all hover:-translate-y-0.5">
+        <a href="/app?demoReset=1" class="group rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-8 py-3.5 text-base font-medium text-white/90 hover:bg-glow-blue/20 hover:border-glow-blue/50 transition-all hover:-translate-y-0.5">
           &#9654; Try it Free in Browser
         </a>
       </div>
-      <p class="mt-4 text-xs text-white/40">Windows 10+ &middot; Try the demo first &middot; Or <a href="/app" class="underline text-glow-blue/60 hover:text-glow-blue">try in your browser</a></p>
+      <p class="mt-4 text-xs text-white/40">Windows 10+ &middot; Try the demo first &middot; Or <a href="/app?demoReset=1" class="underline text-glow-blue/60 hover:text-glow-blue">try in your browser</a></p>
     </div>
 
     <!-- Live Marquee Demo -->
@@ -491,7 +491,7 @@
               <span>30+ streak badges, glow &amp; bloom controls</span>
             </li>
           </ul>
-          <a href="#" class="block w-full rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 py-3 text-center text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow">
+          <a href="/checkout/monthly.html" class="block w-full rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 py-3 text-center text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow">
             Get HabitGlo &mdash; $4/mo
           </a>
         </div>
@@ -528,7 +528,7 @@
               Early access to new features
             </li>
           </ul>
-          <a href="#" class="block w-full rounded-xl border border-white/10 bg-white/5 py-3 text-center text-sm font-semibold hover:bg-white/10 transition-colors">
+          <a href="/checkout/lifetime.html" class="block w-full rounded-xl border border-white/10 bg-white/5 py-3 text-center text-sm font-semibold hover:bg-white/10 transition-colors">
             Get HabitGlo &mdash; $29
           </a>
         </div>
@@ -598,7 +598,7 @@
             </span>
           </summary>
           <div class="px-6 pb-4 text-sm text-white/50 leading-relaxed">
-            Currently Windows 10+ as a native desktop app. Mac and Linux support is planned. You can also <a href="/app" class="underline text-glow-blue/80 hover:text-glow-blue">try HabitGlo in your browser</a> — add habits, pick themes, and preview the scrolling overlay without installing anything.
+            Currently Windows 10+ as a native desktop app. Mac and Linux support is planned. You can also <a href="/app?demoReset=1" class="underline text-glow-blue/80 hover:text-glow-blue">try HabitGlo in your browser</a> — add habits, pick themes, and preview the scrolling overlay without installing anything.
           </div>
         </details>
         <details class="group rounded-xl border border-white/10 bg-white/[0.03]">
@@ -630,7 +630,7 @@
         <a href="#pricing" class="rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 px-10 py-4 text-lg font-semibold shadow-xl shadow-glow-pink/25 hover:shadow-glow-pink/40 transition-all hover:-translate-y-0.5">
           Get HabitGlo
         </a>
-        <a href="/app" class="rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-10 py-4 text-lg font-medium text-white/80 hover:bg-glow-blue/20 hover:border-glow-blue/50 transition-all hover:-translate-y-0.5">
+        <a href="/app?demoReset=1" class="rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-10 py-4 text-lg font-medium text-white/80 hover:bg-glow-blue/20 hover:border-glow-blue/50 transition-all hover:-translate-y-0.5">
           &#9654; Try in Browser
         </a>
       </div>
@@ -648,11 +648,13 @@
         <span class="text-white/30 text-xs ml-2">v0.1.0</span>
       </div>
       <div class="flex items-center gap-6 text-xs text-white/40">
-        <a href="#" class="hover:text-white/70 transition-colors">Twitter</a>
-        <a href="#" class="hover:text-white/70 transition-colors">GitHub</a>
-        <a href="#" class="hover:text-white/70 transition-colors">Discord</a>
-        <a href="#" class="hover:text-white/70 transition-colors">Privacy</a>
-        <a href="#" class="hover:text-white/70 transition-colors">Terms</a>
+        <a href="https://x.com/habitgloapp" class="hover:text-white/70 transition-colors">Twitter</a>
+        <a href="https://github.com/YOUR_ORG/YOUR_REPO" class="hover:text-white/70 transition-colors">GitHub</a>
+        <a href="https://discord.gg/YOUR_INVITE_CODE" class="hover:text-white/70 transition-colors">Discord</a>
+        <a href="/pricing" class="hover:text-white/70 transition-colors">Pricing</a>
+        <a href="/privacy" class="hover:text-white/70 transition-colors">Privacy</a>
+        <a href="/terms" class="hover:text-white/70 transition-colors">Terms</a>
+        <a href="/refund" class="hover:text-white/70 transition-colors">Refund</a>
       </div>
       <p class="text-xs text-white/30">Built with Tauri, React, and too much caffeine.</p>
     </div>
@@ -674,3 +676,4 @@
   </script>
 </body>
 </html>
+

@@ -85,6 +85,9 @@ function App() {
   const setOverlay = useHabitsStore((s) => s.setOverlay)
   const paused = useHabitsStore((s) => s.overlay.paused)
   const user = useHabitsStore((s) => s.user)
+  const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
+  const subscriptionLoading = useHabitsStore((s) => s.subscriptionLoading)
+  const hasHabits = useHabitsStore((s) => s.habits.length > 0)
 
   useEffect(() => {
     document.body.classList.add('bg-slate-950')
@@ -92,6 +95,14 @@ function App() {
 
   // In browser mode, never require auth — let users try freely with local storage
   const requiresAuth = isTauri && hasSupabase && !user
+  const billingGateEnabled = import.meta.env.VITE_BILLING_GATE !== 'false'
+  const hasPaidAccess =
+    subscriptionStatus === 'active' ||
+    subscriptionStatus === 'trialing' ||
+    subscriptionStatus === 'lifetime'
+  const checkingSubscription = billingGateEnabled && isTauri && hasSupabase && !!user && subscriptionLoading
+  const requiresSubscription =
+    billingGateEnabled && isTauri && hasSupabase && !!user && !subscriptionLoading && !hasPaidAccess
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-slate-950 px-6 pb-10 text-white">
@@ -109,7 +120,7 @@ function App() {
               </div>
             </div>
             <a
-              href="/landing.html#pricing"
+              href="/pricing"
               className="flex shrink-0 items-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
             >
               <Download size={14} />
@@ -157,16 +168,20 @@ function App() {
               </div>
             </div>
             <div className="mt-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
-              <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Ambient reminders on your screen.</h1>
-              <p className="mt-2 max-w-xl text-sm text-white/70">
+              <p className="text-center text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
+              <div className="mt-2 flex items-center justify-center gap-4">
+                <h1 className="min-w-0 text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                  Ambient reminders on your screen.
+                </h1>
+                {!requiresAuth && (
+                  <div className="shrink-0">
+                    <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
+                  </div>
+                )}
+              </div>
+              <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/70">
                 Keep your habits and reminders visible—all day, on your screen.
               </p>
-              {!requiresAuth && (
-                <div className="mt-4">
-                  <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
-                </div>
-              )}
             </div>
           </>
         )}
@@ -184,10 +199,34 @@ function App() {
             </div>
           </div>
         </main>
+      ) : checkingSubscription ? (
+        <main className="mx-auto mt-8 grid max-w-4xl gap-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/80">
+            <h2 className="text-lg font-semibold text-white">Checking subscription</h2>
+            <p className="mt-2 text-sm text-white/70">
+              Verifying your billing status...
+            </p>
+          </div>
+        </main>
+      ) : requiresSubscription ? (
+        <main className="mx-auto mt-8 grid max-w-4xl gap-4">
+          <div className="rounded-2xl border border-glow-pink/25 bg-white/5 p-6 text-sm text-white/80">
+            <h2 className="text-lg font-semibold text-white">Subscription required</h2>
+            <p className="mt-2 text-sm text-white/70">
+              Your account is signed in, but desktop access requires an active subscription.
+            </p>
+            <p className="mt-2 text-xs uppercase tracking-wide text-white/60">
+              Current status: {subscriptionStatus}
+            </p>
+            <div className="mt-4">
+              <AuthPanel />
+            </div>
+          </div>
+        </main>
       ) : (
         <main className="mx-auto mt-8 grid max-w-6xl gap-4 md:grid-cols-3">
           <div className="md:col-span-2 flex flex-col gap-4">
-            <HabitForm />
+            <HabitForm highlighted={!isTauri && !hasHabits} />
             <HabitList />
             <HabitPacks />
             <CompletedToday />
@@ -212,7 +251,7 @@ function App() {
                   The desktop app adds always-on-top overlay, click-through mode, cloud sync, streak leaderboards, and more.
                 </p>
                 <a
-                  href="/landing.html#pricing"
+                  href="/pricing"
                   className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2.5 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
                 >
                   <Download size={14} />
