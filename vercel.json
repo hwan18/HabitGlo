@@ -1,55 +1,59 @@
 {
-  "redirects": [
+  "routes": [
     {
-      "source": "/landing",
-      "destination": "/",
-      "permanent": true
+      "src": "^/$",
+      "dest": "/landing.html"
     },
     {
-      "source": "/landing.html",
-      "destination": "/",
-      "permanent": true
+      "src": "^/app/?$",
+      "dest": "/index.html"
     },
     {
-      "source": "/legal/terms.html",
-      "destination": "/terms",
-      "permanent": true
+      "src": "^/pricing/?$",
+      "dest": "/pricing.html"
     },
     {
-      "source": "/legal/privacy.html",
-      "destination": "/privacy",
-      "permanent": true
+      "src": "^/terms/?$",
+      "dest": "/legal/terms.html"
     },
     {
-      "source": "/legal/refund.html",
-      "destination": "/refund",
-      "permanent": true
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/landing.html"
+      "src": "^/privacy/?$",
+      "dest": "/legal/privacy.html"
     },
     {
-      "source": "/app",
-      "destination": "/index.html"
+      "src": "^/refund/?$",
+      "dest": "/legal/refund.html"
     },
     {
-      "source": "/pricing",
-      "destination": "/pricing.html"
+      "src": "^/landing(?:\\.html)?/?$",
+      "status": 308,
+      "headers": {
+        "Location": "/"
+      }
     },
     {
-      "source": "/terms",
-      "destination": "/legal/terms.html"
+      "src": "^/legal/terms\\.html$",
+      "status": 308,
+      "headers": {
+        "Location": "/terms"
+      }
     },
     {
-      "source": "/privacy",
-      "destination": "/legal/privacy.html"
+      "src": "^/legal/privacy\\.html$",
+      "status": 308,
+      "headers": {
+        "Location": "/privacy"
+      }
     },
     {
-      "source": "/refund",
-      "destination": "/legal/refund.html"
+      "src": "^/legal/refund\\.html$",
+      "status": 308,
+      "headers": {
+        "Location": "/refund"
+      }
+    },
+    {
+      "handle": "filesystem"
     }
   ]
 }
