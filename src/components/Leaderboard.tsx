@@ -5,7 +5,7 @@ import { Flame, Trophy, RefreshCw, Globe, User, Monitor } from 'lucide-react'
 import { Button } from './Button'
 import { isTauri } from '@/lib/platform'
 
-export function Leaderboard() {
+export function LeaderboardWidget() {
   const user = useHabitsStore((s) => s.user)
   const habits = useHabitsStore((s) => s.habits)
   const toggleLeaderboardSharing = useHabitsStore((s) => s.toggleLeaderboardSharing)
