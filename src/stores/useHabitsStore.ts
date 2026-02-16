@@ -13,6 +13,7 @@ import {
   getSubscriptionStatus,
   type SubscriptionStatus,
 } from '@/lib/db'
+import { hasSupabase, supabase } from '@/lib/supabaseClient'
 import { useLeaderboardStore } from './useLeaderboardStore'
 import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
 import type { User } from '@supabase/supabase-js'
@@ -59,6 +60,8 @@ type CompletedEntry = {
 
 type StoreState = {
   user: User | null
+  authReady: boolean
+  authInitializing: boolean
   subscriptionStatus: SubscriptionStatus
   subscriptionLoading: boolean
   habits: Habit[]
@@ -66,6 +69,8 @@ type StoreState = {
   loading: boolean
   theme: ThemeSettings
   overlay: OverlaySettings
+  initializeAuth: () => Promise<void>
+  applyAuthState: (user: User | null, source?: string) => Promise<void>
   setUser: (user: User | null) => Promise<void>
   refreshSubscriptionStatus: () => Promise<void>
   addHabit: (text: string, options?: Partial<Habit>) => Promise<void>
@@ -112,63 +117,226 @@ const isDateToday = (isoStr: string): boolean => {
 const pruneStaleCompleted = (entries: CompletedEntry[]): CompletedEntry[] =>
   entries.filter((e) => isDateToday(e.loggedAt))
 
+const devAuthLog = (...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.info('[auth]', ...args)
+  }
+}
+
+let authListenerCleanup: (() => void) | null = null
+let authInitPromise: Promise<void> | null = null
+let authRequestEpoch = 0
+let habitsSubscriptionCleanup: (() => void) | null = null
+
 export const useHabitsStore = create<StoreState>()(
   persist(
-    (set, get) => ({
-      user: null,
-      subscriptionStatus: 'free',
-      subscriptionLoading: false,
-      habits: [],
-      completedToday: [],
-      loading: false,
-      theme: defaultTheme,
-      overlay: defaultOverlay,
+    (set, get) => {
+      const cleanupHabitsSubscription = () => {
+        if (!habitsSubscriptionCleanup) return
+        habitsSubscriptionCleanup()
+        habitsSubscriptionCleanup = null
+      }
 
-      setUser: async (user) => {
-        set({ user })
-        await Promise.all([get().refreshSubscriptionStatus(), get().hydrate()])
-      },
+      const isAuthEpochCurrent = (epoch: number, userId: string | null) => {
+        const currentUserId = get().user?.id ?? null
+        return authRequestEpoch === epoch && currentUserId === userId
+      }
 
-      refreshSubscriptionStatus: async () => {
-        const userId = get().user?.id
-        if (!userId) {
-          set({ subscriptionStatus: 'free', subscriptionLoading: false })
+      const runRefreshSubscriptionForUser = async (
+        userId: string,
+        epoch: number,
+        source: string,
+      ) => {
+        set({ subscriptionLoading: true })
+        devAuthLog('subscription:start', { source, userId, epoch })
+        const subscriptionStatus = await getSubscriptionStatus(userId)
+        if (!isAuthEpochCurrent(epoch, userId)) {
+          devAuthLog('subscription:stale', { source, userId, epoch })
           return
         }
-        set({ subscriptionLoading: true })
-        const subscriptionStatus = await getSubscriptionStatus(userId)
         set({ subscriptionStatus, subscriptionLoading: false })
-      },
+        devAuthLog('subscription:end', { source, userId, epoch, subscriptionStatus })
+      }
 
-      hydrate: async () => {
-        const userId = get().user?.id
+      const runHydrateForUser = async (userId: string, epoch: number, source: string) => {
         set({ loading: true })
+        devAuthLog('hydrate:start', { source, userId, epoch })
 
-        // Load settings from Supabase if available (cross-device sync)
-        if (userId) {
-          const remote = await loadSettings(userId)
-          if (remote) {
-            if (remote.theme) set({ theme: { ...get().theme, ...remote.theme } })
-            if (remote.overlay) set({ overlay: { ...get().overlay, ...remote.overlay } })
-          }
+        const remote = await loadSettings(userId)
+        if (!isAuthEpochCurrent(epoch, userId)) {
+          devAuthLog('hydrate:stale:settings', { source, userId, epoch })
+          return
         }
 
-        const habits = await listHabits(userId ?? undefined)
+        if (remote) {
+          if (remote.theme) set({ theme: { ...get().theme, ...remote.theme } })
+          if (remote.overlay) set({ overlay: { ...get().overlay, ...remote.overlay } })
+        }
+
+        const habits = await listHabits(userId)
+        if (!isAuthEpochCurrent(epoch, userId)) {
+          devAuthLog('hydrate:stale:habits', { source, userId, epoch })
+          return
+        }
+
         const sorted = habits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
         const theme = get().theme
-        const normalized = sorted.map((habit) => normalizeHabitColor(habit, theme))
-        set({ habits: normalized, loading: false })
-        if (userId) {
-          subscribeHabits(userId, async () => {
-            const remoteHabits = await listHabits(userId)
-            const sortedRemote = remoteHabits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-            const theme = get().theme
-            set({ habits: sortedRemote.map((habit) => normalizeHabitColor(habit, theme)) })
+        set({
+          habits: sorted.map((habit) => normalizeHabitColor(habit, theme)),
+          loading: false,
+        })
+
+        cleanupHabitsSubscription()
+        habitsSubscriptionCleanup = subscribeHabits(userId, async () => {
+          if (get().user?.id !== userId) return
+          const remoteHabits = await listHabits(userId)
+          if (get().user?.id !== userId) return
+          const sortedRemote = remoteHabits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+          const currentTheme = get().theme
+          set({
+            habits: sortedRemote.map((habit) => normalizeHabitColor(habit, currentTheme)),
           })
-          // Refresh leaderboards after hydration
-          void useLeaderboardStore.getState().refresh(userId)
-        }
-      },
+        })
+        void useLeaderboardStore.getState().refresh(userId)
+        devAuthLog('hydrate:end', { source, userId, epoch })
+      }
+
+      return {
+        user: null,
+        authReady: false,
+        authInitializing: false,
+        subscriptionStatus: 'free',
+        subscriptionLoading: false,
+        habits: [],
+        completedToday: [],
+        loading: false,
+        theme: defaultTheme,
+        overlay: defaultOverlay,
+
+        initializeAuth: async () => {
+          if (get().authReady && authListenerCleanup) return
+          if (authInitPromise) return authInitPromise
+
+          authInitPromise = (async () => {
+            if (!hasSupabase || !supabase) {
+              cleanupHabitsSubscription()
+              set({
+                user: null,
+                authReady: true,
+                authInitializing: false,
+                subscriptionStatus: 'free',
+                subscriptionLoading: false,
+                loading: false,
+              })
+              await get().hydrate()
+              return
+            }
+
+            if (!authListenerCleanup) {
+              const { data } = supabase.auth.onAuthStateChange((event, session) => {
+                if (
+                  event === 'INITIAL_SESSION' ||
+                  event === 'SIGNED_IN' ||
+                  event === 'SIGNED_OUT' ||
+                  event === 'TOKEN_REFRESHED' ||
+                  event === 'USER_UPDATED'
+                ) {
+                  devAuthLog('event', event, { userId: session?.user?.id ?? null })
+                  void get().applyAuthState(session?.user ?? null, `auth_event:${event}`)
+                }
+              })
+              authListenerCleanup = () => {
+                data.subscription.unsubscribe()
+                authListenerCleanup = null
+              }
+            }
+
+            set({ authInitializing: true })
+            const { data, error } = await supabase.auth.getSession()
+            if (error) {
+              devAuthLog('getSession:error', error.message)
+            }
+            await get().applyAuthState(data.session?.user ?? null, 'initializeAuth:getSession')
+          })().finally(() => {
+            set({ authInitializing: false, authReady: true })
+            authInitPromise = null
+          })
+
+          return authInitPromise
+        },
+
+        applyAuthState: async (user, source = 'unknown') => {
+          const prevUserId = get().user?.id ?? null
+          const nextUserId = user?.id ?? null
+
+          if (prevUserId === nextUserId && get().authReady && source !== 'setUser') {
+            set({ authInitializing: false, authReady: true })
+            devAuthLog('apply:no-op', { source, userId: nextUserId })
+            return
+          }
+
+          const epoch = ++authRequestEpoch
+          devAuthLog('apply', { source, prevUserId, nextUserId, epoch })
+
+          if (!user) {
+            cleanupHabitsSubscription()
+            set({
+              user: null,
+              authReady: true,
+              authInitializing: false,
+              subscriptionStatus: 'free',
+              subscriptionLoading: false,
+              loading: false,
+            })
+            await get().hydrate()
+            return
+          }
+
+          set({
+            user,
+            authReady: true,
+            authInitializing: false,
+          })
+
+          await Promise.all([
+            runRefreshSubscriptionForUser(user.id, epoch, `${source}:refresh`),
+            runHydrateForUser(user.id, epoch, `${source}:hydrate`),
+          ])
+        },
+
+        setUser: async (user) => {
+          await get().applyAuthState(user, 'setUser')
+        },
+
+        refreshSubscriptionStatus: async () => {
+          const userId = get().user?.id ?? null
+          if (!userId) {
+            set({ subscriptionStatus: 'free', subscriptionLoading: false })
+            return
+          }
+          await runRefreshSubscriptionForUser(userId, authRequestEpoch, 'manual_refresh')
+        },
+
+        hydrate: async () => {
+          const userId = get().user?.id ?? null
+          const epoch = authRequestEpoch
+
+          if (!userId) {
+            cleanupHabitsSubscription()
+            set({ loading: true })
+            const habits = await listHabits(undefined)
+            if (authRequestEpoch !== epoch) return
+            const sorted = habits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+            const theme = get().theme
+            set({
+              habits: sorted.map((habit) => normalizeHabitColor(habit, theme)),
+              loading: false,
+            })
+            return
+          }
+
+          await runHydrateForUser(userId, epoch, 'manual_hydrate')
+        },
 
       addHabit: async (text, options) => {
         const userId = get().user?.id
@@ -329,25 +497,25 @@ export const useHabitsStore = create<StoreState>()(
         }
       },
 
-      toggleLeaderboardSharing: async (enabled) => {
-        const userId = get().user?.id
-        const updatedHabits = get().habits.map((h) => ({ ...h, show_on_leaderboard: enabled }))
-        set({ habits: updatedHabits })
-        // Persist to database
-        for (const habit of updatedHabits) {
-          await upsertHabit({ ...habit, user_id: userId, text: habit.text })
-        }
-        // Refresh leaderboard after toggling
-        if (userId) {
-          void useLeaderboardStore.getState().refresh(userId)
-        }
-      },
-    }),
+        toggleLeaderboardSharing: async (enabled) => {
+          const userId = get().user?.id
+          const updatedHabits = get().habits.map((h) => ({ ...h, show_on_leaderboard: enabled }))
+          set({ habits: updatedHabits })
+          // Persist to database
+          for (const habit of updatedHabits) {
+            await upsertHabit({ ...habit, user_id: userId, text: habit.text })
+          }
+          // Refresh leaderboard after toggling
+          if (userId) {
+            void useLeaderboardStore.getState().refresh(userId)
+          }
+        },
+      }
+    },
     {
       name: 'habitglo-store',
+      version: 2,
       partialize: (state) => ({
-        user: state.user,
-        subscriptionStatus: state.subscriptionStatus,
         // Always persist habits to localStorage so overlay window can read them
         // (overlay can't share Supabase auth session with dashboard)
         habits: state.habits,
@@ -355,12 +523,19 @@ export const useHabitsStore = create<StoreState>()(
         theme: state.theme,
         overlay: state.overlay,
       }),
+      migrate: (persistedState) => {
+        const persisted = (persistedState ?? {}) as Record<string, unknown>
+        const next = { ...persisted }
+        delete next.user
+        delete next.subscriptionStatus
+        delete next.subscriptionLoading
+        return next
+      },
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<StoreState> | undefined
         return {
           ...currentState,
           ...persisted,
-          subscriptionStatus: persisted?.subscriptionStatus ?? currentState.subscriptionStatus,
           completedToday: pruneStaleCompleted(persisted?.completedToday ?? []),
           theme: {
             ...currentState.theme,

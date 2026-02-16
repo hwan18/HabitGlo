@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase, hasSupabase } from '@/lib/supabaseClient'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { Button } from './Button'
@@ -11,7 +11,6 @@ export function AuthPanel() {
   const [status, setStatus] = useState<string | null>(null)
   const [billingBusy, setBillingBusy] = useState(false)
   const user = useHabitsStore((s) => s.user)
-  const setUser = useHabitsStore((s) => s.setUser)
   const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
   const refreshSubscriptionStatus = useHabitsStore((s) => s.refreshSubscriptionStatus)
 
@@ -20,26 +19,6 @@ export function AuthPanel() {
     subscriptionStatus === 'trialing' ||
     subscriptionStatus === 'lifetime'
   const isLifetime = subscriptionStatus === 'lifetime'
-
-  useEffect(() => {
-    const init = async () => {
-      if (!supabase) return
-      const { data } = await supabase.auth.getSession()
-      if (data.session?.user) {
-        setUser(data.session.user)
-      }
-    }
-    init()
-
-    const sub = supabase?.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) setUser(session.user)
-      if (event === 'SIGNED_OUT') setUser(null)
-    })
-
-    return () => {
-      sub?.data.subscription.unsubscribe()
-    }
-  }, [setUser])
 
   const sendMagicLink = async () => {
     if (!supabase) return
@@ -76,7 +55,6 @@ export function AuthPanel() {
 
   const signOut = async () => {
     await supabase?.auth.signOut()
-    setUser(null)
   }
 
   const startCheckout = async (plan: 'monthly' | 'lifetime') => {

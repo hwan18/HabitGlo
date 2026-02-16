@@ -58,8 +58,7 @@ if (shouldResetBrowserDemo()) {
   consumeDemoResetQueryParam()
 }
 
-useHabitsStore.getState().refreshSubscriptionStatus()
-useHabitsStore.getState().hydrate()
+void useHabitsStore.getState().initializeAuth()
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

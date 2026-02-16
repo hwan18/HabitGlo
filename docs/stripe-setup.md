@@ -76,5 +76,7 @@ In Stripe Dashboard -> Developers -> Webhooks:
 ## 7) Notes
 
 - This integration gates desktop app access by subscription status.
-- Desktop gate can be disabled in frontend env with `VITE_BILLING_GATE=false`.
+- Billing gate behavior:
+  - Development: defaults OFF unless `VITE_BILLING_GATE=true`
+  - Production: defaults ON unless `VITE_BILLING_GATE=false`
 - If you later want strict website-side download protection, add a backend endpoint that verifies entitlement before issuing short-lived download URLs.

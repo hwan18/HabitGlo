@@ -85,6 +85,8 @@ function App() {
   const setOverlay = useHabitsStore((s) => s.setOverlay)
   const paused = useHabitsStore((s) => s.overlay.paused)
   const user = useHabitsStore((s) => s.user)
+  const authReady = useHabitsStore((s) => s.authReady)
+  const authInitializing = useHabitsStore((s) => s.authInitializing)
   const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
   const subscriptionLoading = useHabitsStore((s) => s.subscriptionLoading)
   const hasHabits = useHabitsStore((s) => s.habits.length > 0)
@@ -94,15 +96,24 @@ function App() {
   }, [])
 
   // In browser mode, never require auth — let users try freely with local storage
-  const requiresAuth = isTauri && hasSupabase && !user
-  const billingGateEnabled = import.meta.env.VITE_BILLING_GATE !== 'false'
+  const billingGateFlag = import.meta.env.VITE_BILLING_GATE
+  const billingGateEnabled = import.meta.env.DEV ? billingGateFlag === 'true' : billingGateFlag !== 'false'
+  const restoringSession = isTauri && hasSupabase && !authReady
+  const requiresAuth = isTauri && hasSupabase && authReady && !user
   const hasPaidAccess =
     subscriptionStatus === 'active' ||
     subscriptionStatus === 'trialing' ||
     subscriptionStatus === 'lifetime'
-  const checkingSubscription = billingGateEnabled && isTauri && hasSupabase && !!user && subscriptionLoading
+  const checkingSubscription =
+    billingGateEnabled && isTauri && hasSupabase && authReady && !!user && subscriptionLoading
   const requiresSubscription =
-    billingGateEnabled && isTauri && hasSupabase && !!user && !subscriptionLoading && !hasPaidAccess
+    billingGateEnabled &&
+    isTauri &&
+    hasSupabase &&
+    authReady &&
+    !!user &&
+    !subscriptionLoading &&
+    !hasPaidAccess
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-slate-950 px-6 pb-10 text-white">
@@ -140,7 +151,7 @@ function App() {
               <p className="mt-2 max-w-xl text-sm text-white/70">
                 Keep your habits and reminders visible—all day, on your screen.
               </p>
-              {!requiresAuth && (
+              {!requiresAuth && !restoringSession && (
                 <div className="mt-4">
                   <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
                 </div>
@@ -173,7 +184,7 @@ function App() {
                 <h1 className="min-w-0 text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                   Ambient reminders on your screen.
                 </h1>
-                {!requiresAuth && (
+                {!requiresAuth && !restoringSession && (
                   <div className="shrink-0">
                     <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
                   </div>
@@ -187,7 +198,16 @@ function App() {
         )}
       </header>
 
-      {requiresAuth ? (
+      {restoringSession ? (
+        <main className="mx-auto mt-8 grid max-w-4xl gap-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/80">
+            <h2 className="text-lg font-semibold text-white">Restoring session</h2>
+            <p className="mt-2 text-sm text-white/70">
+              {authInitializing ? 'Reconnecting your account...' : 'Preparing your account state...'}
+            </p>
+          </div>
+        </main>
+      ) : requiresAuth ? (
         <main className="mx-auto mt-8 grid max-w-4xl gap-4">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/80">
             <h2 className="text-lg font-semibold text-white">Create your account</h2>

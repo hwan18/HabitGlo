@@ -58,6 +58,9 @@ const getMilestoneBadge = (streak: number): string | null => {
   return null
 }
 
+const getStreakTooltip = (streak: number): string =>
+  streak === 1 ? 'Current streak: 1 consecutive day' : `Current streak: ${streak} consecutive days`
+
 const HabitCard = ({ habit }: { habit: Habit }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: habit.id })
   const toggleHabit = useHabitsStore((s) => s.toggleHabit)
@@ -76,6 +79,7 @@ const HabitCard = ({ habit }: { habit: Habit }) => {
   const loggedToday = isLoggedToday(habit.last_done_at)
   const streak = habit.streak_current ?? 0
   const milestoneBadge = getMilestoneBadge(streak)
+  const streakTooltip = getStreakTooltip(streak)
 
   const handleLog = async () => {
     if (loggedToday) return
@@ -112,11 +116,20 @@ const HabitCard = ({ habit }: { habit: Habit }) => {
         <span className="font-medium text-white">{habit.text}</span>
         {/* Streak display */}
         {streak > 0 && (
-          <span className="flex items-center gap-1 rounded-full bg-orange-500/20 px-2 py-0.5 text-[11px] text-orange-300">
-            <Flame size={10} className="text-orange-400" />
-            {streak}
-            {milestoneBadge && <span className="ml-0.5">{milestoneBadge}</span>}
-          </span>
+          <div className="group relative">
+            <span
+              className="flex items-center gap-1 rounded-full bg-orange-500/20 px-2 py-0.5 text-[11px] text-orange-300"
+              title={streakTooltip}
+              aria-label={streakTooltip}
+            >
+              <Flame size={10} className="text-orange-400" />
+              {streak}
+              {milestoneBadge && <span className="ml-0.5">{milestoneBadge}</span>}
+            </span>
+            <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded border border-white/10 bg-black/90 px-2 py-1 text-[10px] text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+              {streakTooltip}
+            </div>
+          </div>
         )}
         {/* Success feedback */}
         {showSuccess && (
