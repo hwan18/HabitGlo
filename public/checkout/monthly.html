@@ -109,6 +109,12 @@
       const priceId = typeof prices.monthly === 'string'
         ? prices.monthly.trim()
         : '';
+      const isLiveToken = clientToken.indexOf('live_') === 0;
+      const isTestToken = clientToken.indexOf('test_') === 0;
+      const isProductionOnLocalhost = isLocalhost && environment === 'production';
+      const hasEnvironmentTokenMismatch =
+        (environment === 'production' && isTestToken) ||
+        (environment === 'sandbox' && isLiveToken);
       const checkoutLink = document.getElementById('checkout-link');
       const status = document.getElementById('status');
       const scriptUrl = 'https://cdn.paddle.com/paddle/v2/paddle.js';
@@ -116,6 +122,96 @@
       const setWarning = function (message) {
         status.classList.add('warn');
         status.textContent = message;
+      };
+
+      const setStatus = function (message) {
+        status.classList.remove('warn');
+        status.textContent = message;
+      };
+
+      const disableCheckout = function (message) {
+        setWarning(message);
+        checkoutLink.textContent = 'Checkout Unavailable';
+        checkoutLink.setAttribute('aria-disabled', 'true');
+        checkoutLink.style.pointerEvents = 'none';
+        checkoutLink.style.opacity = '0.55';
+      };
+
+      const toMessageText = function (value) {
+        return typeof value === 'string' && value.trim()
+          ? value.trim()
+          : '';
+      };
+
+      const getEventName = function (eventData) {
+        if (!eventData || typeof eventData !== 'object') return '';
+        if (typeof eventData.name === 'string') return eventData.name.toLowerCase();
+        if (typeof eventData.eventName === 'string') return eventData.eventName.toLowerCase();
+        if (typeof eventData.event_name === 'string') return eventData.event_name.toLowerCase();
+        return '';
+      };
+
+      const getCheckoutFailureMessage = function (eventData) {
+        if (!eventData || typeof eventData !== 'object') {
+          return 'See browser console for details.';
+        }
+
+        const details = [];
+        const pushDetail = function (key, value) {
+          const text = toMessageText(value);
+          if (text) details.push(key + ': ' + text);
+        };
+
+        const error = eventData.error && typeof eventData.error === 'object'
+          ? eventData.error
+          : null;
+        const data = eventData.data && typeof eventData.data === 'object'
+          ? eventData.data
+          : null;
+
+        if (error) {
+          pushDetail('code', error.code);
+          pushDetail('detail', error.detail);
+          pushDetail('message', error.message);
+        }
+        if (data) {
+          pushDetail('code', data.code);
+          pushDetail('detail', data.detail);
+          pushDetail('message', data.message);
+        }
+        pushDetail('code', eventData.code);
+        pushDetail('detail', eventData.detail);
+        pushDetail('message', eventData.message);
+
+        if (!details.length) {
+          return 'See browser console for full Paddle payload.';
+        }
+        return details.join(' | ');
+      };
+
+      const onPaddleEvent = function (eventData) {
+        window.HABITGLO_LAST_PADDLE_EVENT = eventData;
+        const eventName = getEventName(eventData);
+        console.log('[Paddle event]', eventName || 'unknown', eventData);
+
+        if (eventName === 'checkout.failed') {
+          setWarning('Paddle checkout failed. ' + getCheckoutFailureMessage(eventData));
+          return;
+        }
+
+        if (eventName === 'checkout.closed') {
+          setStatus('Checkout closed. You can try again.');
+          return;
+        }
+
+        if (eventName === 'checkout.loaded') {
+          setStatus('Checkout loaded. Continue payment in the Paddle overlay.');
+          return;
+        }
+
+        if (eventName === 'checkout.completed') {
+          setStatus('Checkout completed. Redirecting...');
+        }
       };
 
       const loadPaddle = function () {
@@ -149,7 +245,10 @@
           if (environment === 'sandbox' && paddleSdk.Environment && typeof paddleSdk.Environment.set === 'function') {
             paddleSdk.Environment.set('sandbox');
           }
-          paddleSdk.Initialize({ token: clientToken });
+          paddleSdk.Initialize({
+            token: clientToken,
+            eventCallback: onPaddleEvent,
+          });
           initialized = true;
         }
         return paddleSdk;
@@ -165,14 +264,24 @@
         return;
       }
 
-      status.textContent = isLocalhost && environment === 'production'
-        ? 'Monthly checkout is ready. Live mode on localhost may be restricted by Paddle settings.'
-        : 'Monthly checkout is ready. Click continue to open Paddle.';
+      if (isProductionOnLocalhost) {
+        disableCheckout('Live Paddle checkout is blocked on localhost. Switch to sandbox for local testing, or use your production HTTPS domain.');
+        return;
+      }
+
+      if (hasEnvironmentTokenMismatch) {
+        disableCheckout('Paddle environment/token mismatch. Use test_ token for sandbox, or live_ token for production.');
+        return;
+      }
+
+      setStatus('Monthly checkout is ready. Click continue to open Paddle.');
 
       checkoutLink.addEventListener('click', async function (event) {
         event.preventDefault();
-        status.classList.remove('warn');
-        status.textContent = 'Opening secure checkout...';
+        if (checkoutLink.getAttribute('aria-disabled') === 'true') {
+          return;
+        }
+        setStatus('Opening secure checkout...');
         try {
           const paddleSdk = await ensurePaddle();
           const checkoutSettings = {
@@ -187,7 +296,7 @@
             customData: { plan: plan },
             settings: checkoutSettings,
           });
-          status.textContent = 'Checkout opened. Complete payment to continue.';
+          setStatus('Checkout opened. If no overlay appears, check browser console for [Paddle event] logs.');
         } catch (error) {
           const message = error && error.message ? error.message : 'Failed to open checkout.';
           setWarning(message);
