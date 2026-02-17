@@ -4,7 +4,7 @@
 
 - Website pricing/download flow doc: `docs/deployment-download-flow.md`
 - Website checkout/download config: `public/download/config.js`
-- Stripe setup doc: `docs/stripe-setup.md`
+- Paddle setup doc: `docs/paddle-setup.md`
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

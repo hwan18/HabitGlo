@@ -9,8 +9,8 @@ create table if not exists profiles (
   display_name text,
   subscription_status text default 'free',
   subscription_plan text default 'free',
-  stripe_customer_id text,
-  stripe_subscription_id text,
+  paddle_customer_id text,
+  paddle_subscription_id text,
   subscription_current_period_end timestamptz,
   subscription_updated_at timestamptz default now(),
   settings jsonb default '{}'::jsonb,
@@ -44,8 +44,8 @@ alter table profiles add column if not exists email text;
 alter table profiles add column if not exists display_name text;
 alter table profiles add column if not exists subscription_status text default 'free';
 alter table profiles add column if not exists subscription_plan text default 'free';
-alter table profiles add column if not exists stripe_customer_id text;
-alter table profiles add column if not exists stripe_subscription_id text;
+alter table profiles add column if not exists paddle_customer_id text;
+alter table profiles add column if not exists paddle_subscription_id text;
 alter table profiles add column if not exists subscription_current_period_end timestamptz;
 alter table profiles add column if not exists subscription_updated_at timestamptz default now();
 alter table profiles add column if not exists settings jsonb default '{}'::jsonb;
@@ -58,7 +58,7 @@ alter table habits add column if not exists show_on_leaderboard boolean default 
 create index if not exists habits_user_id_idx on habits(user_id);
 create index if not exists habit_logs_user_id_idx on habit_logs(user_id);
 create index if not exists habit_logs_habit_id_idx on habit_logs(habit_id);
-create unique index if not exists profiles_stripe_customer_id_idx on profiles(stripe_customer_id) where stripe_customer_id is not null;
+create unique index if not exists profiles_paddle_customer_id_idx on profiles(paddle_customer_id) where paddle_customer_id is not null;
 
 alter table profiles enable row level security;
 alter table habits enable row level security;
@@ -219,12 +219,12 @@ $$ language sql security definer stable;
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS display_name text;
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_status text default 'free';
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_plan text default 'free';
--- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id text;
--- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS paddle_customer_id text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS paddle_subscription_id text;
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_current_period_end timestamptz;
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_updated_at timestamptz default now();
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS settings jsonb default '{}'::jsonb;
--- CREATE UNIQUE INDEX IF NOT EXISTS profiles_stripe_customer_id_idx ON profiles(stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
+-- CREATE UNIQUE INDEX IF NOT EXISTS profiles_paddle_customer_id_idx ON profiles(paddle_customer_id) WHERE paddle_customer_id IS NOT NULL;
 -- ALTER TABLE profiles DROP COLUMN IF EXISTS theme_preferences;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS color_index integer default 0;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_current integer default 0;

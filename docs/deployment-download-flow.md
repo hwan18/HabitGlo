@@ -7,14 +7,16 @@ This repo now supports a static deployment flow:
 3. `/download/windows.html`
 4. installer URL or release page
 
-## 1) Configure checkout and download URLs
+## 1) Configure checkout and download values
 
 Edit `public/download/config.js` before each deployment.
 
 Required fields:
 
-- `checkout.monthlyUrl`
-- `checkout.lifetimeUrl`
+- `paddle.environment` (`sandbox` or `production`)
+- `paddle.clientToken`
+- `paddle.prices.monthly`
+- `paddle.prices.lifetime`
 - `download.windows.directUrl` (preferred)
 
 Optional but recommended:
@@ -24,21 +26,19 @@ Optional but recommended:
 - `download.windows.sha256`
 - `download.windows.releasePageUrl`
 
-## 2) Payment provider setup
+## 2) Paddle setup
 
-Set your payment provider links in:
+Set your Paddle values in:
 
-- `checkout.monthlyUrl`
-- `checkout.lifetimeUrl`
+- `paddle.environment`
+- `paddle.clientToken`
+- `paddle.prices.monthly`
+- `paddle.prices.lifetime`
 
-Then set payment success URLs to:
+The checkout pages open Paddle directly:
 
-- Monthly success URL: `/download/windows.html?plan=monthly`
-- Lifetime success URL: `/download/windows.html?plan=lifetime`
-
-Set cancel URL to:
-
-- `/landing.html#pricing`
+- `/checkout/monthly.html`
+- `/checkout/lifetime.html`
 
 ## 3) Release process
 
@@ -59,4 +59,3 @@ If you need strict paid-only download access:
 1. Add a backend endpoint.
 2. Verify checkout session or webhook event server-side.
 3. Return a short-lived signed download URL.
-

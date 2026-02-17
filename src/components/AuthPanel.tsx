@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase, hasSupabase } from '@/lib/supabaseClient'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { Button } from './Button'
-import { createStripeCheckoutSession, createStripePortalSession, openExternalUrl } from '@/lib/billing'
+import { billingProviderLabel, openBillingPortal, startCheckout as startBillingCheckout } from '@/lib/billing'
 
 export function AuthPanel() {
   const [email, setEmail] = useState('')
@@ -57,12 +57,11 @@ export function AuthPanel() {
     await supabase?.auth.signOut()
   }
 
-  const startCheckout = async (plan: 'monthly' | 'lifetime') => {
+  const handleCheckout = async (plan: 'monthly' | 'lifetime') => {
     try {
       setBillingBusy(true)
-      setStatus('Opening Stripe checkout...')
-      const url = await createStripeCheckoutSession(plan)
-      await openExternalUrl(url)
+      setStatus(`Opening ${billingProviderLabel} checkout...`)
+      await startBillingCheckout(plan, { email: user?.email ?? null, userId: user?.id ?? null })
       setStatus('Checkout opened. Complete payment, then click "Refresh billing status".')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to start checkout'
@@ -75,9 +74,8 @@ export function AuthPanel() {
   const openPortal = async () => {
     try {
       setBillingBusy(true)
-      setStatus('Opening Stripe billing portal...')
-      const url = await createStripePortalSession()
-      await openExternalUrl(url)
+      setStatus(`Opening ${billingProviderLabel} billing portal...`)
+      await openBillingPortal()
       setStatus('Billing portal opened.')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to open billing portal'
@@ -202,10 +200,10 @@ export function AuthPanel() {
             <div className="mt-3 flex flex-wrap gap-2">
               {!isPaid && (
                 <>
-                  <Button size="sm" onClick={() => void startCheckout('monthly')} disabled={billingBusy}>
+                  <Button size="sm" onClick={() => void handleCheckout('monthly')} disabled={billingBusy}>
                     Start Monthly
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => void startCheckout('lifetime')} disabled={billingBusy}>
+                  <Button size="sm" variant="ghost" onClick={() => void handleCheckout('lifetime')} disabled={billingBusy}>
                     Buy Lifetime
                   </Button>
                 </>

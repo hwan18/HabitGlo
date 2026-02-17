@@ -81,36 +81,118 @@
     <h1>Monthly Plan Checkout</h1>
     <p class="price">$4/month</p>
     <p>
-      This endpoint forwards users from pricing to your payment provider.
-      Set <code>checkout.monthlyUrl</code> in <code>public/download/config.js</code>.
+      Start secure checkout directly with Paddle.
+      Set <code>paddle.clientToken</code> and <code>paddle.prices.monthly</code> in <code>public/download/config.js</code>.
     </p>
-    <p id="status" class="status">Loading checkout link...</p>
+    <p id="status" class="status">Loading checkout configuration...</p>
     <div class="actions">
-      <a id="checkout-link" class="primary" href="/download/windows.html?plan=monthly">Continue</a>
+      <a id="checkout-link" class="primary" href="#">Continue to Secure Checkout</a>
       <a href="/download/windows.html?plan=monthly">Skip to Download Page</a>
       <a href="/pricing">Back to Pricing</a>
     </div>
   </main>
   <script>
     (function () {
+      const plan = 'monthly';
       const config = window.HABITGLO_WEBSITE_CONFIG || {};
-      const monthlyUrl = config.checkout && typeof config.checkout.monthlyUrl === 'string'
-        ? config.checkout.monthlyUrl.trim()
+      const paddle = config.paddle && typeof config.paddle === 'object' ? config.paddle : {};
+      const prices = paddle.prices && typeof paddle.prices === 'object' ? paddle.prices : {};
+      const environment = typeof paddle.environment === 'string'
+        ? paddle.environment.trim().toLowerCase()
+        : 'production';
+      const isLocalhost =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+      const clientToken = typeof paddle.clientToken === 'string'
+        ? paddle.clientToken.trim()
+        : '';
+      const priceId = typeof prices.monthly === 'string'
+        ? prices.monthly.trim()
         : '';
       const checkoutLink = document.getElementById('checkout-link');
       const status = document.getElementById('status');
+      const scriptUrl = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
-      if (monthlyUrl) {
-        checkoutLink.href = monthlyUrl;
-        checkoutLink.textContent = 'Continue to Secure Checkout';
-        status.textContent = 'Monthly checkout link is configured. Continue to payment.';
+      const setWarning = function (message) {
+        status.classList.add('warn');
+        status.textContent = message;
+      };
+
+      const loadPaddle = function () {
+        return new Promise(function (resolve, reject) {
+          if (window.Paddle) {
+            resolve(window.Paddle);
+            return;
+          }
+          const existing = document.querySelector('script[src="' + scriptUrl + '"]');
+          if (existing) {
+            existing.addEventListener('load', function () { resolve(window.Paddle); }, { once: true });
+            existing.addEventListener('error', function () { reject(new Error('Failed to load Paddle.js')); }, { once: true });
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = scriptUrl;
+          script.async = true;
+          script.onload = function () { resolve(window.Paddle); };
+          script.onerror = function () { reject(new Error('Failed to load Paddle.js')); };
+          document.head.appendChild(script);
+        });
+      };
+
+      let initialized = false;
+      const ensurePaddle = async function () {
+        const paddleSdk = await loadPaddle();
+        if (!paddleSdk || typeof paddleSdk.Initialize !== 'function') {
+          throw new Error('Paddle.js did not initialize correctly.');
+        }
+        if (!initialized) {
+          if (environment === 'sandbox' && paddleSdk.Environment && typeof paddleSdk.Environment.set === 'function') {
+            paddleSdk.Environment.set('sandbox');
+          }
+          paddleSdk.Initialize({ token: clientToken });
+          initialized = true;
+        }
+        return paddleSdk;
+      };
+
+      if (!clientToken) {
+        setWarning('Missing paddle.clientToken in /download/config.js.');
         return;
       }
 
-      checkoutLink.href = '/download/windows.html?plan=monthly';
-      checkoutLink.textContent = 'Checkout URL Missing - Open Download';
-      status.classList.add('warn');
-      status.innerHTML = 'No monthly checkout URL configured. Set <code>checkout.monthlyUrl</code> in <code>public/download/config.js</code>.';
+      if (!priceId) {
+        setWarning('Missing paddle.prices.monthly in /download/config.js.');
+        return;
+      }
+
+      status.textContent = isLocalhost && environment === 'production'
+        ? 'Monthly checkout is ready. Live mode on localhost may be restricted by Paddle settings.'
+        : 'Monthly checkout is ready. Click continue to open Paddle.';
+
+      checkoutLink.addEventListener('click', async function (event) {
+        event.preventDefault();
+        status.classList.remove('warn');
+        status.textContent = 'Opening secure checkout...';
+        try {
+          const paddleSdk = await ensurePaddle();
+          const checkoutSettings = {
+            displayMode: 'overlay',
+            theme: 'dark',
+          };
+          if (!isLocalhost) {
+            checkoutSettings.successUrl = window.location.origin + '/download/windows.html?plan=' + plan;
+          }
+          paddleSdk.Checkout.open({
+            items: [{ priceId: priceId, quantity: 1 }],
+            customData: { plan: plan },
+            settings: checkoutSettings,
+          });
+          status.textContent = 'Checkout opened. Complete payment to continue.';
+        } catch (error) {
+          const message = error && error.message ? error.message : 'Failed to open checkout.';
+          setWarning(message);
+        }
+      });
     })();
   </script>
 </body>

@@ -1,7 +1,9 @@
 import { hasSupabase, supabase } from './supabaseClient'
 import { isTauri } from './platform'
+import { startPaddleCheckout } from './paddle'
 
 export type BillingPlan = 'monthly' | 'lifetime'
+export const billingProviderLabel = 'Paddle'
 
 const assertSupabase = () => {
   if (!hasSupabase || !supabase) {
@@ -17,20 +19,9 @@ const getUrlFromResponse = (data: unknown): string => {
   return url
 }
 
-export const createStripeCheckoutSession = async (plan: BillingPlan): Promise<string> => {
+const createPaddlePortalSession = async (): Promise<string> => {
   assertSupabase()
-  const { data, error } = await supabase!.functions.invoke('create-stripe-checkout', {
-    body: { plan },
-  })
-  if (error) {
-    throw new Error(error.message || 'Failed to create checkout session')
-  }
-  return getUrlFromResponse(data)
-}
-
-export const createStripePortalSession = async (): Promise<string> => {
-  assertSupabase()
-  const { data, error } = await supabase!.functions.invoke('create-stripe-portal', {
+  const { data, error } = await supabase!.functions.invoke('create-paddle-portal', {
     body: {},
   })
   if (error) {
@@ -50,4 +41,13 @@ export const openExternalUrl = async (url: string) => {
     }
   }
   window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+export const startCheckout = async (plan: BillingPlan, options: { email?: string | null; userId?: string | null }) => {
+  await startPaddleCheckout({ plan, email: options.email, userId: options.userId })
+}
+
+export const openBillingPortal = async () => {
+  const url = await createPaddlePortalSession()
+  await openExternalUrl(url)
 }

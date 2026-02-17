@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 const staticRouteMap: Record<string, string> = {
+  '/': '/landing.html',
+  '/landing': '/landing.html',
+  '/app': '/index.html',
   '/pricing': '/pricing.html',
   '/terms': '/legal/terms.html',
   '/privacy': '/legal/privacy.html',
