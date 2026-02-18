@@ -134,7 +134,10 @@ export const startPaddleCheckout = async ({ plan, email, userId }: PaddleCheckou
     settings: {
       displayMode: 'overlay',
       theme: 'dark',
-      successUrl: `${window.location.origin}/download/windows.html?plan=${plan}`,
+      ...(window.location.hostname !== 'localhost' &&
+        window.location.hostname !== '127.0.0.1' && {
+          successUrl: `${window.location.origin}/download/windows.html?plan=${plan}`,
+        }),
     },
   })
 }
