@@ -1,0 +1,38 @@
+HabitGlo - Recent Changes
+=========================
+
+Feb 15, 2026
+------------
+- Fixed Paddle checkout successUrl: no longer sets a localhost redirect URL
+  when running on localhost (Tauri desktop dev). This matches the guard already
+  used in the HTML checkout pages (lifetime.html, monthly.html).
+- Added shadcn MCP server config to .cursor/mcp.json for Cursor IDE integration.
+- Installed shadcn CLI as a dev dependency.
+- Upgraded Node.js from v18 to v24 LTS (required by shadcn CLI).
+- Ran an extensive checkout flow audit and documented 7 issues:
+    1. successUrl always set on localhost (fixed)
+    2. CSP in tauri.conf.json may block Paddle.js internals (identified)
+    3. Paddle failures are silent with no user feedback (identified)
+    4. Download page has placeholder URLs in config.js (identified)
+    5. No auto-refresh of subscription status after checkout (identified)
+    6. Dual config systems (.env vs config.js) can drift (identified)
+    7. successUrl redirects Tauri away from the React app (identified)
+
+Feb 14, 2026
+------------
+- Added checkout diagnostics and localhost live-mode warning guard.
+- Switched billing flow from Stripe to Paddle with direct client-side checkout.
+- Updated AuthPanel, HabitList, App, and Zustand stores for Paddle integration.
+- Added Cursor MCP config (.cursor/mcp.json).
+
+Feb 13, 2026
+------------
+- Finalized Paddle domain review updates (paddle-rereview-reply.md).
+- Fixed Vercel routing so the landing page serves at root.
+
+Feb 11-12, 2026
+----------------
+- Added billing gate, pricing page, legal pages (terms, privacy, refund).
+- Integrated Stripe checkout (later replaced by Paddle).
+- Added browser demo mode with locked desktop-only features.
+- Simplified pricing to a single "Get HabitGlo" flow.
