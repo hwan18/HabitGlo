@@ -40,6 +40,16 @@ The checkout pages open Paddle directly:
 - `/checkout/monthly.html`
 - `/checkout/lifetime.html`
 
+Optional query params for account mapping:
+
+- `uid` (or `user_id` / `supabase_user_id`): Supabase user UUID
+- `email`: prefill checkout email
+- `source`: stored as checkout source metadata
+
+Example:
+
+- `/checkout/monthly.html?uid=<SUPABASE-USER-UUID>&email=user@example.com&source=app`
+
 ## 3) Release process
 
 For every desktop release:
@@ -52,7 +62,8 @@ For every desktop release:
 
 ## 4) Important limitation (static-only flow)
 
-This is a static website flow. It does not verify payment on the download page.
+This is a static website flow. It does not verify payment on the download page, and purchases
+without account metadata rely on webhook fallback matching (customer ID or email).
 
 If you need strict paid-only download access:
 

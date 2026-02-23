@@ -1,10 +1,18 @@
 # Paddle Setup (HabitGlo)
 
-This setup keeps the existing billing gate behavior and switches checkout/portal actions to Paddle.
+This checklist covers what to configure in Paddle and what to configure in this repo.
 
-## 1) Configure frontend env
+## 1) Create products and prices in Paddle (Sandbox first)
 
-Set these in your local `.env` (and production environment variables):
+In Paddle:
+
+1. Create catalog items for monthly and lifetime plans.
+2. Copy both price IDs (`pri_...`) for later use.
+3. Create a client-side token (`test_...` for sandbox, `live_...` for production).
+
+## 2) Configure app/frontend env values
+
+Set these in local `.env` and production environment variables:
 
 ```env
 VITE_BILLING_GATE=true
@@ -15,40 +23,50 @@ VITE_PADDLE_PRICE_LIFETIME=pri_...
 ```
 
 Notes:
-- Use `VITE_PADDLE_ENVIRONMENT=production` for live.
-- `VITE_PADDLE_CLIENT_TOKEN` is the Paddle.js client-side token from your Paddle account.
+- Use `VITE_PADDLE_ENVIRONMENT=production` only when going live.
+- Price IDs must match the same Paddle environment as the client token.
 
-## 2) Apply DB migration
+## 3) Apply DB migration
 
-Run `supabase.sql` so `profiles` includes:
+Run `supabase.sql` so `profiles` includes billing fields:
 - `paddle_customer_id`
 - `paddle_subscription_id`
+- `subscription_status`, `subscription_plan`, `subscription_current_period_end`
 
-## 3) Deploy Supabase Edge Functions
+## 4) Deploy Supabase Edge Functions (critical)
 
-Deploy:
+Deploy functions:
 
 ```bash
-supabase functions deploy create-paddle-portal
-supabase functions deploy paddle-webhook
+npx supabase functions deploy create-paddle-portal --project-ref <YOUR-PROJECT-REF>
+npx supabase functions deploy paddle-webhook --project-ref <YOUR-PROJECT-REF> --no-verify-jwt
 ```
+
+Important:
+- `paddle-webhook` must be deployed with `--no-verify-jwt`.
+- Keep `create-paddle-portal` JWT-protected (default behavior).
 
 Set function secrets:
 
 ```bash
-supabase secrets set PADDLE_API_KEY=live_...
-supabase secrets set PADDLE_NOTIFICATION_WEBHOOK_SECRET=pdl_ntfset_...
+npx supabase secrets set --project-ref <YOUR-PROJECT-REF> PADDLE_API_KEY=live_...
+npx supabase secrets set --project-ref <YOUR-PROJECT-REF> PADDLE_NOTIFICATION_WEBHOOK_SECRET=pdl_ntfset_...
 ```
 
 Optional:
 
 ```bash
-supabase secrets set PADDLE_API_BASE_URL=https://api.paddle.com
+npx supabase secrets set --project-ref <YOUR-PROJECT-REF> PADDLE_API_BASE_URL=https://api.paddle.com
 ```
 
-## 4) Configure Paddle webhook destination
+Quick check:
+- Send unauthenticated `POST` to `https://<YOUR-PROJECT-REF>.functions.supabase.co/paddle-webhook`.
+- Expected: `400` (`Missing paddle-signature header` or `Invalid Paddle signature`).
+- If you still get `401`, redeploy with `--no-verify-jwt`.
 
-In Paddle developer tools, add notification destination:
+## 5) Configure Paddle notification destination
+
+In Paddle dashboard, add notification destination:
 
 `https://<YOUR-PROJECT-REF>.functions.supabase.co/paddle-webhook`
 
@@ -58,18 +76,25 @@ Subscribe to at least:
 - `subscription.updated`
 - `subscription.canceled`
 
-Copy the endpoint secret to `PADDLE_NOTIFICATION_WEBHOOK_SECRET`.
+Copy that destination's endpoint secret into Supabase secret:
+- `PADDLE_NOTIFICATION_WEBHOOK_SECRET`
 
-## 5) Website checkout config
+## 6) Configure approved domains in Paddle (production)
 
-Set Paddle.js values in:
+For live checkout, approve all production domains you use to launch checkout:
+- `https://habitglo.com`
+- `https://www.habitglo.com`
 
-`public/download/config.js`
+If checkout starts on `www`, that exact subdomain must be approved.
+
+## 7) Configure static website checkout values
+
+Edit `public/download/config.js`:
 
 ```js
 paddle: {
   environment: 'sandbox', // or 'production'
-  clientToken: 'test_...',
+  clientToken: 'test_...', // use live_... in production
   prices: {
     monthly: 'pri_...',
     lifetime: 'pri_...',
@@ -77,13 +102,27 @@ paddle: {
 }
 ```
 
-The website checkout pages (`/checkout/monthly.html`, `/checkout/lifetime.html`) open Paddle checkout
-directly with these values and route successful payments to `/download/windows.html`.
+Website checkout routes:
+- `/checkout/monthly.html`
+- `/checkout/lifetime.html`
 
-## 6) Smoke test
+These pages now support optional query params for metadata mapping:
+- `uid` (Supabase user UUID, also accepts `user_id`/`supabase_user_id`)
+- `email` (prefill checkout email)
+- `source` (stored as `custom_data.checkout_source`)
 
-1. Sign in to HabitGlo app.
-2. Click `Start Monthly` or `Buy Lifetime` in Account panel.
-3. Complete checkout.
-4. Click `Refresh Billing Status`.
-5. Confirm `profiles.subscription_status` updates via webhook.
+Example:
+
+`/checkout/monthly.html?uid=<SUPABASE-USER-UUID>&email=user@example.com&source=app`
+
+## 8) Smoke test (sandbox, then production)
+
+1. Start with sandbox token + sandbox price IDs.
+2. Complete a monthly checkout and a lifetime checkout.
+3. Verify Paddle sends webhook events successfully.
+4. In Supabase `profiles`, confirm:
+   - `subscription_status`
+   - `subscription_plan`
+   - `paddle_customer_id`
+   - `paddle_subscription_id` (monthly flow)
+5. Repeat after switching to production values.

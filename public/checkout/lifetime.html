@@ -115,6 +115,14 @@
       const hasEnvironmentTokenMismatch =
         (environment === 'production' && isTestToken) ||
         (environment === 'sandbox' && isLiveToken);
+      const queryParams = new URLSearchParams(window.location.search);
+      const rawUserId =
+        queryParams.get('uid') ||
+        queryParams.get('user_id') ||
+        queryParams.get('supabase_user_id') ||
+        '';
+      const rawEmail = queryParams.get('email') || '';
+      const rawSource = queryParams.get('source') || '';
       const checkoutLink = document.getElementById('checkout-link');
       const status = document.getElementById('status');
       const scriptUrl = 'https://cdn.paddle.com/paddle/v2/paddle.js';
@@ -142,6 +150,20 @@
           ? value.trim()
           : '';
       };
+
+      const isUuid = function (value) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+      };
+
+      const userId = isUuid(toMessageText(rawUserId))
+        ? toMessageText(rawUserId).toLowerCase()
+        : '';
+      const customerEmail = toMessageText(rawEmail);
+      const checkoutSource = toMessageText(rawSource) || 'website';
+
+      if (toMessageText(rawUserId) && !userId) {
+        console.warn('[Paddle checkout] Ignoring invalid supabase_user_id query parameter.');
+      }
 
       const getEventName = function (eventData) {
         if (!eventData || typeof eventData !== 'object') return '';
@@ -291,11 +313,17 @@
           if (!isLocalhost) {
             checkoutSettings.successUrl = window.location.origin + '/download/windows.html?plan=' + plan;
           }
-          paddleSdk.Checkout.open({
+          const checkoutData = {
             items: [{ priceId: priceId, quantity: 1 }],
-            customData: { plan: plan },
+            customData: {
+              plan: plan,
+              checkout_source: checkoutSource,
+              ...(userId ? { supabase_user_id: userId } : {}),
+            },
             settings: checkoutSettings,
-          });
+            ...(customerEmail ? { customer: { email: customerEmail } } : {}),
+          };
+          paddleSdk.Checkout.open(checkoutData);
           setStatus('Checkout opened. If no overlay appears, check browser console for [Paddle event] logs.');
         } catch (error) {
           const message = error && error.message ? error.message : 'Failed to open checkout.';
