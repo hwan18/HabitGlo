@@ -2,13 +2,13 @@
   window.HABITGLO_WEBSITE_CONFIG = {
     paddle: {
       // "sandbox" for testing, "production" for live.
-      environment: 'production',
+      environment: 'sandbox',
       // Paddle client-side token from Dashboard -> Developer tools -> Authentication.
-      clientToken: 'live_70d8fa8150690f13481ccd14370',
+      clientToken: 'test_8d57bc44bcb289856df54242c35',
       // Paddle price IDs from Catalog.
       prices: {
-        monthly: 'pri_01khmd0ycp143872rde80bj3jg',
-        lifetime: 'pri_01khmd8xspdks988pyssx6r24t',
+        monthly: 'pri_01kj4c7wbp52txqrjtgg5zwtz9',
+        lifetime: 'pri_01kj4c9m37x15rz4k9qmg2dfpf',
       },
     },
     download: {
