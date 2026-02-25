@@ -1,16 +1,23 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
-import { isUuid, verifyPaddleSignature } from '../_shared/paddle.ts'
+import { isUuid, verifyPaddleSignatureDetailed } from '../_shared/paddle.ts'
 
 type PaddleNotification = {
   event_type?: unknown
   data?: unknown
 }
 
-const paddleWebhookSecret = Deno.env.get('PADDLE_NOTIFICATION_WEBHOOK_SECRET')
+const paddleWebhookSecret = Deno.env.get('PADDLE_NOTIFICATION_WEBHOOK_SECRET')?.trim()
 const supabaseUrl = Deno.env.get('SUPABASE_URL')
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+const signatureMaxAgeSeconds = (() => {
+  const raw = Deno.env.get('PADDLE_SIGNATURE_MAX_AGE_SECONDS')?.trim()
+  if (!raw) return 300
+  const parsed = Number.parseInt(raw, 10)
+  if (!Number.isFinite(parsed) || parsed <= 0) return 300
+  return parsed
+})()
 
 if (!paddleWebhookSecret) throw new Error('Missing PADDLE_NOTIFICATION_WEBHOOK_SECRET')
 if (!supabaseUrl) throw new Error('Missing SUPABASE_URL')
@@ -167,13 +174,21 @@ serve(async (req) => {
   }
 
   const rawBody = await req.text()
-  const isValid = await verifyPaddleSignature({
+  const verification = await verifyPaddleSignatureDetailed({
     signatureHeader: signature,
     rawBody,
     secretKey: paddleWebhookSecret,
+    maxAgeSeconds: signatureMaxAgeSeconds,
   })
-  if (!isValid) {
-    return jsonResponse({ error: 'Invalid Paddle signature' }, 400)
+  if (!verification.ok) {
+    console.warn('Paddle signature verification failed', {
+      reason: verification.reason,
+      ts: verification.ts,
+      now: verification.now,
+      skewSeconds: verification.skewSeconds,
+      maxAgeSeconds: signatureMaxAgeSeconds,
+    })
+    return jsonResponse({ error: `Invalid Paddle signature (${verification.reason})` }, 400)
   }
 
   let event: PaddleNotification

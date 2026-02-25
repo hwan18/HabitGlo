@@ -1,10 +1,5 @@
 const encoder = new TextEncoder()
 
-const toHex = (input: Uint8Array): string =>
-  Array.from(input)
-    .map((v) => v.toString(16).padStart(2, '0'))
-    .join('')
-
 const fromHex = (input: string): Uint8Array | null => {
   if (!/^[0-9a-f]+$/i.test(input) || input.length % 2 !== 0) return null
   const bytes = new Uint8Array(input.length / 2)
@@ -33,37 +28,102 @@ export const verifyPaddleSignature = async (input: {
   secretKey: string
   maxAgeSeconds?: number
 }): Promise<boolean> => {
-  const parts = input.signatureHeader.split(';').map((part) => part.trim())
+  const result = await verifyPaddleSignatureDetailed(input)
+  return result.ok
+}
+
+type VerifyPaddleSignatureResult = {
+  ok: boolean
+  reason:
+    | 'missing_ts'
+    | 'missing_h1'
+    | 'invalid_ts'
+    | 'expired_ts'
+    | 'invalid_secret'
+    | 'invalid_h1_format'
+    | 'mismatch'
+    | 'internal_error'
+    | 'ok'
+  now: number
+  ts: number | null
+  skewSeconds: number | null
+}
+
+const normalizeSecretKey = (input: string): string => {
+  const trimmed = input.trim()
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim()
+  }
+  return trimmed
+}
+
+export const verifyPaddleSignatureDetailed = async (input: {
+  signatureHeader: string
+  rawBody: string
+  secretKey: string
+  maxAgeSeconds?: number
+}): Promise<VerifyPaddleSignatureResult> => {
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const parts = input.signatureHeader.trim().split(';').map((part) => part.trim())
   const tsPart = parts.find((part) => part.startsWith('ts='))
   const hmacParts = parts.filter((part) => part.startsWith('h1='))
 
-  if (!tsPart || hmacParts.length === 0) return false
+  if (!tsPart) {
+    return { ok: false, reason: 'missing_ts', now: nowSeconds, ts: null, skewSeconds: null }
+  }
+  if (hmacParts.length === 0) {
+    return { ok: false, reason: 'missing_h1', now: nowSeconds, ts: null, skewSeconds: null }
+  }
 
   const tsValue = Number.parseInt(tsPart.slice(3), 10)
-  if (!Number.isFinite(tsValue)) return false
+  if (!Number.isFinite(tsValue)) {
+    return { ok: false, reason: 'invalid_ts', now: nowSeconds, ts: null, skewSeconds: null }
+  }
 
   const maxAge = input.maxAgeSeconds ?? 300
-  const nowSeconds = Math.floor(Date.now() / 1000)
-  if (Math.abs(nowSeconds - tsValue) > maxAge) return false
+  const skewSeconds = nowSeconds - tsValue
+  if (Math.abs(skewSeconds) > maxAge) {
+    return { ok: false, reason: 'expired_ts', now: nowSeconds, ts: tsValue, skewSeconds }
+  }
 
   const payload = `${tsValue}:${input.rawBody}`
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(input.secretKey),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
-  const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
-  const expected = fromHex(toHex(new Uint8Array(signed)))
-  if (!expected) return false
+  const normalizedSecret = normalizeSecretKey(input.secretKey)
+  if (!normalizedSecret) {
+    return { ok: false, reason: 'invalid_secret', now: nowSeconds, ts: tsValue, skewSeconds }
+  }
 
+  let expected: Uint8Array
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(normalizedSecret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    )
+    const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
+    expected = new Uint8Array(signed)
+  } catch {
+    return { ok: false, reason: 'internal_error', now: nowSeconds, ts: tsValue, skewSeconds }
+  }
+
+  let sawValidHmac = false
   for (const part of hmacParts) {
     const provided = fromHex(part.slice(3).trim())
     if (!provided) continue
-    if (timingSafeEqual(expected, provided)) return true
+    sawValidHmac = true
+    if (timingSafeEqual(expected, provided)) {
+      return { ok: true, reason: 'ok', now: nowSeconds, ts: tsValue, skewSeconds }
+    }
   }
-  return false
+  if (!sawValidHmac) {
+    return { ok: false, reason: 'invalid_h1_format', now: nowSeconds, ts: tsValue, skewSeconds }
+  }
+
+  return { ok: false, reason: 'mismatch', now: nowSeconds, ts: tsValue, skewSeconds }
 }
 
 export const paddleApiRequest = async <T>(

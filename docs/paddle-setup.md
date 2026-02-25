@@ -57,7 +57,12 @@ Optional:
 
 ```bash
 npx supabase secrets set --project-ref <YOUR-PROJECT-REF> PADDLE_API_BASE_URL=https://api.paddle.com
+npx supabase secrets set --project-ref <YOUR-PROJECT-REF> PADDLE_SIGNATURE_MAX_AGE_SECONDS=900
 ```
+
+Notes:
+- `PADDLE_SIGNATURE_MAX_AGE_SECONDS` defaults to `300` if unset.
+- Use `900` if your Paddle test deliveries are delayed and failing with timestamp age mismatch.
 
 Quick check:
 - Send unauthenticated `POST` to `https://<YOUR-PROJECT-REF>.functions.supabase.co/paddle-webhook`.
@@ -78,6 +83,16 @@ Subscribe to at least:
 
 Copy that destination's endpoint secret into Supabase secret:
 - `PADDLE_NOTIFICATION_WEBHOOK_SECRET`
+
+PowerShell digest check (to catch hidden spaces/quotes):
+
+```powershell
+npx supabase secrets list --project-ref <YOUR-PROJECT-REF>
+$secret = 'pdl_ntfset_...'
+[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($secret))).ToLower()
+```
+
+The SHA-256 output must exactly match the `DIGEST` shown for `PADDLE_NOTIFICATION_WEBHOOK_SECRET`.
 
 ## 6) Configure approved domains in Paddle (production)
 
