@@ -1,0 +1,69 @@
+HABITGLO LANDING PAGE CHANGES - Feb 25, 2026
+=============================================
+
+File changed: landing.html
+
+Version history:
+  V1 - Added .env to .gitignore
+  V2 - Combined Habit Packs + Palette Showcase into one "Customize" section
+  V3 - Made habit packs compact (no habit tags), trimmed palettes to first row
+  V4 - Emotional copy rewrite + testimonials section + final CTA pull-quote + nav "Reviews" link
+  V5 - Pain-point section, bento grid features, removed old Customize section, cleaned nav
+
+---
+
+CURRENT STATE (Version 5) - Page Flow:
+  Nav -> Hero -> Social Proof Bar -> Pain Point -> Bento Features -> Testimonials -> Pricing -> FAQ -> Final CTA -> Footer
+
+---
+
+CHANGE 1: Navigation Bar
+  - Removed: "Customize" and "Reviews" links
+  - Now has: Why HabitGlo | Features | Pricing | FAQ
+  - "Why HabitGlo" links to #problem (pain-point section)
+  - "Features" links to #features (bento grid)
+
+CHANGE 2: New Pain-Point Section (replaced old Features/How It Works)
+  - id="problem"
+  - Heading: "Your habits are invisible."
+  - Left side: 3 pain points with icons and connector lines
+    1. Forgotten by Noon - intentions evaporate by lunchtime
+    2. Willpower Runs Out - motivation fails by mid-afternoon
+    3. Death by Distraction - small interruptions steal entire days
+  - Right side: "Your typical day" visual timeline (green -> red)
+  - Bottom: Red callout stat about phone checking 96 times/day
+
+CHANGE 3: New Bento Grid Features Section
+  - id="features"
+  - Heading: "Everything you need to stay on track."
+  - 8 feature cards in bento layout with mini visual demos:
+    1. Always-On Display (wide) - live scrolling marquee inside
+    2. Click-Through Mode - pulsing "NON-BLOCKING" indicator
+    3. Streak Tracking - mini weekly streak calendar
+    4. Habit Packs - colored pack name tags
+    5. 10 Color Palettes (wide) - floating animated swatches
+    6. Cloud Sync - pulsing "SYNCED" indicator
+    7. Leaderboard - mini progress bars
+    8. Desktop App - platform badges
+  - CSS animations: float, pulse-soft, slide-in-right, hover lift
+
+CHANGE 4: Removed Old Customize Section
+  - The standalone Habit Packs + Color Palettes section was removed
+  - Those features are now shown inside the bento grid cards
+
+CHANGE 5: Testimonials Section (added earlier, still present)
+  - id="reviews"
+  - 3 testimonial cards: M.K. (developer), Sarah L. (designer), James R. (student)
+  - 5-star ratings on each card
+  - "Join hundreds of people building discipline that lasts."
+
+CHANGE 6: Final CTA Pull-Quote (added earlier, still present)
+  - Italic quote above the CTA heading:
+    "I used to know exactly what I needed to do and still not do it. Now I can't unsee it." - A.T.
+
+CHANGE 7: CSS Additions
+  - @keyframes float (bento swatch bobbing)
+  - @keyframes pulse-soft (status indicators)
+  - @keyframes slide-in-right
+  - .bento-card hover effects (translateY + box-shadow)
+  - .pain-line connector lines between pain points

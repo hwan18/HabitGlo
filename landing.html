@@ -73,6 +73,21 @@
     /* Smooth fade-in */
     .fade-section { opacity: 0; transform: translateY(24px); transition: opacity 0.6s, transform 0.6s; }
     .fade-section.visible { opacity: 1; transform: translateY(0); }
+
+    /* Bento card animations */
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes pulse-soft { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+    @keyframes slide-in-right { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .anim-float { animation: float 4s ease-in-out infinite; }
+    .anim-pulse { animation: pulse-soft 3s ease-in-out infinite; }
+    .anim-slide { animation: slide-in-right 0.6s ease-out both; }
+    .bento-card { transition: transform 0.3s, box-shadow 0.3s; }
+    .bento-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(255,90,217,0.1), 0 4px 15px rgba(54,210,255,0.08); }
+
+    /* Pain point connector line */
+    .pain-line { position: relative; }
+    .pain-line::before { content: ''; position: absolute; left: 19px; top: 40px; bottom: -24px; width: 1px; background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent); }
+    .pain-line:last-child::before { display: none; }
   </style>
 </head>
 <body id="top" class="bg-black text-white font-sans antialiased overflow-x-hidden">
@@ -87,8 +102,8 @@
         <span class="text-lg font-bold tracking-tight">HabitGlo</span>
       </a>
       <div class="hidden md:flex items-center gap-8 text-sm text-white/60">
-        <a href="#features" class="hover:text-white transition-colors">How It Works</a>
-        <a href="#packs" class="hover:text-white transition-colors">Use Cases</a>
+        <a href="#problem" class="hover:text-white transition-colors">Why HabitGlo</a>
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
         <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
         <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
       </div>
@@ -188,159 +203,283 @@
   </section>
 
   <!-- ============================================ -->
-  <!-- FEATURES -->
+  <!-- PAIN POINT SECTION -->
   <!-- ============================================ -->
-  <section id="features" class="py-24 px-6 fade-section">
+  <section id="problem" class="py-24 px-6 fade-section">
     <div class="mx-auto max-w-6xl">
       <div class="text-center mb-16">
-        <p class="text-xs uppercase tracking-[0.3em] text-glow-pink/80 mb-3">HabitGlo Is Made For You</p>
-        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">When attention slips,<br /><span class="glow-text-blue text-glow-blue">your standards stay visible.</span></h2>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">Your habits are<br /><span class="glow-text text-glow-pink">invisible.</span></h2>
+        <p class="mt-4 text-white/50 max-w-xl mx-auto">You set intentions every morning. By noon, you&rsquo;ve forgotten them all. Sound familiar?</p>
       </div>
-      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <!-- Feature 1 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-glow-pink/10 text-glow-pink">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+
+      <div class="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <!-- Pain Points (Left) -->
+        <div class="space-y-8">
+          <div class="pain-line flex gap-4">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1">Forgotten by Noon</h3>
+              <p class="text-sm text-white/50 leading-relaxed">You set intentions in the morning. By lunchtime, you&rsquo;ve opened 30 tabs and haven&rsquo;t done any of them. Your best plans evaporate the moment the screen lights up.</p>
+            </div>
           </div>
-          <h3 class="text-lg font-semibold mb-2">Stop Drifting Mid-Session</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Your priorities stay in view while you work, so you recover attention faster instead of losing an hour to tab-hopping.</p>
+          <div class="pain-line flex gap-4">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1">Willpower Runs Out</h3>
+              <p class="text-sm text-white/50 leading-relaxed">You rely on motivation and memory, but both fail by mid-afternoon. The habits that matter most get pushed to &ldquo;tomorrow&rdquo; &mdash; again.</p>
+            </div>
+          </div>
+          <div class="pain-line flex gap-4">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1">Death by Distraction</h3>
+              <p class="text-sm text-white/50 leading-relaxed">A quick check here, a notification there. Each one seems harmless, but they quietly steal hours from your day and weeks from your goals.</p>
+            </div>
+          </div>
         </div>
-        <!-- Feature 2 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-glow-blue/10 text-glow-blue">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+
+        <!-- Visual (Right) - Stylized "lost day" screen -->
+        <div class="relative">
+          <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-6 overflow-hidden">
+            <div class="text-xs text-white/30 uppercase tracking-widest mb-4">Your typical day</div>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-white/5">
+                <div class="flex items-center gap-3">
+                  <span class="text-green-400 text-sm">9:00 AM</span>
+                  <span class="text-white/70 text-sm">Set intentions, feeling motivated</span>
+                </div>
+                <span class="text-green-400/60 text-xs">&#10003;</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-white/5">
+                <div class="flex items-center gap-3">
+                  <span class="text-amber-400 text-sm">10:30 AM</span>
+                  <span class="text-white/70 text-sm">Quick email check... 45 min gone</span>
+                </div>
+                <span class="text-amber-400/60 text-xs">&#9888;</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-white/5">
+                <div class="flex items-center gap-3">
+                  <span class="text-amber-400 text-sm">12:00 PM</span>
+                  <span class="text-white/70 text-sm">Forgot about posture, deep work</span>
+                </div>
+                <span class="text-red-400/60 text-xs">&#10007;</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-red-500/10">
+                <div class="flex items-center gap-3">
+                  <span class="text-red-400 text-sm">3:00 PM</span>
+                  <span class="text-white/70 text-sm">Scrolled phone for 2 hours</span>
+                </div>
+                <span class="text-red-400/60 text-xs">&#10007;</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-red-500/10">
+                <div class="flex items-center gap-3">
+                  <span class="text-red-400 text-sm">6:00 PM</span>
+                  <span class="text-white/70 text-sm">Where did the day go?</span>
+                </div>
+                <span class="text-red-400/60 text-xs">&#10007;</span>
+              </div>
+            </div>
           </div>
-          <h3 class="text-lg font-semibold mb-2">Protect Deep Work Without Friction</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Click-through mode keeps reminders present but non-blocking, so your tools stay usable and your focus stays intact.</p>
+          <div class="absolute -bottom-3 -right-3 w-32 h-32 rounded-full bg-red-500/5 blur-[60px] pointer-events-none"></div>
         </div>
-        <!-- Feature 3 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-glow-green/10 text-glow-green">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
-          </div>
-          <h3 class="text-lg font-semibold mb-2">Make Consistency Feel Personal</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Customize the look until it feels like your system, not another generic productivity app you abandon in a week.</p>
+      </div>
+
+      <!-- Stat callout -->
+      <div class="mt-16 rounded-2xl border border-red-500/20 bg-red-500/[0.04] px-8 py-5 flex flex-col sm:flex-row items-center gap-4 max-w-3xl mx-auto">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
-        <!-- Feature 4 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
-          </div>
-          <h3 class="text-lg font-semibold mb-2">See Proof You're Changing</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Daily streaks and milestones turn effort into visible momentum, so your identity shifts from "trying" to "consistent."</p>
-        </div>
-        <!-- Feature 5 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-400">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
-          </div>
-          <h3 class="text-lg font-semibold mb-2">Add Accountability When You Need It</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Opt into leaderboard visibility for external pressure, or stay private and use HabitGlo as your personal commitment system.</p>
-        </div>
-        <!-- Feature 6 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
-          </div>
-          <h3 class="text-lg font-semibold mb-2">Keep Momentum Across Devices</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Your habits and streaks follow you, so one disrupted session never has to become a lost day.</p>
+        <div>
+          <p class="text-sm text-white/80"><strong class="text-red-400">The average person checks their phone 96 times a day</strong></p>
+          <p class="text-xs text-white/40 mt-0.5">Without visible reminders, your best intentions don&rsquo;t stand a chance against the pull of distraction.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ============================================ -->
-  <!-- HABIT PACKS -->
+  <!-- FEATURES BENTO GRID -->
   <!-- ============================================ -->
-  <section id="packs" class="py-24 px-6 bg-gradient-to-b from-transparent via-glow-blue/[0.03] to-transparent fade-section">
+  <section id="features" class="py-24 px-6 bg-gradient-to-b from-transparent via-glow-blue/[0.03] to-transparent fade-section">
     <div class="mx-auto max-w-6xl">
       <div class="text-center mb-16">
-        <p class="text-xs uppercase tracking-[0.3em] text-glow-blue/80 mb-3">Use Cases</p>
-        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">See how HabitGlo fits into<br /><span class="glow-text-blue text-glow-blue">your day.</span></h2>
-        <p class="mt-4 text-white/50 max-w-xl mx-auto">Choose a ready-made pack based on your work style, energy goals, and focus challenges. One click and you are running.</p>
+        <p class="text-xs uppercase tracking-[0.3em] text-glow-blue/80 mb-3">Powerful &amp; Simple</p>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">Everything you need to<br /><span class="glow-text-blue text-glow-blue">stay on track.</span></h2>
+        <p class="mt-4 text-white/50 max-w-lg mx-auto">Your habits, always visible. Your focus, always protected. Your progress, always growing.</p>
       </div>
-      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <!-- Pack 1 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-lg">&#x1F3AF;</div>
+
+      <!-- Bento Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <!-- Card 1: Always-On Display (Large) -->
+        <div class="bento-card gradient-border rounded-2xl p-6 md:col-span-2 overflow-hidden">
+          <div class="flex items-start justify-between mb-4">
             <div>
-              <h3 class="font-semibold">The Deep Flow Protocol</h3>
-              <p class="text-xs text-white/40">4 habits &middot; For focused execution</p>
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-glow-pink/10 text-glow-pink mb-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+              </div>
+              <h3 class="text-lg font-semibold">Always-On Display</h3>
+              <p class="text-sm text-white/50 mt-1">Your reminders scroll across the screen all day. No app to open, no notification to dismiss.</p>
             </div>
           </div>
-          <div class="flex flex-wrap gap-1.5">
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">ONE TASK AT A TIME</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">CLOSE YOUR TABS</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">PHONE IN THE OTHER ROOM</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">IS THIS DEEP WORK?</span>
+          <!-- Mini marquee visual -->
+          <div class="rounded-xl bg-black/60 border border-white/5 overflow-hidden h-12 flex items-center mt-2">
+            <div class="marquee-track whitespace-nowrap flex items-center text-lg font-bold tracking-[0.2em]">
+              <span class="text-[#ff3131] mx-4" style="text-shadow: 0 0 10px rgba(255,49,49,0.4)">ONE TASK AT A TIME</span>
+              <span class="text-white/10 mx-1">&bull;</span>
+              <span class="text-[#ffb000] mx-4" style="text-shadow: 0 0 10px rgba(255,176,0,0.4)">BREATHE</span>
+              <span class="text-white/10 mx-1">&bull;</span>
+              <span class="text-[#6bff6b] mx-4" style="text-shadow: 0 0 10px rgba(107,255,107,0.4)">POSTURE CHECK</span>
+              <span class="text-white/10 mx-1">&bull;</span>
+              <span class="text-[#ff3131] mx-4" style="text-shadow: 0 0 10px rgba(255,49,49,0.4)">ONE TASK AT A TIME</span>
+              <span class="text-white/10 mx-1">&bull;</span>
+              <span class="text-[#ffb000] mx-4" style="text-shadow: 0 0 10px rgba(255,176,0,0.4)">BREATHE</span>
+              <span class="text-white/10 mx-1">&bull;</span>
+              <span class="text-[#6bff6b] mx-4" style="text-shadow: 0 0 10px rgba(107,255,107,0.4)">POSTURE CHECK</span>
+              <span class="text-white/10 mx-1">&bull;</span>
+            </div>
           </div>
         </div>
-        <!-- Pack 2 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 text-lg">&#x1F9EC;</div>
-            <div>
-              <h3 class="font-semibold">The Biohacker's Baseline</h3>
-              <p class="text-xs text-white/40">5 habits &middot; For stable daily energy</p>
-            </div>
+
+        <!-- Card 2: Click-Through Mode -->
+        <div class="bento-card gradient-border rounded-2xl p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-glow-blue/10 text-glow-blue mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
           </div>
-          <div class="flex flex-wrap gap-1.5">
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">NOSE BREATHING ONLY</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">VIEW SUNLIGHT NOW</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">SHOULDERS BACK / CHEST OUT</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">HYDRATE + ELECTROLYTES</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">BLINK OFTEN - EYES DRY</span>
+          <h3 class="text-lg font-semibold mb-1">Click-Through Mode</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Reminders stay visible but never block your clicks. Your tools stay fully usable.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <div class="anim-pulse h-2 w-2 rounded-full bg-glow-blue"></div>
+            <span class="text-[11px] text-white/30 tracking-wide">NON-BLOCKING</span>
           </div>
         </div>
-        <!-- Pack 3 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="h-10 w-10 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-400 text-lg">&#x2728;</div>
-            <div>
-              <h3 class="font-semibold">The Posture & Presence Pack</h3>
-              <p class="text-xs text-white/40">5 habits &middot; For physical discipline cues</p>
-            </div>
+
+        <!-- Card 3: Streak Tracking -->
+        <div class="bento-card gradient-border rounded-2xl p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
           </div>
-          <div class="flex flex-wrap gap-1.5">
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">TONGUE ON ROOF OF MOUTH</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">CHIN TUCK NOW</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">NO MOUTH BREATHING</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">SWALLOW CORRECTLY</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">RELAX JAW MUSCLES</span>
-          </div>
-        </div>
-        <!-- Pack 4 -->
-        <div class="gradient-border rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-lg">&#x1F3DB;</div>
-            <div>
-              <h3 class="font-semibold">The Stoic Resilience Pack</h3>
-              <p class="text-xs text-white/40">4 habits &middot; For resilient thinking</p>
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-1.5">
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">CONTROL THE CONTROLLABLE</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">AMOR FATI - LOVE YOUR FATE</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">NOTHING IS AS IT SEEMS</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">THE OBSTACLE IS THE WAY</span>
+          <h3 class="text-lg font-semibold mb-1">Streak Tracking</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Watch your consistency build day by day. Visible momentum shifts your identity.</p>
+          <!-- Mini streak visual -->
+          <div class="flex gap-1 mt-4">
+            <div class="h-6 w-6 rounded bg-orange-500/30 flex items-center justify-center text-[9px] text-orange-300">M</div>
+            <div class="h-6 w-6 rounded bg-orange-500/30 flex items-center justify-center text-[9px] text-orange-300">T</div>
+            <div class="h-6 w-6 rounded bg-orange-500/30 flex items-center justify-center text-[9px] text-orange-300">W</div>
+            <div class="h-6 w-6 rounded bg-orange-500/30 flex items-center justify-center text-[9px] text-orange-300">T</div>
+            <div class="h-6 w-6 rounded bg-orange-500/30 flex items-center justify-center text-[9px] text-orange-300">F</div>
+            <div class="h-6 w-6 rounded bg-orange-500/20 border border-dashed border-orange-500/30 flex items-center justify-center text-[9px] text-orange-300/40">S</div>
+            <div class="h-6 w-6 rounded bg-orange-500/10 border border-dashed border-orange-500/20 flex items-center justify-center text-[9px] text-orange-300/20">S</div>
           </div>
         </div>
-        <!-- Pack 5 -->
-        <div class="gradient-border rounded-2xl p-6 md:col-span-2 lg:col-span-2">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="h-10 w-10 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-400 text-lg">&#x1F54A;</div>
+
+        <!-- Card 4: Habit Packs -->
+        <div class="bento-card gradient-border rounded-2xl p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-glow-green/10 text-glow-green mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-1">Habit Packs</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Pre-built packs for focus, posture, stoicism, and more. One click to start.</p>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="rounded bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-300">Deep Flow</span>
+            <span class="rounded bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300">Biohacker</span>
+            <span class="rounded bg-pink-500/10 px-2 py-0.5 text-[10px] text-pink-300">Posture</span>
+            <span class="rounded bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">Stoic</span>
+          </div>
+        </div>
+
+        <!-- Card 5: Color Palettes (Large) -->
+        <div class="bento-card gradient-border rounded-2xl p-6 md:col-span-2">
+          <div class="flex items-start gap-6">
             <div>
-              <h3 class="font-semibold">The Awareness & Freedom Pack</h3>
-              <p class="text-xs text-white/40">5 habits &middot; For urge awareness and control</p>
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 mb-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
+              </div>
+              <h3 class="text-lg font-semibold mb-1">10 Color Palettes</h3>
+              <p class="text-sm text-white/50 leading-relaxed">From Synthwave to Minimal. Make your reminder system look like it belongs to you.</p>
+            </div>
+            <!-- Palette swatches -->
+            <div class="hidden sm:grid grid-cols-5 gap-2 shrink-0">
+              <div class="flex flex-col items-center gap-1">
+                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#ff3131;animation-delay:0s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#ffb000;animation-delay:0.2s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#6bff6b;animation-delay:0.4s"></span></div>
+                <span class="text-[9px] text-white/40">Classic</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#ff5ad9;animation-delay:0.1s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#36d2ff;animation-delay:0.3s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#f5ff6b;animation-delay:0.5s"></span></div>
+                <span class="text-[9px] text-white/40">Synthwave</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#64B5F6;animation-delay:0.2s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#90CAF9;animation-delay:0.4s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#BBDEFB;animation-delay:0.6s"></span></div>
+                <span class="text-[9px] text-white/40">Focus</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#81C784;animation-delay:0.3s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#A5D6A7;animation-delay:0.5s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#C8E6C9;animation-delay:0.7s"></span></div>
+                <span class="text-[9px] text-white/40">Forest</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#B39DDB;animation-delay:0.4s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#CE93D8;animation-delay:0.6s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#E1BEE7;animation-delay:0.8s"></span></div>
+                <span class="text-[9px] text-white/40">Lavender</span>
+              </div>
             </div>
           </div>
-          <div class="flex flex-wrap gap-1.5">
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">HANDS IN YOUR LAP</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">RELAX YOUR SHOULDERS</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">TAKE A DEEP EXHALE</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">THIS URGE WILL PASS</span>
-            <span class="rounded bg-white/10 px-2 py-1 text-[11px] text-white/60 tracking-wide">SOFTEN YOUR GAZE</span>
+        </div>
+
+        <!-- Card 6: Cloud Sync -->
+        <div class="bento-card gradient-border rounded-2xl p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-1">Cloud Sync</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Habits and streaks follow you across devices. Never lose a day of progress.</p>
+          <div class="flex items-center gap-2 mt-4">
+            <div class="anim-pulse h-2 w-2 rounded-full bg-glow-green"></div>
+            <span class="text-[11px] text-white/30 tracking-wide">SYNCED</span>
+          </div>
+        </div>
+
+        <!-- Card 7: Leaderboard -->
+        <div class="bento-card gradient-border rounded-2xl p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-400 mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-1">Leaderboard</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Opt-in accountability with others. Or stay private. Your discipline, your choice.</p>
+          <!-- Mini leaderboard visual -->
+          <div class="mt-4 space-y-1.5">
+            <div class="flex items-center gap-2 text-[11px]">
+              <span class="text-yellow-400 font-bold w-4">1</span>
+              <div class="h-1.5 flex-1 rounded-full bg-yellow-400/20"><div class="h-full rounded-full bg-yellow-400/60" style="width:92%"></div></div>
+              <span class="text-white/30">47d</span>
+            </div>
+            <div class="flex items-center gap-2 text-[11px]">
+              <span class="text-white/40 font-bold w-4">2</span>
+              <div class="h-1.5 flex-1 rounded-full bg-white/10"><div class="h-full rounded-full bg-white/30" style="width:78%"></div></div>
+              <span class="text-white/30">39d</span>
+            </div>
+            <div class="flex items-center gap-2 text-[11px]">
+              <span class="text-white/40 font-bold w-4">3</span>
+              <div class="h-1.5 flex-1 rounded-full bg-white/10"><div class="h-full rounded-full bg-white/20" style="width:61%"></div></div>
+              <span class="text-white/30">31d</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8: Windows Desktop App -->
+        <div class="bento-card gradient-border rounded-2xl p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-1">Desktop App</h3>
+          <p class="text-sm text-white/50 leading-relaxed">Native Windows app that runs all day. Always on top, always reminding.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20">Windows 10+</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-white/5 text-white/30 border border-white/10">2 min setup</span>
           </div>
         </div>
       </div>
@@ -348,96 +487,71 @@
   </section>
 
   <!-- ============================================ -->
-  <!-- PALETTE SHOWCASE -->
+  <!-- TESTIMONIALS -->
   <!-- ============================================ -->
-  <section class="py-24 px-6 fade-section">
-    <div class="mx-auto max-w-4xl text-center">
-      <p class="text-xs uppercase tracking-[0.3em] text-glow-green/80 mb-3">Identity Layer</p>
-      <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">Make your environment reflect<br />the standards you set.</h2>
-      <p class="text-white/50 max-w-lg mx-auto mb-12">Choose a visual style that makes your reminders impossible to ignore and your discipline system feel like it belongs to you.</p>
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 max-w-2xl mx-auto">
-        <!-- Palettes -->
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ff3131; color:#ff3131;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ffb000; color:#ffb000;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#6bff6b; color:#6bff6b;"></span>
+  <section id="reviews" class="py-24 px-6 fade-section">
+    <div class="mx-auto max-w-6xl">
+      <div class="text-center mb-16">
+        <p class="text-xs uppercase tracking-[0.3em] text-glow-green/80 mb-3">Real Results</p>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">They stopped drifting.<br /><span class="glow-text-blue text-glow-blue">You can too.</span></h2>
+      </div>
+      <div class="grid gap-6 md:grid-cols-3">
+        <!-- Testimonial 1 -->
+        <div class="gradient-border rounded-2xl p-6 flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-10 w-10 rounded-full bg-glow-blue/20 flex items-center justify-center text-sm font-bold text-glow-blue shrink-0">MK</div>
+            <div>
+              <p class="font-semibold text-sm">M.K.</p>
+              <p class="text-[11px] text-white/40">Software Developer</p>
+            </div>
           </div>
-          <p class="text-[11px] font-semibold text-white/70">Classic</p>
+          <p class="text-sm text-white/60 leading-relaxed flex-1">&ldquo;I&rsquo;ve tried every productivity app out there. HabitGlo is different because it doesn&rsquo;t ask me to open another app &mdash; it&rsquo;s just there, on my screen, reminding me to breathe, sit up straight, and stay on one task. My focus sessions went from 20 minutes to over 2 hours.&rdquo;</p>
+          <div class="flex gap-0.5 mt-4 text-glow-amber">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
         </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ff5ad9; color:#ff5ad9;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#36d2ff; color:#36d2ff;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#f5ff6b; color:#f5ff6b;"></span>
+        <!-- Testimonial 2 -->
+        <div class="gradient-border rounded-2xl p-6 flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-10 w-10 rounded-full bg-glow-pink/20 flex items-center justify-center text-sm font-bold text-glow-pink shrink-0">SL</div>
+            <div>
+              <p class="font-semibold text-sm">Sarah L.</p>
+              <p class="text-[11px] text-white/40">Freelance Designer</p>
+            </div>
           </div>
-          <p class="text-[11px] font-semibold text-white/70">Synthwave</p>
+          <p class="text-sm text-white/60 leading-relaxed flex-1">&ldquo;I didn&rsquo;t realize how much I was drifting until I saw my habits staring back at me all day. Within a week I stopped checking my phone mid-work. Within a month I finished projects I&rsquo;d been putting off for a year. This thing quietly changed my life.&rdquo;</p>
+          <div class="flex gap-0.5 mt-4 text-glow-amber">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
         </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#64B5F6; color:#64B5F6;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#90CAF9; color:#90CAF9;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#BBDEFB; color:#BBDEFB;"></span>
+        <!-- Testimonial 3 -->
+        <div class="gradient-border rounded-2xl p-6 flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-10 w-10 rounded-full bg-glow-green/20 flex items-center justify-center text-sm font-bold text-glow-green shrink-0">JR</div>
+            <div>
+              <p class="font-semibold text-sm">James R.</p>
+              <p class="text-[11px] text-white/40">University Student</p>
+            </div>
           </div>
-          <p class="text-[11px] font-semibold text-white/70">Focus</p>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFB74D; color:#FFB74D;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFCC80; color:#FFCC80;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFE0B2; color:#FFE0B2;"></span>
+          <p class="text-sm text-white/60 leading-relaxed flex-1">&ldquo;I set up the Stoic Resilience pack before exam season and it completely shifted my mindset. Every time I wanted to give up, &lsquo;The obstacle is the way&rsquo; was right there on my screen. Ended up with my best grades ever.&rdquo;</p>
+          <div class="flex gap-0.5 mt-4 text-glow-amber">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
           </div>
-          <p class="text-[11px] font-semibold text-white/70">Warm Amber</p>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#81C784; color:#81C784;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#A5D6A7; color:#A5D6A7;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#C8E6C9; color:#C8E6C9;"></span>
-          </div>
-          <p class="text-[11px] font-semibold text-white/70">Forest</p>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#B39DDB; color:#B39DDB;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#CE93D8; color:#CE93D8;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#E1BEE7; color:#E1BEE7;"></span>
-          </div>
-          <p class="text-[11px] font-semibold text-white/70">Lavender</p>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#B0BEC5; color:#B0BEC5;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#CFD8DC; color:#CFD8DC;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#ECEFF1; color:#ECEFF1;"></span>
-          </div>
-          <p class="text-[11px] font-semibold text-white/70">Minimal</p>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FF8A65; color:#FF8A65;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFAB91; color:#FFAB91;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#FFF176; color:#FFF176;"></span>
-          </div>
-          <p class="text-[11px] font-semibold text-white/70">Sunrise</p>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#4DD0E1; color:#4DD0E1;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#80DEEA; color:#80DEEA;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#B2EBF2; color:#B2EBF2;"></span>
-          </div>
-          <p class="text-[11px] font-semibold text-white/70">Ocean</p>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-          <div class="flex justify-center gap-1.5 mb-2">
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#7986CB; color:#7986CB;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#9FA8DA; color:#9FA8DA;"></span>
-            <span class="palette-swatch h-6 w-6 rounded-full" style="background:#5C6BC0; color:#5C6BC0;"></span>
-          </div>
-          <p class="text-[11px] font-semibold text-white/70">Night Owl</p>
         </div>
       </div>
+      <p class="text-center text-white/30 text-sm mt-10">Join hundreds of people building discipline that lasts.</p>
     </div>
   </section>
 
@@ -621,6 +735,7 @@
   <!-- ============================================ -->
   <section class="py-24 px-6 fade-section">
     <div class="mx-auto max-w-3xl text-center">
+      <p class="text-white/40 italic text-sm mb-8 max-w-md mx-auto">&ldquo;I used to know exactly what I needed to do and still not do it. Now I can&rsquo;t unsee it.&rdquo; &mdash; A.T.</p>
       <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-6">
         You're one decision away<br />
         <span class="glow-text bg-gradient-to-r from-glow-pink to-glow-blue bg-clip-text text-transparent">from better days.</span>
