@@ -1,11 +1,19 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
-import { isUuid, verifyPaddleSignatureDetailed } from '../_shared/paddle.ts'
+import { isUuid, paddleApiRequest, verifyPaddleSignatureDetailed } from '../_shared/paddle.ts'
 
 type PaddleNotification = {
   event_type?: unknown
   data?: unknown
+}
+
+type ProfileBilling = {
+  user_id: string
+  subscription_status: string | null
+  subscription_plan: string | null
+  paddle_customer_id: string | null
+  paddle_subscription_id: string | null
 }
 
 const paddleWebhookSecret = Deno.env.get('PADDLE_NOTIFICATION_WEBHOOK_SECRET')?.trim()
@@ -40,6 +48,19 @@ const normalizePlan = (value: unknown): 'monthly' | 'lifetime' => {
   return 'monthly'
 }
 
+const isPaidRecurringStatus = (value: unknown): boolean => {
+  const normalized = String(value ?? '').toLowerCase()
+  return normalized === 'active' || normalized === 'trialing' || normalized === 'past_due'
+}
+
+const isLifetimeProfile = (profile: ProfileBilling | null): boolean => {
+  if (!profile) return false
+  return (
+    String(profile.subscription_status ?? '').toLowerCase() === 'lifetime' ||
+    String(profile.subscription_plan ?? '').toLowerCase() === 'lifetime'
+  )
+}
+
 const mapSubscriptionStatus = (value: unknown): 'trialing' | 'active' | 'past_due' | 'canceled' | 'free' => {
   const normalized = String(value ?? '').toLowerCase()
   switch (normalized) {
@@ -62,10 +83,20 @@ const resolveUserId = async (input: {
   customData?: unknown
   customerId?: string | null
   email?: string | null
+  subscriptionId?: string | null
 }): Promise<string | null> => {
   const customData = readObject(input.customData)
   const metadataUserId = customData?.supabase_user_id
   if (isUuid(metadataUserId)) return metadataUserId
+
+  if (input.subscriptionId) {
+    const { data } = await adminClient
+      .from('profiles')
+      .select('user_id')
+      .eq('paddle_subscription_id', input.subscriptionId)
+      .maybeSingle()
+    if (isUuid(data?.user_id)) return data.user_id
+  }
 
   if (input.customerId) {
     const { data } = await adminClient
@@ -88,14 +119,53 @@ const resolveUserId = async (input: {
   return null
 }
 
+const getProfileForUser = async (userId: string): Promise<ProfileBilling | null> => {
+  const { data, error } = await adminClient
+    .from('profiles')
+    .select('user_id, subscription_status, subscription_plan, paddle_customer_id, paddle_subscription_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) {
+    throw new Error(error.message || 'Failed to load billing profile')
+  }
+  return (data as ProfileBilling | null) ?? null
+}
+
+const cancelPaddleSubscriptionImmediately = async (
+  subscriptionId: string,
+  reason:
+    | 'duplicate_monthly_transaction'
+    | 'duplicate_monthly_subscription_event'
+    | 'upgrade_to_lifetime'
+    | 'monthly_transaction_after_lifetime'
+    | 'monthly_subscription_event_after_lifetime',
+) => {
+  try {
+    await paddleApiRequest(`/subscriptions/${subscriptionId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ effective_from: 'immediately' }),
+    })
+    console.log('Canceled Paddle subscription', { subscriptionId, reason })
+  } catch (err) {
+    console.error('Failed to cancel Paddle subscription', {
+      subscriptionId,
+      reason,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+}
+
 const updateProfileBilling = async (userId: string, updates: Record<string, unknown>) => {
-  await adminClient
+  const { error } = await adminClient
     .from('profiles')
     .update({
       ...updates,
       subscription_updated_at: new Date().toISOString(),
     })
     .eq('user_id', userId)
+  if (error) {
+    throw new Error(error.message || 'Failed to update billing profile')
+  }
 }
 
 const handleTransactionCompleted = async (data: unknown) => {
@@ -107,19 +177,55 @@ const handleTransactionCompleted = async (data: unknown) => {
   const subscriptionId = readString(payload, 'subscription_id')
   const customer = readObject(payload.customer)
   const customerEmail = customer ? readString(customer, 'email') : null
-  const userId = await resolveUserId({ customData, customerId, email: customerEmail })
+  const userId = await resolveUserId({
+    customData,
+    customerId,
+    email: customerEmail,
+    subscriptionId,
+  })
   if (!userId) return
 
   const customDataObj = readObject(customData)
   const plan = normalizePlan(customDataObj?.plan)
+  const currentProfile = await getProfileForUser(userId)
+  const resolvedCustomerId =
+    customerId ??
+    (typeof currentProfile?.paddle_customer_id === 'string' ? currentProfile.paddle_customer_id : null)
+  const currentSubscriptionId =
+    typeof currentProfile?.paddle_subscription_id === 'string' ? currentProfile.paddle_subscription_id : null
+  const hasPaidRecurringMonthly =
+    !!currentSubscriptionId &&
+    isPaidRecurringStatus(currentProfile?.subscription_status) &&
+    !isLifetimeProfile(currentProfile)
 
-  if (!subscriptionId && plan === 'lifetime') {
+  if (plan === 'lifetime') {
+    if (hasPaidRecurringMonthly) {
+      await cancelPaddleSubscriptionImmediately(currentSubscriptionId, 'upgrade_to_lifetime')
+    }
     await updateProfileBilling(userId, {
       subscription_status: 'lifetime',
       subscription_plan: 'lifetime',
-      paddle_customer_id: customerId,
+      paddle_customer_id: resolvedCustomerId,
       paddle_subscription_id: null,
       subscription_current_period_end: null,
+    })
+    return
+  }
+
+  if (isLifetimeProfile(currentProfile)) {
+    if (subscriptionId) {
+      await cancelPaddleSubscriptionImmediately(subscriptionId, 'monthly_transaction_after_lifetime')
+    }
+    console.log('Ignoring monthly transaction for lifetime account', { userId, subscriptionId })
+    return
+  }
+
+  if (subscriptionId && hasPaidRecurringMonthly && currentSubscriptionId !== subscriptionId) {
+    await cancelPaddleSubscriptionImmediately(subscriptionId, 'duplicate_monthly_transaction')
+    console.log('Ignored duplicate monthly transaction', {
+      userId,
+      canonicalSubscriptionId: currentSubscriptionId,
+      incomingSubscriptionId: subscriptionId,
     })
     return
   }
@@ -127,8 +233,8 @@ const handleTransactionCompleted = async (data: unknown) => {
   // Fallback for recurring transactions before subscription webhook arrives.
   await updateProfileBilling(userId, {
     subscription_status: 'active',
-    subscription_plan: plan,
-    paddle_customer_id: customerId,
+    subscription_plan: 'monthly',
+    paddle_customer_id: resolvedCustomerId,
     paddle_subscription_id: subscriptionId,
   })
 }
@@ -139,22 +245,62 @@ const handleSubscriptionEvent = async (data: unknown) => {
 
   const customData = payload.custom_data
   const customerId = readString(payload, 'customer_id')
+  const subscriptionId = readString(payload, 'id')
   const customer = readObject(payload.customer)
   const customerEmail = customer ? readString(customer, 'email') : null
-  const userId = await resolveUserId({ customData, customerId, email: customerEmail })
+  const userId = await resolveUserId({
+    customData,
+    customerId,
+    email: customerEmail,
+    subscriptionId,
+  })
   if (!userId) return
 
   const customDataObj = readObject(customData)
   const plan = normalizePlan(customDataObj?.plan)
-  const subscriptionId = readString(payload, 'id')
   const status = mapSubscriptionStatus(readString(payload, 'status'))
   const currentBillingPeriod = readObject(payload.current_billing_period)
   const periodEnd = currentBillingPeriod ? readString(currentBillingPeriod, 'ends_at') : null
+  const currentProfile = await getProfileForUser(userId)
+  const resolvedCustomerId =
+    customerId ??
+    (typeof currentProfile?.paddle_customer_id === 'string' ? currentProfile.paddle_customer_id : null)
+  const currentSubscriptionId =
+    typeof currentProfile?.paddle_subscription_id === 'string' ? currentProfile.paddle_subscription_id : null
+  const hasPaidRecurringMonthly =
+    !!currentSubscriptionId &&
+    isPaidRecurringStatus(currentProfile?.subscription_status) &&
+    !isLifetimeProfile(currentProfile)
+
+  if (plan === 'monthly' && isLifetimeProfile(currentProfile)) {
+    if (subscriptionId && status !== 'canceled') {
+      await cancelPaddleSubscriptionImmediately(subscriptionId, 'monthly_subscription_event_after_lifetime')
+    }
+    console.log('Ignoring monthly subscription event for lifetime account', {
+      userId,
+      incomingSubscriptionId: subscriptionId,
+      status,
+    })
+    return
+  }
+
+  if (plan === 'monthly' && subscriptionId && hasPaidRecurringMonthly && currentSubscriptionId !== subscriptionId) {
+    if (status === 'active' || status === 'trialing' || status === 'past_due') {
+      await cancelPaddleSubscriptionImmediately(subscriptionId, 'duplicate_monthly_subscription_event')
+    }
+    console.log('Ignoring non-canonical monthly subscription event', {
+      userId,
+      canonicalSubscriptionId: currentSubscriptionId,
+      incomingSubscriptionId: subscriptionId,
+      status,
+    })
+    return
+  }
 
   await updateProfileBilling(userId, {
     subscription_status: status,
     subscription_plan: plan,
-    paddle_customer_id: customerId,
+    paddle_customer_id: resolvedCustomerId,
     paddle_subscription_id: subscriptionId,
     subscription_current_period_end: periodEnd,
   })

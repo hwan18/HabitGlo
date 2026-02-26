@@ -61,8 +61,16 @@ export function AuthPanel() {
     try {
       setBillingBusy(true)
       setStatus(`Opening ${billingProviderLabel} checkout...`)
-      await startBillingCheckout(plan, { email: user?.email ?? null, userId: user?.id ?? null })
-      setStatus('Checkout opened. Complete payment, then click "Refresh billing status".')
+      const result = await startBillingCheckout(plan, { email: user?.email ?? null, userId: user?.id ?? null })
+      if (result.action === 'checkout_opened') {
+        setStatus('Checkout opened. Complete payment, then click "Refresh billing status".')
+        return
+      }
+      if (result.action === 'portal_opened') {
+        setStatus('You already have an active recurring plan. Billing portal opened instead.')
+        return
+      }
+      setStatus('This account already has lifetime access.')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to start checkout'
       setStatus(message)
@@ -209,9 +217,14 @@ export function AuthPanel() {
                 </>
               )}
               {isPaid && !isLifetime && (
-                <Button size="sm" variant="ghost" onClick={() => void openPortal()} disabled={billingBusy}>
-                  Manage Billing
-                </Button>
+                <>
+                  <Button size="sm" variant="ghost" onClick={() => void handleCheckout('lifetime')} disabled={billingBusy}>
+                    Upgrade to Lifetime
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => void openPortal()} disabled={billingBusy}>
+                    Manage Billing
+                  </Button>
+                </>
               )}
               <Button size="sm" variant="ghost" onClick={() => void refreshBilling()} disabled={billingBusy}>
                 Refresh Billing Status

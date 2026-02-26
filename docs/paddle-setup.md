@@ -38,12 +38,14 @@ Run `supabase.sql` so `profiles` includes billing fields:
 Deploy functions:
 
 ```bash
+npx supabase functions deploy create-paddle-checkout-gate --project-ref <YOUR-PROJECT-REF>
 npx supabase functions deploy create-paddle-portal --project-ref <YOUR-PROJECT-REF>
 npx supabase functions deploy paddle-webhook --project-ref <YOUR-PROJECT-REF> --no-verify-jwt
 ```
 
 Important:
 - `paddle-webhook` must be deployed with `--no-verify-jwt`.
+- Keep `create-paddle-checkout-gate` JWT-protected (default behavior).
 - Keep `create-paddle-portal` JWT-protected (default behavior).
 
 Set function secrets:

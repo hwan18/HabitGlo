@@ -4,11 +4,71 @@ import { startPaddleCheckout } from './paddle'
 
 export type BillingPlan = 'monthly' | 'lifetime'
 export const billingProviderLabel = 'Paddle'
+type CheckoutGateDecision =
+  | { action: 'checkout' }
+  | { action: 'portal'; url: string; reason: 'already_subscribed' }
+  | { action: 'blocked'; reason: 'already_lifetime' }
+
+export type CheckoutStartResult =
+  | { action: 'checkout_opened' }
+  | { action: 'portal_opened' }
+  | { action: 'blocked'; reason: 'already_lifetime' }
 
 const assertSupabase = () => {
   if (!hasSupabase || !supabase) {
     throw new Error('Supabase is not configured')
   }
+}
+
+const getSupabaseEnvValue = (value: unknown, name: string): string => {
+  const normalized = typeof value === 'string' ? value.trim() : ''
+  if (!normalized) {
+    throw new Error(`Missing ${name}`)
+  }
+  return normalized
+}
+
+const getFunctionEndpoint = (functionName: string): { endpoint: string; anonKey: string } => {
+  const supabaseUrl = getSupabaseEnvValue(import.meta.env.VITE_SUPABASE_URL, 'VITE_SUPABASE_URL')
+  const anonKey = getSupabaseEnvValue(import.meta.env.VITE_SUPABASE_ANON_KEY, 'VITE_SUPABASE_ANON_KEY')
+  const endpoint = `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/${functionName}`
+  return { endpoint, anonKey }
+}
+
+const getValidAccessToken = async (): Promise<string> => {
+  assertSupabase()
+
+  // Always refresh once for privileged billing actions to avoid stale JWT edge cases.
+  const { data: refreshedData, error: refreshError } = await supabase!.auth.refreshSession()
+  if (refreshError) {
+    throw new Error(refreshError.message || 'Please sign in again.')
+  }
+
+  const refreshedToken = refreshedData.session?.access_token
+  if (typeof refreshedToken === 'string' && refreshedToken.length > 0) {
+    const { data: userData, error: userError } = await supabase!.auth.getUser(refreshedToken)
+    if (userError || !userData.user) {
+      throw new Error('Please sign in again.')
+    }
+    return refreshedToken
+  }
+
+  const { data: sessionData, error: sessionError } = await supabase!.auth.getSession()
+  if (sessionError) {
+    throw new Error(sessionError.message || 'Failed to read auth session')
+  }
+
+  const sessionToken = sessionData.session?.access_token
+  if (!sessionToken) {
+    throw new Error('Please sign in again.')
+  }
+
+  const { data: userData, error: userError } = await supabase!.auth.getUser(sessionToken)
+  if (userError || !userData.user) {
+    throw new Error('Please sign in again.')
+  }
+
+  return sessionToken
 }
 
 const getUrlFromResponse = (data: unknown): string => {
@@ -19,15 +79,76 @@ const getUrlFromResponse = (data: unknown): string => {
   return url
 }
 
-const createPaddlePortalSession = async (): Promise<string> => {
-  assertSupabase()
-  const { data, error } = await supabase!.functions.invoke('create-paddle-portal', {
-    body: {},
+const callAuthedFunction = async (functionName: string, body: Record<string, unknown>): Promise<unknown> => {
+  const { endpoint, anonKey } = getFunctionEndpoint(functionName)
+  const accessToken = await getValidAccessToken()
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: anonKey,
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(body),
   })
-  if (error) {
-    throw new Error(error.message || 'Failed to create billing portal session')
+
+  const rawText = await response.text()
+  let parsed: unknown = null
+  if (rawText.trim().length > 0) {
+    try {
+      parsed = JSON.parse(rawText)
+    } catch {
+      parsed = rawText
+    }
   }
-  return getUrlFromResponse(data)
+
+  if (!response.ok) {
+    const errorFromJson =
+      (parsed as { error?: unknown; message?: unknown } | null)?.error ??
+      (parsed as { error?: unknown; message?: unknown } | null)?.message
+    const message =
+      typeof errorFromJson === 'string' && errorFromJson.length > 0
+        ? errorFromJson
+        : typeof parsed === 'string' && parsed.length > 0
+          ? parsed
+          : `Edge function request failed (${response.status})`
+    throw new Error(message)
+  }
+
+  return parsed
+}
+
+const createPaddlePortalSession = async (): Promise<string> => {
+  const parsed = await callAuthedFunction('create-paddle-portal', {})
+  return getUrlFromResponse(parsed)
+}
+
+const getCheckoutGateDecision = async (plan: BillingPlan): Promise<CheckoutGateDecision> => {
+  const response = (await callAuthedFunction('create-paddle-checkout-gate', {
+    plan,
+  })) as
+    | { action?: unknown; url?: unknown; reason?: unknown }
+    | null
+    | undefined
+
+  const action = response?.action
+  if (action === 'checkout') {
+    return { action: 'checkout' }
+  }
+  if (
+    action === 'portal' &&
+    typeof response?.url === 'string' &&
+    response.url.length > 0 &&
+    response.reason === 'already_subscribed'
+  ) {
+    return { action: 'portal', url: response.url, reason: 'already_subscribed' }
+  }
+  if (action === 'blocked' && response?.reason === 'already_lifetime') {
+    return { action: 'blocked', reason: 'already_lifetime' }
+  }
+
+  throw new Error('Invalid checkout gate response')
 }
 
 export const openExternalUrl = async (url: string) => {
@@ -43,8 +164,21 @@ export const openExternalUrl = async (url: string) => {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-export const startCheckout = async (plan: BillingPlan, options: { email?: string | null; userId?: string | null }) => {
+export const startCheckout = async (
+  plan: BillingPlan,
+  options: { email?: string | null; userId?: string | null },
+): Promise<CheckoutStartResult> => {
+  const decision = await getCheckoutGateDecision(plan)
+  if (decision.action === 'portal') {
+    await openExternalUrl(decision.url)
+    return { action: 'portal_opened' }
+  }
+  if (decision.action === 'blocked') {
+    return { action: 'blocked', reason: decision.reason }
+  }
+
   await startPaddleCheckout({ plan, email: options.email, userId: options.userId })
+  return { action: 'checkout_opened' }
 }
 
 export const openBillingPortal = async () => {
