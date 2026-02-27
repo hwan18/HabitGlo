@@ -317,37 +317,43 @@
       <!-- Bento Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        <!-- Card 1: Always-On Display (Large) -->
-        <div class="bento-card gradient-border rounded-2xl p-6 md:col-span-2 overflow-hidden">
-          <div class="flex items-start justify-between mb-4">
+        <!-- ROW 1: LED Marquee Hero (full width) -->
+        <div class="bento-card rounded-2xl p-6 md:col-span-2 lg:col-span-3 overflow-hidden glow-box relative" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,90,217,0.2);">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-glow-pink/10 text-glow-pink shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            </div>
             <div>
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-glow-pink/10 text-glow-pink mb-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-              </div>
-              <h3 class="text-lg font-semibold">Always-On Display</h3>
-              <p class="text-sm text-white/50 mt-1">Your reminders scroll across the screen all day. No app to open, no notification to dismiss.</p>
+              <h3 class="text-lg font-semibold">LED Reminder Marquee</h3>
+              <p class="text-sm text-white/40">Your habits scroll across the screen all day &mdash; always visible, never in the way.</p>
             </div>
           </div>
-          <!-- Mini marquee visual -->
-          <div class="rounded-xl bg-black/60 border border-white/5 overflow-hidden h-12 flex items-center mt-2">
-            <div class="marquee-track whitespace-nowrap flex items-center text-lg font-bold tracking-[0.2em]">
-              <span class="text-[#ff3131] mx-4" style="text-shadow: 0 0 10px rgba(255,49,49,0.4)">ONE TASK AT A TIME</span>
-              <span class="text-white/10 mx-1">&bull;</span>
-              <span class="text-[#ffb000] mx-4" style="text-shadow: 0 0 10px rgba(255,176,0,0.4)">BREATHE</span>
-              <span class="text-white/10 mx-1">&bull;</span>
-              <span class="text-[#6bff6b] mx-4" style="text-shadow: 0 0 10px rgba(107,255,107,0.4)">POSTURE CHECK</span>
-              <span class="text-white/10 mx-1">&bull;</span>
-              <span class="text-[#ff3131] mx-4" style="text-shadow: 0 0 10px rgba(255,49,49,0.4)">ONE TASK AT A TIME</span>
-              <span class="text-white/10 mx-1">&bull;</span>
-              <span class="text-[#ffb000] mx-4" style="text-shadow: 0 0 10px rgba(255,176,0,0.4)">BREATHE</span>
-              <span class="text-white/10 mx-1">&bull;</span>
-              <span class="text-[#6bff6b] mx-4" style="text-shadow: 0 0 10px rgba(107,255,107,0.4)">POSTURE CHECK</span>
-              <span class="text-white/10 mx-1">&bull;</span>
+          <div class="rounded-xl bg-black/80 border border-white/10 overflow-hidden h-14 flex items-center mt-4 glow-box">
+            <div class="marquee-track whitespace-nowrap flex items-center text-2xl font-bold tracking-[0.25em]">
+              <span class="text-[#ff3131] mx-6" style="text-shadow: 0 0 14px #ff3131, 0 0 28px rgba(255,49,49,0.3)">ONE TASK AT A TIME</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#ffb000] mx-6" style="text-shadow: 0 0 14px #ffb000, 0 0 28px rgba(255,176,0,0.3)">BREATHE</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#6bff6b] mx-6" style="text-shadow: 0 0 14px #6bff6b, 0 0 28px rgba(107,255,107,0.3)">POSTURE CHECK</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#ff3131] mx-6" style="text-shadow: 0 0 14px #ff3131, 0 0 28px rgba(255,49,49,0.3)">HYDRATE + ELECTROLYTES</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#ffb000] mx-6" style="text-shadow: 0 0 14px #ffb000, 0 0 28px rgba(255,176,0,0.3)">IS THIS DEEP WORK?</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#6bff6b] mx-6" style="text-shadow: 0 0 14px #6bff6b, 0 0 28px rgba(107,255,107,0.3)">SHOULDERS BACK</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#ff3131] mx-6" style="text-shadow: 0 0 14px #ff3131, 0 0 28px rgba(255,49,49,0.3)">ONE TASK AT A TIME</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#ffb000] mx-6" style="text-shadow: 0 0 14px #ffb000, 0 0 28px rgba(255,176,0,0.3)">BREATHE</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
+              <span class="text-[#6bff6b] mx-6" style="text-shadow: 0 0 14px #6bff6b, 0 0 28px rgba(107,255,107,0.3)">POSTURE CHECK</span>
+              <span class="text-[#c83b3b] mx-2">&bull;</span>
             </div>
           </div>
+          <div class="absolute top-0 right-0 w-40 h-40 bg-glow-pink/5 blur-[80px] pointer-events-none rounded-full"></div>
         </div>
 
-        <!-- Card 2: Click-Through Mode -->
+        <!-- ROW 2: Click-Through | Streak Tracking | Habit Packs -->
         <div class="bento-card gradient-border rounded-2xl p-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-glow-blue/10 text-glow-blue mb-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
@@ -360,14 +366,12 @@
           </div>
         </div>
 
-        <!-- Card 3: Streak Tracking -->
         <div class="bento-card gradient-border rounded-2xl p-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 mb-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
           </div>
           <h3 class="text-lg font-semibold mb-1">Streak Tracking</h3>
           <p class="text-sm text-white/50 leading-relaxed">Watch your consistency build day by day. Visible momentum shifts your identity.</p>
-          <!-- Mini streak visual -->
           <div class="flex gap-1 mt-4">
             <div class="h-6 w-6 rounded bg-orange-500/30 flex items-center justify-center text-[9px] text-orange-300">M</div>
             <div class="h-6 w-6 rounded bg-orange-500/30 flex items-center justify-center text-[9px] text-orange-300">T</div>
@@ -379,7 +383,6 @@
           </div>
         </div>
 
-        <!-- Card 4: Habit Packs -->
         <div class="bento-card gradient-border rounded-2xl p-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-glow-green/10 text-glow-green mb-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
@@ -394,63 +397,27 @@
           </div>
         </div>
 
-        <!-- Card 5: Color Palettes (Large) -->
-        <div class="bento-card gradient-border rounded-2xl p-6 md:col-span-2">
-          <div class="flex items-start gap-6">
-            <div>
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 mb-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
-              </div>
-              <h3 class="text-lg font-semibold mb-1">10 Color Palettes</h3>
-              <p class="text-sm text-white/50 leading-relaxed">From Synthwave to Minimal. Make your reminder system look like it belongs to you.</p>
-            </div>
-            <!-- Palette swatches -->
-            <div class="hidden sm:grid grid-cols-5 gap-2 shrink-0">
-              <div class="flex flex-col items-center gap-1">
-                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#ff3131;animation-delay:0s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#ffb000;animation-delay:0.2s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#6bff6b;animation-delay:0.4s"></span></div>
-                <span class="text-[9px] text-white/40">Classic</span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#ff5ad9;animation-delay:0.1s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#36d2ff;animation-delay:0.3s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#f5ff6b;animation-delay:0.5s"></span></div>
-                <span class="text-[9px] text-white/40">Synthwave</span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#64B5F6;animation-delay:0.2s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#90CAF9;animation-delay:0.4s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#BBDEFB;animation-delay:0.6s"></span></div>
-                <span class="text-[9px] text-white/40">Focus</span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#81C784;animation-delay:0.3s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#A5D6A7;animation-delay:0.5s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#C8E6C9;animation-delay:0.7s"></span></div>
-                <span class="text-[9px] text-white/40">Forest</span>
-              </div>
-              <div class="flex flex-col items-center gap-1">
-                <div class="flex gap-1"><span class="h-5 w-5 rounded-full anim-float" style="background:#B39DDB;animation-delay:0.4s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#CE93D8;animation-delay:0.6s"></span><span class="h-5 w-5 rounded-full anim-float" style="background:#E1BEE7;animation-delay:0.8s"></span></div>
-                <span class="text-[9px] text-white/40">Lavender</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 6: Cloud Sync -->
+        <!-- ROW 3: Color Palettes | Leaderboard | Desktop App + Sync -->
         <div class="bento-card gradient-border rounded-2xl p-6">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 mb-3">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
           </div>
-          <h3 class="text-lg font-semibold mb-1">Cloud Sync</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Habits and streaks follow you across devices. Never lose a day of progress.</p>
-          <div class="flex items-center gap-2 mt-4">
-            <div class="anim-pulse h-2 w-2 rounded-full bg-glow-green"></div>
-            <span class="text-[11px] text-white/30 tracking-wide">SYNCED</span>
+          <h3 class="text-lg font-semibold mb-1">Color Palettes</h3>
+          <p class="text-sm text-white/50 leading-relaxed mb-3">Make it yours. 10 themes to match your vibe.</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2"><div class="flex gap-1"><span class="h-4 w-4 rounded-full" style="background:#ff3131"></span><span class="h-4 w-4 rounded-full" style="background:#ffb000"></span><span class="h-4 w-4 rounded-full" style="background:#6bff6b"></span></div><span class="text-[10px] text-white/40">Classic</span></div>
+            <div class="flex items-center gap-2"><div class="flex gap-1"><span class="h-4 w-4 rounded-full" style="background:#ff5ad9"></span><span class="h-4 w-4 rounded-full" style="background:#36d2ff"></span><span class="h-4 w-4 rounded-full" style="background:#f5ff6b"></span></div><span class="text-[10px] text-white/40">Synthwave</span></div>
+            <div class="flex items-center gap-2"><div class="flex gap-1"><span class="h-4 w-4 rounded-full" style="background:#81C784"></span><span class="h-4 w-4 rounded-full" style="background:#A5D6A7"></span><span class="h-4 w-4 rounded-full" style="background:#C8E6C9"></span></div><span class="text-[10px] text-white/40">Forest</span></div>
           </div>
+          <p class="text-[10px] text-white/25 mt-2">+7 more including Ocean, Lavender &amp; Night Owl</p>
         </div>
 
-        <!-- Card 7: Leaderboard -->
         <div class="bento-card gradient-border rounded-2xl p-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-400 mb-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
           </div>
           <h3 class="text-lg font-semibold mb-1">Leaderboard</h3>
           <p class="text-sm text-white/50 leading-relaxed">Opt-in accountability with others. Or stay private. Your discipline, your choice.</p>
-          <!-- Mini leaderboard visual -->
           <div class="mt-4 space-y-1.5">
             <div class="flex items-center gap-2 text-[11px]">
               <span class="text-yellow-400 font-bold w-4">1</span>
@@ -470,18 +437,22 @@
           </div>
         </div>
 
-        <!-- Card 8: Windows Desktop App -->
         <div class="bento-card gradient-border rounded-2xl p-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 mb-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
           </div>
           <h3 class="text-lg font-semibold mb-1">Desktop App</h3>
-          <p class="text-sm text-white/50 leading-relaxed">Native Windows app that runs all day. Always on top, always reminding.</p>
-          <div class="mt-4 flex items-center gap-2">
+          <p class="text-sm text-white/50 leading-relaxed">Native Windows app with cloud sync built in. Always on top, always reminding.</p>
+          <div class="mt-4 flex flex-wrap items-center gap-2">
             <span class="text-[10px] px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20">Windows 10+</span>
             <span class="text-[10px] px-2 py-0.5 rounded bg-white/5 text-white/30 border border-white/10">2 min setup</span>
           </div>
+          <div class="flex items-center gap-2 mt-3">
+            <div class="anim-pulse h-2 w-2 rounded-full bg-glow-green"></div>
+            <span class="text-[11px] text-white/30 tracking-wide">CLOUD SYNCED</span>
+          </div>
         </div>
+
       </div>
     </div>
   </section>

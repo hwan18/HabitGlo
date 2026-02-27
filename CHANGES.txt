@@ -9,10 +9,11 @@ Version history:
   V3 - Made habit packs compact (no habit tags), trimmed palettes to first row
   V4 - Emotional copy rewrite + testimonials section + final CTA pull-quote + nav "Reviews" link
   V5 - Pain-point section, bento grid features, removed old Customize section, cleaned nav
+  V6 - Fix bento grid: full-width marquee hero, compact palettes, merge Cloud Sync + Desktop App (Feb 25, 2026)
 
 ---
 
-CURRENT STATE (Version 5) - Page Flow:
+CURRENT STATE (Version 6) - Page Flow:
   Nav -> Hero -> Social Proof Bar -> Pain Point -> Bento Features -> Testimonials -> Pricing -> FAQ -> Final CTA -> Footer
 
 ---
@@ -33,18 +34,14 @@ CHANGE 2: New Pain-Point Section (replaced old Features/How It Works)
   - Right side: "Your typical day" visual timeline (green -> red)
   - Bottom: Red callout stat about phone checking 96 times/day
 
-CHANGE 3: New Bento Grid Features Section
+CHANGE 3: Bento Grid Features Section (V6 - fixed layout)
   - id="features"
   - Heading: "Everything you need to stay on track."
-  - 8 feature cards in bento layout with mini visual demos:
-    1. Always-On Display (wide) - live scrolling marquee inside
-    2. Click-Through Mode - pulsing "NON-BLOCKING" indicator
-    3. Streak Tracking - mini weekly streak calendar
-    4. Habit Packs - colored pack name tags
-    5. 10 Color Palettes (wide) - floating animated swatches
-    6. Cloud Sync - pulsing "SYNCED" indicator
-    7. Leaderboard - mini progress bars
-    8. Desktop App - platform badges
+  - 7 feature cards in clean 3-row bento layout:
+    Row 1: LED Reminder Marquee (full-width hero, col-span-3, glow-box border, h-14 marquee)
+    Row 2: Click-Through Mode | Streak Tracking | Habit Packs
+    Row 3: Color Palettes (compact 1-col, 3 swatches + "+7 more") | Leaderboard | Desktop App + Cloud Sync (merged)
+  - Every row fills all 3 columns, zero gaps
   - CSS animations: float, pulse-soft, slide-in-right, hover lift
 
 CHANGE 4: Removed Old Customize Section

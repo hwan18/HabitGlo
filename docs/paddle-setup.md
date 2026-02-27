@@ -2,6 +2,9 @@
 
 This checklist covers what to configure in Paddle and what to configure in this repo.
 
+Related runbook:
+- `docs/lifetime-tracking-minimal.md` for how lifetime accounts are tracked without extra schema.
+
 ## 1) Create products and prices in Paddle (Sandbox first)
 
 In Paddle:
@@ -123,14 +126,16 @@ Website checkout routes:
 - `/checkout/monthly.html`
 - `/checkout/lifetime.html`
 
-These pages now support optional query params for metadata mapping:
+These pages require an authenticated account-link URL for metadata mapping:
 - `uid` (Supabase user UUID, also accepts `user_id`/`supabase_user_id`)
-- `email` (prefill checkout email)
+- `email` (recommended; prefill checkout email)
 - `source` (stored as `custom_data.checkout_source`)
 
 Example:
 
 `/checkout/monthly.html?uid=<SUPABASE-USER-UUID>&email=user@example.com&source=app`
+
+If `uid` is missing or invalid, checkout is intentionally blocked on static pages.
 
 ## 8) Smoke test (sandbox, then production)
 
@@ -143,3 +148,13 @@ Example:
    - `paddle_customer_id`
    - `paddle_subscription_id` (monthly flow)
 5. Repeat after switching to production values.
+
+## 9) Troubleshooting: payment completed but profile not updated
+
+If Paddle shows payment completed but your app/Supabase account does not update:
+
+1. Confirm checkout URL included a valid `uid` query param.
+2. In Paddle notification payload, confirm:
+   - `data.custom_data.supabase_user_id` exists and matches your Supabase user ID.
+3. Confirm webhook delivery is `200` for the real event (not simulation-only payload).
+4. Query `profiles` by that `user_id` and verify billing fields updated.
