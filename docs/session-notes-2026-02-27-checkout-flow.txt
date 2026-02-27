@@ -1,0 +1,20 @@
+Session Notes - 2026-02-27 (Website Checkout Flow)
+
+Summary
+- Investigated why pricing/landing buttons routed to /app?checkout=monthly or /app?checkout=lifetime and showed browser demo.
+- Confirmed root cause: /app is the SPA demo route in browser mode (non-Tauri), and checkout query params are not handled there.
+
+What was changed during the session
+- Tested a CTA flow that routed pricing/landing buttons to /app?checkout=... (for sign-in-first behavior).
+- Verified this caused users to land in browser demo instead of checkout.
+- Rolled back those CTA link changes.
+
+Net result in current code
+- Pricing and landing CTAs point to direct checkout pages again:
+  - /checkout/monthly.html
+  - /checkout/lifetime.html
+- No unresolved code changes are left from the temporary /app?checkout routing attempt.
+
+Current branch state at note time
+- Branch: sandbox-paddle-e2e
+- Working tree: clean before adding this note
