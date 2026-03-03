@@ -187,7 +187,8 @@ const toLocalDateString = (isoString: string | null | undefined): string | null 
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// Compute streak based on last_done_at
+// Compute streak based on unique daily logs.
+// Missing days do not reset streak; each new logged day increments it.
 export const computeStreak = (
   lastDoneAt: string | null | undefined,
   currentStreak: number = 0,
@@ -202,20 +203,8 @@ export const computeStreak = (
     return { streak_current: currentStreak, streak_best: bestStreak, alreadyLoggedToday: true }
   }
 
-  // Check if last log was yesterday
-  const yesterday = new Date(now)
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = toLocalDateString(yesterday.toISOString())
-
-  let newStreak: number
-  if (lastDoneStr === yesterdayStr) {
-    // Continue streak
-    newStreak = currentStreak + 1
-  } else {
-    // Reset streak (first log or missed days)
-    newStreak = 1
-  }
-
+  const normalizedCurrentStreak = Math.max(0, currentStreak)
+  const newStreak = normalizedCurrentStreak + 1
   const newBest = Math.max(bestStreak, newStreak)
   return { streak_current: newStreak, streak_best: newBest, alreadyLoggedToday: false }
 }

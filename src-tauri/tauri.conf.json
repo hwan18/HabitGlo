@@ -40,6 +40,10 @@
       "identifier": "com.habitglo.app",
       "active": true,
       "targets": "msi",
+      "windows": {
+        "digestAlgorithm": "sha256",
+        "signCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/sign-windows.ps1 -TargetPath \"%1\""
+      },
       "icon": [
         "icons/icon.ico",
         "icons/icon.png"

@@ -59,7 +59,7 @@ const getMilestoneBadge = (streak: number): string | null => {
 }
 
 const getStreakTooltip = (streak: number): string =>
-  streak === 1 ? 'Current streak: 1 consecutive day' : `Current streak: ${streak} consecutive days`
+  streak === 1 ? 'Current streak: 1 logged day' : `Current streak: ${streak} logged days`
 
 const HabitCard = ({ habit }: { habit: Habit }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: habit.id })
