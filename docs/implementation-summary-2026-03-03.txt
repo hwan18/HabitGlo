@@ -1,0 +1,45 @@
+Implemented end-to-end with one necessary adjustment: this Tauri v1 toolchain produces a Windows MSI bundle (not NSIS setup.exe), so download metadata was finalized to the real MSI artifact.
+
+Completed
+
+Download config finalized in config.js:
+version: 0.1.0
+fileName: HabitGlo_0.1.0_x64_en-US.msi
+HabitGlo_0.1.0_x64_en-US.msi
+releasePageUrl: https://github.com/hwan18/HabitGlo/releases/latest
+sha256: 03C32185DF55208008CAABA55F03C4A43140F7042F32F9D5F376E75F01BEDC3A
+Built installer and generated checksum:
+Artifact: HabitGlo_0.1.0_x64_en-US.msi
+Size: 5,980,160 bytes
+SHA-256: 03C32185DF55208008CAABA55F03C4A43140F7042F32F9D5F376E75F01BEDC3A
+Created GitHub release and uploaded artifact:
+Tag: v0.1.0
+Release URL: https://github.com/hwan18/HabitGlo/releases/tag/v0.1.0
+Asset URL matches config direct URL.
+Fixed build/lint blockers and continued plan:
+Ignore generated Tauri target files in ESLint: eslint.config.js
+Fixed BulkImport unused var: BulkImport.tsx
+Removed any in DB mapping via typed row: db.ts
+Refactored marquee default logic to satisfy React hooks lint rules: Marquee.tsx
+Implemented Ctrl/Alt + drag overlay movement: OverlayApp.tsx
+Marked backlog item done: backlog.md
+Enabled reliable Tauri bundling:
+Added custom-protocol feature: Cargo.toml
+Enabled bundle with MSI target/icons: tauri.conf.json
+Validation run
+
+npm run lint passes.
+npm run build passes.
+GitHub URL checks:
+Direct asset URL returns 302 to GitHub release asset CDN.
+releases/latest returns 302 to v0.1.0.
+Static download-page wiring verified (directUrl branch, fallback branch, plan greeting logic) in windows.html.
+Not fully executable in this session
+
+Live “deployed site” HTTP smoke (specific domain) wasn’t run because no deployment URL was provided and background preview process launching is blocked by policy here.
+Production billing E2E was not executed; .env currently shows Paddle client token is test_* (sandbox), not live.
+Natural next steps:
+
+Deploy current repo changes so windows.html serves the updated MSI metadata.
+If you require .exe instead of .msi, I can do a dedicated pass to migrate/toolchain-adjust for NSIS output.
+Switch billing env to production values and run the live billing E2E checklist.

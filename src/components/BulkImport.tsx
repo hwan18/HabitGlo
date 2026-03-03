@@ -14,7 +14,7 @@ export function BulkImport() {
         try {
           const arr = JSON.parse(text)
           if (Array.isArray(arr)) importEntries(arr)
-        } catch (err) {
+        } catch {
           setMessage('Invalid JSON')
         }
       })

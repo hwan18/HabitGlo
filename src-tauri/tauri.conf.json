@@ -38,7 +38,12 @@
     ],
     "bundle": {
       "identifier": "com.habitglo.app",
-      "icon": []
+      "active": true,
+      "targets": "msi",
+      "icon": [
+        "icons/icon.ico",
+        "icons/icon.png"
+      ]
     },
     "security": {
       "csp": "default-src 'self' tauri://* data: blob: filesystem: ws: http://localhost:* https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://* ws://localhost:*"

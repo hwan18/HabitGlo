@@ -66,6 +66,8 @@ export default function OverlayApp() {
 
   const handleMouseDown = async (e: React.MouseEvent) => {
     if (overlay.clickThrough) return
+    if (e.button !== 0) return
+    if (!e.ctrlKey && !e.altKey) return
     // Only start dragging if clicking on the background, not on interactive elements
     if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.cursor-move')) {
       const overlayWindow = WebviewWindow.getByLabel('overlay')
@@ -76,6 +78,7 @@ export default function OverlayApp() {
   return (
     <div
       className="h-screen w-screen bg-black/30 p-2 cursor-move"
+      title="Hold Ctrl or Alt, then drag to move"
       onMouseDown={handleMouseDown}
     >
       <div className="h-full rounded-xl border border-white/10 shadow-2xl shadow-black/60">

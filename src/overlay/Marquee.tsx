@@ -11,11 +11,21 @@ export function Marquee() {
   const x = useMotionValue(0)
   const copyRef = useRef<HTMLSpanElement | null>(null)
   const [copyWidth, setCopyWidth] = useState(0)
-  const [showDefault, setShowDefault] = useState(false)
+  const [showDefault] = useState(() => {
+    if (!isTauri) return true
+    if (typeof window === 'undefined') return false
+    const key = 'habitglo-has-opened'
+    const alreadyOpened = window.localStorage.getItem(key)
+    if (!alreadyOpened) {
+      window.localStorage.setItem(key, '1')
+      return true
+    }
+    return false
+  })
   const showSeparator = theme.showSeparator ?? true
   const separator = showSeparator ? '\u00A0\u00A0•\u00A0\u00A0' : '\u00A0\u00A0\u00A0\u00A0'
   const defaultMessage = 'Add your first habit/reminder'
-  const shouldShowDefault = habits.length === 0 && (!isTauri || showDefault)
+  const shouldShowDefault = habits.length === 0 && showDefault
   const segments = useMemo(() => {
     if (habits.length > 0) {
       return habits
@@ -31,26 +41,6 @@ export function Marquee() {
     () => segments.map((segment) => ({ ...segment, runs: splitScriptRuns(segment.text) })),
     [segments],
   )
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (!isTauri) {
-      setShowDefault(true)
-      return
-    }
-    const key = 'habitglo-has-opened'
-    const alreadyOpened = window.localStorage.getItem(key)
-    if (!alreadyOpened) {
-      setShowDefault(true)
-      window.localStorage.setItem(key, '1')
-    }
-  }, [])
-
-  useEffect(() => {
-    if (habits.length > 0 && showDefault) {
-      setShowDefault(false)
-    }
-  }, [habits.length, showDefault])
 
   useEffect(() => {
     const el = copyRef.current

@@ -59,6 +59,21 @@ const writeLocal = (habits: Habit[]) => {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(habits))
 }
 
+type HabitRow = {
+  id: string
+  user_id: string
+  text: string
+  color: string | null
+  color_index: number | null
+  is_active: boolean
+  priority: number
+  created_at: string | null
+  last_done_at: string | null
+  streak_current: number | null
+  streak_best: number | null
+  show_on_leaderboard: boolean | null
+}
+
 export const listHabits = async (userId?: string): Promise<Habit[]> => {
   if (isSupabaseReady() && userId) {
     const { data, error } = await supabase!
@@ -67,9 +82,13 @@ export const listHabits = async (userId?: string): Promise<Habit[]> => {
       .eq('user_id', userId)
       .order('priority', { ascending: true })
     if (error) throw error
-    return (data ?? []).map((h: any) => ({
+    return ((data ?? []) as HabitRow[]).map((h) => ({
       ...h,
-      colorIndex: h.color_index ?? h.colorIndex ?? 0,
+      color: h.color ?? '#ff3131',
+      colorIndex: h.color_index ?? 0,
+      streak_current: h.streak_current ?? 0,
+      streak_best: h.streak_best ?? 0,
+      show_on_leaderboard: h.show_on_leaderboard ?? false,
     })) as Habit[]
   }
   return readLocal()
