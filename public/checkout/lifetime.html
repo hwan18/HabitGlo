@@ -87,6 +87,7 @@
     <p id="status" class="status">Loading checkout configuration...</p>
     <div class="actions">
       <a id="checkout-link" class="primary" href="#">Continue to Secure Checkout</a>
+      <a id="purchase-link" href="/purchase?plan=lifetime&source=website_checkout">Sign In First</a>
       <a href="/download/windows.html?plan=lifetime">Skip to Download Page</a>
       <a href="/pricing">Back to Pricing</a>
     </div>
@@ -124,6 +125,7 @@
       const rawEmail = queryParams.get('email') || '';
       const rawSource = queryParams.get('source') || '';
       const checkoutLink = document.getElementById('checkout-link');
+      const purchaseLink = document.getElementById('purchase-link');
       const status = document.getElementById('status');
       const scriptUrl = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
@@ -159,10 +161,20 @@
         ? toMessageText(rawUserId).toLowerCase()
         : '';
       const customerEmail = toMessageText(rawEmail);
-      const checkoutSource = toMessageText(rawSource) || 'website';
+      const checkoutSource = toMessageText(rawSource) || 'website_checkout';
+
+      if (purchaseLink) {
+        const purchaseParams = new URLSearchParams({ plan: plan, source: checkoutSource });
+        purchaseLink.href = '/purchase?' + purchaseParams.toString();
+      }
 
       if (toMessageText(rawUserId) && !userId) {
         console.warn('[Paddle checkout] Ignoring invalid supabase_user_id query parameter.');
+      }
+
+      if (!userId) {
+        disableCheckout('Sign in first to link purchase to your account.');
+        return;
       }
 
       const getEventName = function (eventData) {
@@ -318,7 +330,7 @@
             customData: {
               plan: plan,
               checkout_source: checkoutSource,
-              ...(userId ? { supabase_user_id: userId } : {}),
+              supabase_user_id: userId,
             },
             settings: checkoutSettings,
             ...(customerEmail ? { customer: { email: customerEmail } } : {}),

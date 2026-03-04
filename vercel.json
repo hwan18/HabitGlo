@@ -13,6 +13,10 @@
       "dest": "/pricing.html"
     },
     {
+      "src": "^/purchase/?$",
+      "dest": "/purchase.html"
+    },
+    {
       "src": "^/terms/?$",
       "dest": "/legal/terms.html"
     },

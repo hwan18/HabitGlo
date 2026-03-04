@@ -1,5 +1,10 @@
 ;(function () {
   window.HABITGLO_WEBSITE_CONFIG = {
+    supabase: {
+      // Supabase project URL and publishable anon key for website auth flows.
+      url: 'https://bgsmwattqizqnobkdfqi.supabase.co',
+      anonKey: 'sb_publishable_rpqjoDOjxYH77IEzMxkKww_dnXkzhSs',
+    },
     paddle: {
       // "sandbox" for testing, "production" for live.
       environment: 'sandbox',

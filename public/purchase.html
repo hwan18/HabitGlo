@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HabitGlo Purchase</title>
+  <script src="/download/config.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #06070c;
+      --panel: #13182a;
+      --border: #2b3550;
+      --text: #f1f4ff;
+      --muted: #a9b5d8;
+      --pink: #ff5ad9;
+      --blue: #36d2ff;
+      --green: #6bff6b;
+      --warn-bg: #2f2512;
+      --warn-border: #6f5a23;
+      --warn-text: #ffe4a6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, #1a1031 0%, var(--bg) 52%);
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      color: var(--text);
+      padding: 24px;
+    }
+    .card {
+      width: min(760px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #171d33, var(--panel));
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.75rem;
+    }
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .mode-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .mode-btn {
+      border: 1px solid #344261;
+      background: #111a2c;
+      color: #e6ecff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      border: none;
+      color: #040509;
+      background: linear-gradient(120deg, var(--pink), var(--blue));
+    }
+    .form {
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    input {
+      width: 100%;
+      border: 1px solid #344261;
+      background: #0d1324;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+    }
+    .submit {
+      border: none;
+      color: #040509;
+      background: linear-gradient(120deg, var(--pink), var(--blue));
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .submit[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 12px;
+      border: 1px solid #2d3552;
+      border-radius: 10px;
+      background: #0f1426;
+      padding: 10px 12px;
+      color: #d4dbf7;
+      font-size: 0.95rem;
+    }
+    .status.warn {
+      border-color: var(--warn-border);
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    a {
+      text-decoration: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      border: 1px solid #344261;
+      color: #e6ecff;
+      font-weight: 600;
+      background: #111a2c;
+    }
+    code {
+      background: #0d1120;
+      border: 1px solid #2a2f42;
+      border-radius: 6px;
+      padding: 2px 6px;
+      color: #d7deff;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1 id="heading">Sign In to Continue</h1>
+    <p id="subtext">Authenticate your HabitGlo account to link this purchase to the correct desktop account.</p>
+    <div class="mode-row">
+      <button id="mode-login" class="mode-btn active" type="button">Sign In</button>
+      <button id="mode-signup" class="mode-btn" type="button">Sign Up</button>
+      <button id="mode-magic" class="mode-btn" type="button">Magic Link</button>
+    </div>
+    <form id="auth-form" class="form">
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+      <input id="password" type="password" placeholder="password" autocomplete="current-password" />
+      <button id="submit" class="submit" type="submit">Sign In and Continue</button>
+    </form>
+    <p id="status" class="status">Preparing secure checkout...</p>
+    <div class="actions">
+      <a href="/pricing">Back to Pricing</a>
+      <a href="/download/windows.html">Download Desktop App</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+
+    (function () {
+      const heading = document.getElementById('heading')
+      const subtext = document.getElementById('subtext')
+      const status = document.getElementById('status')
+      const authForm = document.getElementById('auth-form')
+      const emailInput = document.getElementById('email')
+      const passwordInput = document.getElementById('password')
+      const submitButton = document.getElementById('submit')
+      const modeLogin = document.getElementById('mode-login')
+      const modeSignup = document.getElementById('mode-signup')
+      const modeMagic = document.getElementById('mode-magic')
+
+      const queryParams = new URLSearchParams(window.location.search)
+      const requestedPlan = String(queryParams.get('plan') || '').toLowerCase()
+      const source = (queryParams.get('source') || 'website').trim() || 'website'
+      const validPlan = requestedPlan === 'monthly' || requestedPlan === 'lifetime' ? requestedPlan : null
+      let mode = 'login'
+      let busy = false
+      let hasRedirected = false
+
+      const setWarning = (message) => {
+        status.classList.add('warn')
+        status.textContent = message
+      }
+
+      const setStatus = (message) => {
+        status.classList.remove('warn')
+        status.textContent = message
+      }
+
+      const setBusy = (nextBusy) => {
+        busy = nextBusy
+        submitButton.disabled = nextBusy
+      }
+
+      const getPlanLabel = () => {
+        if (validPlan === 'monthly') return 'monthly plan'
+        if (validPlan === 'lifetime') return 'lifetime plan'
+        return 'selected plan'
+      }
+
+      const getReturnUrl = () => {
+        const params = new URLSearchParams({ plan: validPlan, source })
+        return `${window.location.origin}/purchase?${params.toString()}`
+      }
+
+      const getCheckoutUrl = (user) => {
+        const params = new URLSearchParams({ uid: user.id, source })
+        if (user.email) {
+          params.set('email', user.email)
+        }
+        return `/checkout/${validPlan}.html?${params.toString()}`
+      }
+
+      const redirectToCheckout = (user) => {
+        if (!user || hasRedirected) return
+        hasRedirected = true
+        setStatus('Signed in. Redirecting to secure checkout...')
+        window.location.replace(getCheckoutUrl(user))
+      }
+
+      const setMode = (nextMode) => {
+        mode = nextMode
+        modeLogin.classList.toggle('active', mode === 'login')
+        modeSignup.classList.toggle('active', mode === 'signup')
+        modeMagic.classList.toggle('active', mode === 'magic')
+        const isMagic = mode === 'magic'
+        passwordInput.style.display = isMagic ? 'none' : 'block'
+        passwordInput.required = !isMagic
+        submitButton.textContent =
+          mode === 'login'
+            ? 'Sign In and Continue'
+            : mode === 'signup'
+              ? 'Create Account and Continue'
+              : 'Send Magic Link'
+      }
+
+      if (!validPlan) {
+        heading.textContent = 'Plan Missing'
+        subtext.textContent = 'Open this page from pricing with a valid plan query.'
+        authForm.style.display = 'none'
+        setWarning('Missing or invalid plan. Use /purchase?plan=monthly or /purchase?plan=lifetime.')
+        return
+      }
+
+      heading.textContent = `Sign In for ${getPlanLabel().replace(/^./, (v) => v.toUpperCase())}`
+      subtext.textContent = `Authenticate your HabitGlo account, then continue to ${getPlanLabel()} checkout.`
+
+      const config = window.HABITGLO_WEBSITE_CONFIG || {}
+      const supabaseConfig = config.supabase && typeof config.supabase === 'object' ? config.supabase : {}
+      const supabaseUrl =
+        typeof supabaseConfig.url === 'string' ? supabaseConfig.url.trim() : ''
+      const supabaseAnonKey =
+        typeof supabaseConfig.anonKey === 'string' ? supabaseConfig.anonKey.trim() : ''
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        authForm.style.display = 'none'
+        setWarning('Missing Supabase config in /download/config.js. Set supabase.url and supabase.anonKey.')
+        return
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+      })
+
+      modeLogin.addEventListener('click', () => setMode('login'))
+      modeSignup.addEventListener('click', () => setMode('signup'))
+      modeMagic.addEventListener('click', () => setMode('magic'))
+      setMode('login')
+
+      supabase.auth.onAuthStateChange((event, session) => {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && session.user) {
+          redirectToCheckout(session.user)
+        }
+      })
+
+      authForm.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        if (busy) return
+
+        const email = String(emailInput.value || '').trim()
+        const password = String(passwordInput.value || '')
+        if (!email) {
+          setWarning('Email is required.')
+          return
+        }
+
+        try {
+          setBusy(true)
+          if (mode === 'login') {
+            setStatus('Signing in...')
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+            if (error) {
+              setWarning(error.message)
+              return
+            }
+            if (data && data.user) {
+              redirectToCheckout(data.user)
+              return
+            }
+            setStatus('Sign-in succeeded. Redirecting...')
+            return
+          }
+
+          if (mode === 'signup') {
+            setStatus('Creating account...')
+            const { data, error } = await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                emailRedirectTo: getReturnUrl(),
+              },
+            })
+            if (error) {
+              setWarning(error.message)
+              return
+            }
+            if (data && data.user && data.session) {
+              redirectToCheckout(data.user)
+              return
+            }
+            setStatus('Account created. Check your email to confirm, then return here to continue.')
+            return
+          }
+
+          setStatus('Sending magic link...')
+          const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              emailRedirectTo: getReturnUrl(),
+            },
+          })
+          if (error) {
+            setWarning(error.message)
+            return
+          }
+          setStatus('Magic link sent. Open your email to continue.')
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Authentication failed'
+          setWarning(message)
+        } finally {
+          setBusy(false)
+        }
+      })
+
+      ;(async () => {
+        setStatus('Checking current session...')
+        const { data, error } = await supabase.auth.getSession()
+        if (error) {
+          setWarning(error.message)
+          return
+        }
+        if (data && data.session && data.session.user) {
+          redirectToCheckout(data.session.user)
+          return
+        }
+        setStatus('Sign in to continue to checkout.')
+      })()
+    })()
+  </script>
+</body>
+</html>

@@ -112,6 +112,10 @@ If checkout starts on `www`, that exact subdomain must be approved.
 Edit `public/download/config.js`:
 
 ```js
+supabase: {
+  url: 'https://<PROJECT-REF>.supabase.co',
+  anonKey: 'sb_publishable_...',
+},
 paddle: {
   environment: 'sandbox', // or 'production'
   clientToken: 'test_...', // use live_... in production
@@ -122,7 +126,11 @@ paddle: {
 }
 ```
 
-Website checkout routes:
+Website purchase should start at:
+- `/purchase?plan=monthly`
+- `/purchase?plan=lifetime`
+
+`/purchase` signs users in, then redirects to account-linked checkout routes:
 - `/checkout/monthly.html`
 - `/checkout/lifetime.html`
 
@@ -140,20 +148,21 @@ If `uid` is missing or invalid, checkout is intentionally blocked on static page
 ## 8) Smoke test (sandbox, then production)
 
 1. Start with sandbox token + sandbox price IDs.
-2. Complete a monthly checkout and a lifetime checkout.
-3. Verify Paddle sends webhook events successfully.
-4. In Supabase `profiles`, confirm:
+2. Open `/purchase?plan=monthly`, sign in, and confirm redirect to `/checkout/monthly.html?uid=...`.
+3. Complete a monthly checkout and a lifetime checkout.
+4. Verify Paddle sends webhook events successfully.
+5. In Supabase `profiles`, confirm:
    - `subscription_status`
    - `subscription_plan`
    - `paddle_customer_id`
    - `paddle_subscription_id` (monthly flow)
-5. Repeat after switching to production values.
+6. Repeat after switching to production values.
 
 ## 9) Troubleshooting: payment completed but profile not updated
 
 If Paddle shows payment completed but your app/Supabase account does not update:
 
-1. Confirm checkout URL included a valid `uid` query param.
+1. Confirm checkout was launched through `/purchase` and checkout URL included a valid `uid` query param.
 2. In Paddle notification payload, confirm:
    - `data.custom_data.supabase_user_id` exists and matches your Supabase user ID.
 3. Confirm webhook delivery is `200` for the real event (not simulation-only payload).

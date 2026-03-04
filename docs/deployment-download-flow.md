@@ -3,9 +3,10 @@
 This repo now supports a static deployment flow:
 
 1. `landing.html` pricing buttons
-2. `/checkout/monthly.html` or `/checkout/lifetime.html`
-3. `/download/windows.html`
-4. installer URL or release page
+2. `/purchase?plan=monthly|lifetime` (web auth gate)
+3. `/checkout/monthly.html` or `/checkout/lifetime.html` (account-linked)
+4. `/download/windows.html`
+5. installer URL or release page
 
 ## 1) Configure checkout and download values
 
@@ -13,6 +14,8 @@ Edit `public/download/config.js` before each deployment.
 
 Required fields:
 
+- `supabase.url` (for website login-first checkout gate)
+- `supabase.anonKey` (for website login-first checkout gate)
 - `paddle.environment` (`sandbox` or `production`)
 - `paddle.clientToken`
 - `paddle.prices.monthly`
@@ -26,31 +29,29 @@ Optional but recommended:
 - `download.windows.sha256`
 - `download.windows.releasePageUrl`
 
-## 2) Paddle setup
+## 2) Login-first checkout flow
 
-Set your Paddle values in:
+Website purchase should start at:
 
-- `paddle.environment`
-- `paddle.clientToken`
-- `paddle.prices.monthly`
-- `paddle.prices.lifetime`
+- `/purchase?plan=monthly`
+- `/purchase?plan=lifetime`
 
-The checkout pages open Paddle directly:
+`/purchase` signs users in, then redirects to account-linked checkout routes:
 
 - `/checkout/monthly.html`
 - `/checkout/lifetime.html`
 
-Required query params for account-linked checkout:
+Required query params on checkout routes:
 
 - `uid` (or `user_id` / `supabase_user_id`): Supabase user UUID
 - `email`: recommended, prefill checkout email
 - `source`: stored as checkout source metadata
 
-Example:
+Example linked checkout URL:
 
 - `/checkout/monthly.html?uid=<SUPABASE-USER-UUID>&email=user@example.com&source=app`
 
-If `uid` is missing or invalid, checkout is blocked on static pages.
+If `uid` is missing or invalid, checkout is blocked.
 
 ## 3) Release process
 
