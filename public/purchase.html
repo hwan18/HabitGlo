@@ -3,170 +3,371 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HabitGlo Purchase</title>
+  <title>HabitGlo – Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="/download/config.js"></script>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #06070c;
-      --panel: #13182a;
-      --border: #2b3550;
-      --text: #f1f4ff;
-      --muted: #a9b5d8;
-      --pink: #ff5ad9;
-      --blue: #36d2ff;
-      --green: #6bff6b;
-      --warn-bg: #2f2512;
+      --bg: #08080d;
+      --card: #111118;
+      --card-border: #1e1e28;
+      --text: #f0f0f5;
+      --muted: #7a7a8c;
+      --accent: #d4a574;
+      --accent-hover: #e0b688;
+      --input-bg: #0c0c14;
+      --input-border: #2a2a3a;
+      --input-focus: #d4a574;
+      --toggle-bg: #16161e;
+      --toggle-active: #1f1f2a;
+      --warn-bg: #2a1f12;
       --warn-border: #6f5a23;
       --warn-text: #ffe4a6;
     }
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
     body {
-      margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at top, #1a1031 0%, var(--bg) 52%);
-      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
       padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
+    .back-link {
+      position: fixed;
+      top: 20px;
+      left: 24px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text); }
     .card {
-      width: min(760px, 100%);
-      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
       border-radius: 16px;
-      background: linear-gradient(180deg, #171d33, var(--panel));
-      padding: 24px;
+      padding: 40px 32px 32px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .card.ready { opacity: 1; }
+    .loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.875rem;
+      position: absolute;
+    }
+    .loader.hidden { display: none; }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #2a2a3a;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .logo-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #d4a574 0%, #b8845a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     h1 {
-      margin: 0 0 6px;
-      font-size: 1.75rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
     }
-    p {
-      margin: 0 0 12px;
+    .subtitle {
+      text-align: center;
       color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 24px;
       line-height: 1.5;
     }
-    .mode-row {
+    .toggle-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 16px 0;
-    }
-    .mode-btn {
-      border: 1px solid #344261;
-      background: #111a2c;
-      color: #e6ecff;
+      background: var(--toggle-bg);
       border-radius: 10px;
-      padding: 8px 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .toggle-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .toggle-btn.active {
+      background: var(--toggle-active);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input::placeholder { color: #444455; }
+    .form-input:focus { border-color: var(--input-focus); }
+    .password-wrap { position: relative; }
+    .password-wrap .form-input { padding-right: 44px; }
+    .pw-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+    }
+    .pw-toggle:hover { color: var(--text); }
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #c49560);
+      color: #0a0a0f;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 0;
+      font-family: inherit;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 4px;
     }
-    .mode-btn.active {
-      border: none;
-      color: #040509;
-      background: linear-gradient(120deg, var(--pink), var(--blue));
-    }
-    .form {
-      display: grid;
-      gap: 10px;
-      margin-top: 6px;
-    }
-    input {
-      width: 100%;
-      border: 1px solid #344261;
-      background: #0d1324;
-      color: var(--text);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 0.95rem;
-    }
-    .submit {
-      border: none;
-      color: #040509;
-      background: linear-gradient(120deg, var(--pink), var(--blue));
-      border-radius: 10px;
+    .submit-btn:hover { opacity: 0.92; }
+    .submit-btn:active { transform: scale(0.99); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-msg {
+      text-align: center;
+      font-size: 0.82rem;
+      margin-top: 14px;
       padding: 10px 14px;
-      font-weight: 700;
-      cursor: pointer;
+      border-radius: 8px;
+      display: none;
     }
-    .submit[disabled] {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .status {
-      margin-top: 12px;
-      border: 1px solid #2d3552;
-      border-radius: 10px;
-      background: #0f1426;
-      padding: 10px 12px;
-      color: #d4dbf7;
-      font-size: 0.95rem;
-    }
-    .status.warn {
-      border-color: var(--warn-border);
+    .status-msg.visible { display: block; }
+    .status-msg.info { color: var(--muted); background: transparent; }
+    .status-msg.warn {
       background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
       color: var(--warn-text);
     }
-    .actions {
+    .divider {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--card-border);
+    }
+    .divider-text {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .footer-text {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 24px;
+    }
+    .footer-text a {
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .footer-text a:hover { text-decoration: underline; }
+    .legal-text {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #555566;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+    .legal-text a {
+      color: #777788;
+      text-decoration: underline;
+    }
+    .actions-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
       margin-top: 16px;
     }
-    a {
+    .ghost-link {
+      color: var(--muted);
       text-decoration: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      border: 1px solid #344261;
-      color: #e6ecff;
-      font-weight: 600;
-      background: #111a2c;
+      font-size: 0.82rem;
+      transition: color 0.2s;
     }
-    code {
-      background: #0d1120;
-      border: 1px solid #2a2f42;
-      border-radius: 6px;
-      padding: 2px 6px;
-      color: #d7deff;
+    .ghost-link:hover { color: var(--text); }
+    @media (max-width: 480px) {
+      .card { padding: 32px 20px 24px; }
+      .back-link { position: static; margin-bottom: 16px; }
+      body { justify-content: flex-start; padding-top: 16px; }
     }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1 id="heading">Sign In to Continue</h1>
-    <p id="subtext">Authenticate your HabitGlo account to link this purchase to the correct desktop account.</p>
-    <div class="mode-row">
-      <button id="mode-login" class="mode-btn active" type="button">Sign In</button>
-      <button id="mode-signup" class="mode-btn" type="button">Sign Up</button>
-      <button id="mode-magic" class="mode-btn" type="button">Magic Link</button>
+  <a class="back-link" href="/pricing">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back
+  </a>
+
+  <div id="loader" class="loader"><span class="spinner"></span> Checking session...</div>
+
+  <main id="card" class="card">
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M14 4c-1.5 3-5 5.5-5 10a5 5 0 0 0 10 0C19 9.5 15.5 7 14 4z" fill="#0a0a0f" opacity="0.9"/>
+          <path d="M14 10c-1 2-3 3.5-3 6a3 3 0 0 0 6 0c0-2.5-2-4-3-6z" fill="#f5e6d3"/>
+        </svg>
+      </div>
     </div>
-    <form id="auth-form" class="form">
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
-      <input id="password" type="password" placeholder="password" autocomplete="current-password" />
-      <button id="submit" class="submit" type="submit">Sign In and Continue</button>
+
+    <h1 id="heading">Welcome back</h1>
+    <p class="subtitle" id="subtext">Enter your email to sign in to your account</p>
+
+    <div class="toggle-row" id="toggle-row">
+      <button id="mode-password" class="toggle-btn active" type="button">Password</button>
+      <button id="mode-magic" class="toggle-btn" type="button">Magic Link</button>
+    </div>
+
+    <form id="auth-form">
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input id="email" class="form-input" type="email" placeholder="name@example.com" autocomplete="email" required />
+      </div>
+      <div class="form-group" id="password-group">
+        <div class="label-row">
+          <label class="form-label" for="password" style="margin-bottom:0">Password</label>
+        </div>
+        <div class="password-wrap">
+          <input id="password" class="form-input" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password" />
+          <button type="button" class="pw-toggle" id="pw-toggle" tabindex="-1" aria-label="Toggle password visibility">
+            <svg id="eye-open" width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M2.5 10s3-5.5 7.5-5.5S17.5 10 17.5 10s-3 5.5-7.5 5.5S2.5 10 2.5 10z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+            </svg>
+            <svg id="eye-closed" width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:none">
+              <path d="M2.5 10s3-5.5 7.5-5.5S17.5 10 17.5 10s-3 5.5-7.5 5.5S2.5 10 2.5 10z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+              <line x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <button id="submit" class="submit-btn" type="submit">Sign In</button>
     </form>
-    <p id="status" class="status">Preparing secure checkout...</p>
-    <div class="actions">
-      <a href="/pricing">Back to Pricing</a>
-      <a href="/download/windows.html">Download Desktop App</a>
+
+    <p id="status" class="status-msg"></p>
+
+    <div class="footer-text" id="footer-toggle">
+      Don't have an account? <a id="signup-link">Sign up</a>
+    </div>
+
+    <div class="legal-text">
+      By continuing, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>
+    </div>
+
+    <div class="actions-row">
+      <a class="ghost-link" href="/pricing">Pricing</a>
+      <a class="ghost-link" href="/download/windows.html">Download App</a>
     </div>
   </main>
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 
-    (function () {
+    ;(function () {
       const heading = document.getElementById('heading')
       const subtext = document.getElementById('subtext')
       const status = document.getElementById('status')
       const authForm = document.getElementById('auth-form')
       const emailInput = document.getElementById('email')
       const passwordInput = document.getElementById('password')
+      const passwordGroup = document.getElementById('password-group')
       const submitButton = document.getElementById('submit')
-      const modeLogin = document.getElementById('mode-login')
-      const modeSignup = document.getElementById('mode-signup')
+      const modePassword = document.getElementById('mode-password')
       const modeMagic = document.getElementById('mode-magic')
+      const signupLink = document.getElementById('signup-link')
+      const footerToggle = document.getElementById('footer-toggle')
+      const toggleRow = document.getElementById('toggle-row')
+      const pwToggle = document.getElementById('pw-toggle')
+      const eyeOpen = document.getElementById('eye-open')
+      const eyeClosed = document.getElementById('eye-closed')
+      const card = document.getElementById('card')
+      const loader = document.getElementById('loader')
+
+      const revealCard = () => {
+        loader.classList.add('hidden')
+        card.classList.add('ready')
+      }
 
       const queryParams = new URLSearchParams(window.location.search)
       const requestedPlan = String(queryParams.get('plan') || '').toLowerCase()
@@ -176,14 +377,26 @@
       let busy = false
       let hasRedirected = false
 
+      pwToggle.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password'
+        passwordInput.type = isPassword ? 'text' : 'password'
+        eyeOpen.style.display = isPassword ? 'none' : 'block'
+        eyeClosed.style.display = isPassword ? 'block' : 'none'
+      })
+
       const setWarning = (message) => {
-        status.classList.add('warn')
+        status.className = 'status-msg visible warn'
         status.textContent = message
       }
 
       const setStatus = (message) => {
-        status.classList.remove('warn')
+        status.className = 'status-msg visible info'
         status.textContent = message
+      }
+
+      const clearStatus = () => {
+        status.className = 'status-msg'
+        status.textContent = ''
       }
 
       const setBusy = (nextBusy) => {
@@ -199,14 +412,12 @@
 
       const getReturnUrl = () => {
         const params = new URLSearchParams({ plan: validPlan, source })
-        return `${window.location.origin}/purchase?${params.toString()}`
+        return `${window.location.origin}/purchase.html?${params.toString()}`
       }
 
       const getCheckoutUrl = (user) => {
         const params = new URLSearchParams({ uid: user.id, source })
-        if (user.email) {
-          params.set('email', user.email)
-        }
+        if (user.email) params.set('email', user.email)
         return `/checkout/${validPlan}.html?${params.toString()}`
       }
 
@@ -217,57 +428,89 @@
         window.location.replace(getCheckoutUrl(user))
       }
 
+      const rebindFooterLink = () => {
+        const link = footerToggle.querySelector('a')
+        if (!link) return
+        link.addEventListener('click', () => {
+          if (link.id === 'signup-link') setMode('signup')
+          else setMode('login')
+        })
+      }
+
       const setMode = (nextMode) => {
         mode = nextMode
-        modeLogin.classList.toggle('active', mode === 'login')
-        modeSignup.classList.toggle('active', mode === 'signup')
-        modeMagic.classList.toggle('active', mode === 'magic')
+        const isLogin = mode === 'login'
+        const isSignup = mode === 'signup'
         const isMagic = mode === 'magic'
-        passwordInput.style.display = isMagic ? 'none' : 'block'
+
+        modePassword.classList.toggle('active', isLogin || isSignup)
+        modeMagic.classList.toggle('active', isMagic)
+
+        passwordGroup.style.display = isMagic ? 'none' : 'block'
         passwordInput.required = !isMagic
-        submitButton.textContent =
-          mode === 'login'
-            ? 'Sign In and Continue'
-            : mode === 'signup'
-              ? 'Create Account and Continue'
-              : 'Send Magic Link'
+
+        if (isSignup) {
+          heading.textContent = 'Create your account'
+          subtext.textContent = validPlan
+            ? `Sign up to continue to ${getPlanLabel()} checkout`
+            : 'Enter your details to get started'
+          submitButton.textContent = 'Create Account'
+          footerToggle.innerHTML = 'Already have an account? <a id="signin-link">Sign in</a>'
+          rebindFooterLink()
+          document.getElementById('signin-link').addEventListener('click', () => setMode('login'))
+        } else if (isMagic) {
+          heading.textContent = 'Magic link sign in'
+          subtext.textContent = "We'll send a sign-in link to your email"
+          submitButton.textContent = 'Send Magic Link'
+          footerToggle.innerHTML = 'Don\'t have an account? <a id="signup-link">Sign up</a>'
+          rebindFooterLink()
+        } else {
+          heading.textContent = 'Welcome back'
+          subtext.textContent = validPlan
+            ? `Sign in to continue to ${getPlanLabel()} checkout`
+            : 'Enter your email to sign in to your account'
+          submitButton.textContent = 'Sign In'
+          footerToggle.innerHTML = 'Don\'t have an account? <a id="signup-link">Sign up</a>'
+          rebindFooterLink()
+        }
+        clearStatus()
       }
+
+      modePassword.addEventListener('click', () => {
+        if (mode === 'magic') setMode('login')
+      })
+      modeMagic.addEventListener('click', () => setMode('magic'))
+      signupLink.addEventListener('click', () => setMode('signup'))
 
       if (!validPlan) {
         heading.textContent = 'Plan Missing'
-        subtext.textContent = 'Open this page from pricing with a valid plan query.'
+        subtext.textContent = 'Open this page from pricing with a valid plan.'
         authForm.style.display = 'none'
-        setWarning('Missing or invalid plan. Use /purchase?plan=monthly or /purchase?plan=lifetime.')
+        toggleRow.style.display = 'none'
+        footerToggle.style.display = 'none'
+        setWarning('Missing or invalid plan. Use /purchase.html?plan=monthly or /purchase.html?plan=lifetime.')
+        revealCard()
         return
       }
 
-      heading.textContent = `Sign In for ${getPlanLabel().replace(/^./, (v) => v.toUpperCase())}`
-      subtext.textContent = `Authenticate your HabitGlo account, then continue to ${getPlanLabel()} checkout.`
+      setMode('login')
 
       const config = window.HABITGLO_WEBSITE_CONFIG || {}
       const supabaseConfig = config.supabase && typeof config.supabase === 'object' ? config.supabase : {}
-      const supabaseUrl =
-        typeof supabaseConfig.url === 'string' ? supabaseConfig.url.trim() : ''
-      const supabaseAnonKey =
-        typeof supabaseConfig.anonKey === 'string' ? supabaseConfig.anonKey.trim() : ''
+      const supabaseUrl = typeof supabaseConfig.url === 'string' ? supabaseConfig.url.trim() : ''
+      const supabaseAnonKey = typeof supabaseConfig.anonKey === 'string' ? supabaseConfig.anonKey.trim() : ''
 
       if (!supabaseUrl || !supabaseAnonKey) {
         authForm.style.display = 'none'
-        setWarning('Missing Supabase config in /download/config.js. Set supabase.url and supabase.anonKey.')
+        toggleRow.style.display = 'none'
+        setWarning('Missing Supabase config in /download/config.js.')
+        revealCard()
         return
       }
 
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-        },
+        auth: { persistSession: true, autoRefreshToken: true },
       })
-
-      modeLogin.addEventListener('click', () => setMode('login'))
-      modeSignup.addEventListener('click', () => setMode('signup'))
-      modeMagic.addEventListener('click', () => setMode('magic'))
-      setMode('login')
 
       supabase.auth.onAuthStateChange((event, session) => {
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && session.user) {
@@ -291,14 +534,8 @@
           if (mode === 'login') {
             setStatus('Signing in...')
             const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-            if (error) {
-              setWarning(error.message)
-              return
-            }
-            if (data && data.user) {
-              redirectToCheckout(data.user)
-              return
-            }
+            if (error) { setWarning(error.message); return }
+            if (data && data.user) { redirectToCheckout(data.user); return }
             setStatus('Sign-in succeeded. Redirecting...')
             return
           }
@@ -308,34 +545,21 @@
             const { data, error } = await supabase.auth.signUp({
               email,
               password,
-              options: {
-                emailRedirectTo: getReturnUrl(),
-              },
+              options: { emailRedirectTo: getReturnUrl() },
             })
-            if (error) {
-              setWarning(error.message)
-              return
-            }
-            if (data && data.user && data.session) {
-              redirectToCheckout(data.user)
-              return
-            }
-            setStatus('Account created. Check your email to confirm, then return here to continue.')
+            if (error) { setWarning(error.message); return }
+            if (data && data.user && data.session) { redirectToCheckout(data.user); return }
+            setStatus('Account created. Check your email to confirm, then return here.')
             return
           }
 
           setStatus('Sending magic link...')
           const { error } = await supabase.auth.signInWithOtp({
             email,
-            options: {
-              emailRedirectTo: getReturnUrl(),
-            },
+            options: { emailRedirectTo: getReturnUrl() },
           })
-          if (error) {
-            setWarning(error.message)
-            return
-          }
-          setStatus('Magic link sent. Open your email to continue.')
+          if (error) { setWarning(error.message); return }
+          setStatus('Magic link sent. Check your email to continue.')
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Authentication failed'
           setWarning(message)
@@ -345,17 +569,18 @@
       })
 
       ;(async () => {
-        setStatus('Checking current session...')
         const { data, error } = await supabase.auth.getSession()
         if (error) {
           setWarning(error.message)
+          revealCard()
           return
         }
         if (data && data.session && data.session.user) {
           redirectToCheckout(data.session.user)
           return
         }
-        setStatus('Sign in to continue to checkout.')
+        clearStatus()
+        revealCard()
       })()
     })()
   </script>

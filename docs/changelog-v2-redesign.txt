@@ -1,0 +1,66 @@
+HabitGlo UI Redesign – Version 2 Changes
+=========================================
+Date: March 4, 2026
+Branch: feat/login-first-web-checkout
+
+Summary
+-------
+Redesigned all 4 standalone web pages (purchase, checkout monthly,
+checkout lifetime, pricing) to match a modern, chic dark aesthetic
+inspired by Vexly.app. Replaced wide flat cards with narrow centered
+cards, neon gradients with warm amber accents, and added branded
+logo, labeled form inputs, and refined typography.
+
+Files Changed
+-------------
+1. public/purchase.html (login/signup page)
+   - Narrow 420px centered card with HabitGlo flame logo
+   - Inter font via Google Fonts
+   - Password / Magic Link pill toggle
+   - Labeled inputs (Email, Password) with password visibility toggle
+   - Warm amber CTA button
+   - "Don't have an account? Sign up" footer toggle
+   - Terms/Privacy links, ghost nav links
+   - Session flash fix: card hidden by default (opacity:0), loading
+     spinner shown while checking Supabase session, card fades in
+     only if no active session exists
+
+2. public/checkout/monthly.html
+   - Narrow 460px centered card with flame logo
+   - "Monthly Plan" badge, $4/month price display
+   - Feature checklist with amber checkmark icons
+   - Amber "Continue to Secure Checkout" CTA
+   - "Secured by Paddle" trust note
+   - Removed developer-facing <code> config instructions
+
+3. public/checkout/lifetime.html
+   - Same treatment as monthly, adapted for lifetime
+   - $29 one-time price, "Pay once, own it forever" note
+   - Lifetime-specific feature list
+
+4. public/pricing.html
+   - Two-column plan cards (responsive, stacks on mobile)
+   - "Most Popular" badge on monthly card
+   - Feature checklists with amber checkmarks
+   - Amber primary CTA on monthly, ghost secondary on lifetime
+   - Footer nav links + support email
+
+5. landing.html
+   - Fixed purchase links: /purchase -> /purchase.html (2 links)
+
+Design Tokens (shared across all pages)
+----------------------------------------
+- Font: Inter (Google Fonts CDN)
+- Background: #08080d
+- Card: #111118, border #1e1e28, radius 16px
+- Text: #f0f0f5 primary, #7a7a8c muted
+- Accent: #d4a574 (warm amber)
+- Inputs: #0c0c14 bg, #2a2a3a border, amber focus ring
+- Warning: #2a1f12 bg, #6f5a23 border, #ffe4a6 text
+
+What Did NOT Change
+-------------------
+- All JavaScript business logic (Supabase auth, Paddle checkout)
+- The flow: pricing -> purchase (auth) -> checkout -> Paddle overlay
+- Query parameter handling and redirect logic
+- src/components/AuthPanel.tsx (in-app React component, not website)

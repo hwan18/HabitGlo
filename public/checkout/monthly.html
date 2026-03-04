@@ -3,169 +3,353 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HabitGlo Monthly Checkout</title>
+  <title>HabitGlo – Monthly Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="/download/config.js"></script>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #05060a;
-      --panel: #121522;
-      --text: #eef2ff;
-      --muted: #9ea8c7;
-      --accent: #ff5ad9;
-      --accent-2: #36d2ff;
-      --warn-bg: #2f2512;
+      --bg: #08080d;
+      --card: #111118;
+      --card-border: #1e1e28;
+      --text: #f0f0f5;
+      --muted: #7a7a8c;
+      --accent: #d4a574;
+      --accent-hover: #e0b688;
+      --input-bg: #0c0c14;
+      --warn-bg: #2a1f12;
       --warn-border: #6f5a23;
       --warn-text: #ffe4a6;
+      --success: #6bff6b;
     }
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
     body {
-      margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at top, #1a1031 0%, var(--bg) 52%);
-      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
       padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
+    .back-link {
+      position: fixed;
+      top: 20px;
+      left: 24px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text); }
     .card {
-      width: min(760px, 100%);
-      border: 1px solid #2a2f42;
+      width: 100%;
+      max-width: 460px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
       border-radius: 16px;
-      background: linear-gradient(180deg, #161b2f, var(--panel));
-      padding: 24px;
+      padding: 40px 32px 32px;
     }
-    h1 { margin: 0 0 8px; font-size: 1.7rem; }
-    .price { margin: 0 0 14px; color: #d5ddff; font-weight: 600; }
-    p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
-    .status {
-      margin-top: 14px;
-      border: 1px solid #2d3552;
+    .logo-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #d4a574 0%, #b8845a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .plan-badge {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .plan-badge span {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      background: rgba(212, 165, 116, 0.1);
+      border: 1px solid rgba(212, 165, 116, 0.2);
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .price-display {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .price-amount {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .price-period {
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 28px;
+      display: grid;
+      gap: 12px;
+    }
+    .features li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: #c0c0cc;
+    }
+    .check-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(212, 165, 116, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .checkout-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #c49560);
+      color: #0a0a0f;
+      border: none;
       border-radius: 10px;
-      background: #0f1426;
-      padding: 10px 12px;
-      color: #d4dbf7;
+      padding: 14px 0;
+      font-family: inherit;
       font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
     }
-    .status.warn {
-      border-color: var(--warn-border);
+    .checkout-btn:hover { opacity: 0.92; }
+    .checkout-btn:active { transform: scale(0.99); }
+    .checkout-btn[aria-disabled="true"] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .status-msg {
+      text-align: center;
+      font-size: 0.82rem;
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: none;
+    }
+    .status-msg.visible { display: block; }
+    .status-msg.info { color: var(--muted); background: transparent; }
+    .status-msg.warn {
       background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
       color: var(--warn-text);
     }
-    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
-    a {
-      text-decoration: none;
-      border-radius: 10px;
-      padding: 10px 14px;
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--card-border);
+    }
+    .divider-text {
+      font-size: 0.72rem;
       font-weight: 600;
-      border: 1px solid #2d3552;
-      color: var(--text);
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
     }
-    .primary {
-      border: none;
-      background: linear-gradient(120deg, var(--accent), var(--accent-2));
-      color: #03040a;
+    .secondary-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 20px;
     }
-    code {
-      background: #0d1120;
-      border: 1px solid #2a2f42;
-      border-radius: 6px;
-      padding: 2px 6px;
-      color: #d7deff;
+    .ghost-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      transition: color 0.2s;
+    }
+    .ghost-link:hover { color: var(--text); }
+    .secure-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #555566;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    @media (max-width: 480px) {
+      .card { padding: 32px 20px 24px; }
+      .back-link { position: static; margin-bottom: 16px; }
+      body { justify-content: flex-start; padding-top: 16px; }
     }
   </style>
 </head>
 <body>
+  <a class="back-link" href="/pricing">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back
+  </a>
+
   <main class="card">
-    <h1>Monthly Plan Checkout</h1>
-    <p class="price">$4/month</p>
-    <p>
-      Start secure checkout directly with Paddle.
-      Set <code>paddle.clientToken</code> and <code>paddle.prices.monthly</code> in <code>public/download/config.js</code>.
-    </p>
-    <p id="status" class="status">Loading checkout configuration...</p>
-    <div class="actions">
-      <a id="checkout-link" class="primary" href="#">Continue to Secure Checkout</a>
-      <a id="purchase-link" href="/purchase?plan=monthly&source=website_checkout">Sign In First</a>
-      <a href="/download/windows.html?plan=monthly">Skip to Download Page</a>
-      <a href="/pricing">Back to Pricing</a>
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M14 4c-1.5 3-5 5.5-5 10a5 5 0 0 0 10 0C19 9.5 15.5 7 14 4z" fill="#0a0a0f" opacity="0.9"/>
+          <path d="M14 10c-1 2-3 3.5-3 6a3 3 0 0 0 6 0c0-2.5-2-4-3-6z" fill="#f5e6d3"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="plan-badge"><span>Monthly Plan</span></div>
+    <div class="price-display">
+      <span class="price-amount">$4</span>
+      <span class="price-period"> / month</span>
+    </div>
+
+    <ul class="features">
+      <li>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Unlimited habits and streak tracking
+      </li>
+      <li>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        All themes and habit packs included
+      </li>
+      <li>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Cloud sync and leaderboard
+      </li>
+      <li>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Cancel anytime, no commitment
+      </li>
+    </ul>
+
+    <a id="checkout-link" class="checkout-btn" href="#">Continue to Secure Checkout</a>
+
+    <p id="status" class="status-msg"></p>
+
+    <div class="divider"><span class="divider-text">or</span></div>
+
+    <div class="secondary-links">
+      <a id="purchase-link" class="ghost-link" href="/purchase.html?plan=monthly&source=website_checkout">Sign In First</a>
+      <a class="ghost-link" href="/download/windows.html?plan=monthly">Download App</a>
+      <a class="ghost-link" href="/pricing">View Pricing</a>
+    </div>
+
+    <div class="secure-note">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="6" width="8" height="6" rx="1.5" stroke="#555566" stroke-width="1.2"/><path d="M5 6V4.5a2 2 0 0 1 4 0V6" stroke="#555566" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Secured by Paddle. Payments are encrypted and PCI-compliant.
     </div>
   </main>
+
   <script>
     (function () {
-      const plan = 'monthly';
-      const config = window.HABITGLO_WEBSITE_CONFIG || {};
-      const paddle = config.paddle && typeof config.paddle === 'object' ? config.paddle : {};
-      const prices = paddle.prices && typeof paddle.prices === 'object' ? paddle.prices : {};
-      const environment = typeof paddle.environment === 'string'
+      var plan = 'monthly';
+      var config = window.HABITGLO_WEBSITE_CONFIG || {};
+      var paddle = config.paddle && typeof config.paddle === 'object' ? config.paddle : {};
+      var prices = paddle.prices && typeof paddle.prices === 'object' ? paddle.prices : {};
+      var environment = typeof paddle.environment === 'string'
         ? paddle.environment.trim().toLowerCase()
         : 'production';
-      const isLocalhost =
+      var isLocalhost =
         window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1';
-      const clientToken = typeof paddle.clientToken === 'string'
+      var clientToken = typeof paddle.clientToken === 'string'
         ? paddle.clientToken.trim()
         : '';
-      const priceId = typeof prices.monthly === 'string'
+      var priceId = typeof prices.monthly === 'string'
         ? prices.monthly.trim()
         : '';
-      const isLiveToken = clientToken.indexOf('live_') === 0;
-      const isTestToken = clientToken.indexOf('test_') === 0;
-      const isProductionOnLocalhost = isLocalhost && environment === 'production';
-      const hasEnvironmentTokenMismatch =
+      var isLiveToken = clientToken.indexOf('live_') === 0;
+      var isTestToken = clientToken.indexOf('test_') === 0;
+      var isProductionOnLocalhost = isLocalhost && environment === 'production';
+      var hasEnvironmentTokenMismatch =
         (environment === 'production' && isTestToken) ||
         (environment === 'sandbox' && isLiveToken);
-      const queryParams = new URLSearchParams(window.location.search);
-      const rawUserId =
+      var queryParams = new URLSearchParams(window.location.search);
+      var rawUserId =
         queryParams.get('uid') ||
         queryParams.get('user_id') ||
         queryParams.get('supabase_user_id') ||
         '';
-      const rawEmail = queryParams.get('email') || '';
-      const rawSource = queryParams.get('source') || '';
-      const checkoutLink = document.getElementById('checkout-link');
-      const purchaseLink = document.getElementById('purchase-link');
-      const status = document.getElementById('status');
-      const scriptUrl = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+      var rawEmail = queryParams.get('email') || '';
+      var rawSource = queryParams.get('source') || '';
+      var checkoutLink = document.getElementById('checkout-link');
+      var purchaseLink = document.getElementById('purchase-link');
+      var status = document.getElementById('status');
+      var scriptUrl = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
-      const setWarning = function (message) {
-        status.classList.add('warn');
+      var setWarning = function (message) {
+        status.className = 'status-msg visible warn';
         status.textContent = message;
       };
 
-      const setStatus = function (message) {
-        status.classList.remove('warn');
+      var setStatus = function (message) {
+        status.className = 'status-msg visible info';
         status.textContent = message;
       };
 
-      const disableCheckout = function (message) {
+      var disableCheckout = function (message) {
         setWarning(message);
         checkoutLink.textContent = 'Checkout Unavailable';
         checkoutLink.setAttribute('aria-disabled', 'true');
-        checkoutLink.style.pointerEvents = 'none';
-        checkoutLink.style.opacity = '0.55';
       };
 
-      const toMessageText = function (value) {
+      var toMessageText = function (value) {
         return typeof value === 'string' && value.trim()
           ? value.trim()
           : '';
       };
 
-      const isUuid = function (value) {
+      var isUuid = function (value) {
         return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
       };
 
-      const userId = isUuid(toMessageText(rawUserId))
+      var userId = isUuid(toMessageText(rawUserId))
         ? toMessageText(rawUserId).toLowerCase()
         : '';
-      const customerEmail = toMessageText(rawEmail);
-      const checkoutSource = toMessageText(rawSource) || 'website_checkout';
+      var customerEmail = toMessageText(rawEmail);
+      var checkoutSource = toMessageText(rawSource) || 'website_checkout';
 
       if (purchaseLink) {
-        const purchaseParams = new URLSearchParams({ plan: plan, source: checkoutSource });
-        purchaseLink.href = '/purchase?' + purchaseParams.toString();
+        var purchaseParams = new URLSearchParams({ plan: plan, source: checkoutSource });
+        purchaseLink.href = '/purchase.html?' + purchaseParams.toString();
       }
 
       if (toMessageText(rawUserId) && !userId) {
@@ -177,7 +361,7 @@
         return;
       }
 
-      const getEventName = function (eventData) {
+      var getEventName = function (eventData) {
         if (!eventData || typeof eventData !== 'object') return '';
         if (typeof eventData.name === 'string') return eventData.name.toLowerCase();
         if (typeof eventData.eventName === 'string') return eventData.eventName.toLowerCase();
@@ -185,24 +369,19 @@
         return '';
       };
 
-      const getCheckoutFailureMessage = function (eventData) {
+      var getCheckoutFailureMessage = function (eventData) {
         if (!eventData || typeof eventData !== 'object') {
           return 'See browser console for details.';
         }
-
-        const details = [];
-        const pushDetail = function (key, value) {
-          const text = toMessageText(value);
+        var details = [];
+        var pushDetail = function (key, value) {
+          var text = toMessageText(value);
           if (text) details.push(key + ': ' + text);
         };
-
-        const error = eventData.error && typeof eventData.error === 'object'
-          ? eventData.error
-          : null;
-        const data = eventData.data && typeof eventData.data === 'object'
-          ? eventData.data
-          : null;
-
+        var error = eventData.error && typeof eventData.error === 'object'
+          ? eventData.error : null;
+        var data = eventData.data && typeof eventData.data === 'object'
+          ? eventData.data : null;
         if (error) {
           pushDetail('code', error.code);
           pushDetail('detail', error.detail);
@@ -216,51 +395,44 @@
         pushDetail('code', eventData.code);
         pushDetail('detail', eventData.detail);
         pushDetail('message', eventData.message);
-
         if (!details.length) {
           return 'See browser console for full Paddle payload.';
         }
         return details.join(' | ');
       };
 
-      const onPaddleEvent = function (eventData) {
+      var onPaddleEvent = function (eventData) {
         window.HABITGLO_LAST_PADDLE_EVENT = eventData;
-        const eventName = getEventName(eventData);
+        var eventName = getEventName(eventData);
         console.log('[Paddle event]', eventName || 'unknown', eventData);
 
         if (eventName === 'checkout.failed') {
-          setWarning('Paddle checkout failed. ' + getCheckoutFailureMessage(eventData));
+          setWarning('Checkout failed. ' + getCheckoutFailureMessage(eventData));
           return;
         }
-
         if (eventName === 'checkout.closed') {
           setStatus('Checkout closed. You can try again.');
           return;
         }
-
         if (eventName === 'checkout.loaded') {
-          setStatus('Checkout loaded. Continue payment in the Paddle overlay.');
+          setStatus('Checkout loaded. Complete payment in the Paddle window.');
           return;
         }
-
         if (eventName === 'checkout.completed') {
-          setStatus('Checkout completed. Redirecting...');
+          setStatus('Payment completed! Redirecting...');
         }
       };
 
-      const loadPaddle = function () {
+      var loadPaddle = function () {
         return new Promise(function (resolve, reject) {
-          if (window.Paddle) {
-            resolve(window.Paddle);
-            return;
-          }
-          const existing = document.querySelector('script[src="' + scriptUrl + '"]');
+          if (window.Paddle) { resolve(window.Paddle); return; }
+          var existing = document.querySelector('script[src="' + scriptUrl + '"]');
           if (existing) {
             existing.addEventListener('load', function () { resolve(window.Paddle); }, { once: true });
             existing.addEventListener('error', function () { reject(new Error('Failed to load Paddle.js')); }, { once: true });
             return;
           }
-          const script = document.createElement('script');
+          var script = document.createElement('script');
           script.src = scriptUrl;
           script.async = true;
           script.onload = function () { resolve(window.Paddle); };
@@ -269,9 +441,9 @@
         });
       };
 
-      let initialized = false;
-      const ensurePaddle = async function () {
-        const paddleSdk = await loadPaddle();
+      var initialized = false;
+      var ensurePaddle = async function () {
+        var paddleSdk = await loadPaddle();
         if (!paddleSdk || typeof paddleSdk.Initialize !== 'function') {
           throw new Error('Paddle.js did not initialize correctly.');
         }
@@ -289,43 +461,38 @@
       };
 
       if (!clientToken) {
-        setWarning('Missing paddle.clientToken in /download/config.js.');
+        disableCheckout('Paddle configuration missing. Contact support.');
         return;
       }
-
       if (!priceId) {
-        setWarning('Missing paddle.prices.monthly in /download/config.js.');
+        disableCheckout('Price configuration missing. Contact support.');
         return;
       }
-
       if (isProductionOnLocalhost) {
-        disableCheckout('Live Paddle checkout is blocked on localhost. Switch to sandbox for local testing, or use your production HTTPS domain.');
+        disableCheckout('Live checkout is not available on localhost.');
         return;
       }
-
       if (hasEnvironmentTokenMismatch) {
-        disableCheckout('Paddle environment/token mismatch. Use test_ token for sandbox, or live_ token for production.');
+        disableCheckout('Paddle configuration error. Contact support.');
         return;
       }
 
-      setStatus('Monthly checkout is ready. Click continue to open Paddle.');
+      setStatus('Ready to checkout. Click continue to proceed.');
 
       checkoutLink.addEventListener('click', async function (event) {
         event.preventDefault();
-        if (checkoutLink.getAttribute('aria-disabled') === 'true') {
-          return;
-        }
+        if (checkoutLink.getAttribute('aria-disabled') === 'true') return;
         setStatus('Opening secure checkout...');
         try {
-          const paddleSdk = await ensurePaddle();
-          const checkoutSettings = {
+          var paddleSdk = await ensurePaddle();
+          var checkoutSettings = {
             displayMode: 'overlay',
             theme: 'dark',
           };
           if (!isLocalhost) {
             checkoutSettings.successUrl = window.location.origin + '/download/windows.html?plan=' + plan;
           }
-          const checkoutData = {
+          var checkoutData = {
             items: [{ priceId: priceId, quantity: 1 }],
             customData: {
               plan: plan,
@@ -333,12 +500,14 @@
               supabase_user_id: userId,
             },
             settings: checkoutSettings,
-            ...(customerEmail ? { customer: { email: customerEmail } } : {}),
           };
+          if (customerEmail) {
+            checkoutData.customer = { email: customerEmail };
+          }
           paddleSdk.Checkout.open(checkoutData);
-          setStatus('Checkout opened. If no overlay appears, check browser console for [Paddle event] logs.');
+          setStatus('Checkout opened. Complete your payment in the Paddle window.');
         } catch (error) {
-          const message = error && error.message ? error.message : 'Failed to open checkout.';
+          var message = error && error.message ? error.message : 'Failed to open checkout.';
           setWarning(message);
         }
       });
@@ -346,4 +515,3 @@
   </script>
 </body>
 </html>
-
