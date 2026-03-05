@@ -208,6 +208,38 @@
       transition: color 0.2s;
     }
     .ghost-link:hover { color: var(--text); }
+    .session-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(212, 165, 116, 0.08);
+      border: 1px solid rgba(212, 165, 116, 0.18);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+    }
+    .session-banner.visible { display: flex; }
+    .session-email {
+      color: #c0c0cc;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .session-email strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .session-signout {
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .session-signout:hover { color: var(--text); }
     .secure-note {
       text-align: center;
       font-size: 0.75rem;
@@ -239,6 +271,11 @@
           <path d="M14 10c-1 2-3 3.5-3 6a3 3 0 0 0 6 0c0-2.5-2-4-3-6z" fill="#f5e6d3"/>
         </svg>
       </div>
+    </div>
+
+    <div id="session-banner" class="session-banner">
+      <span class="session-email">Signed in as <strong id="session-email-text"></strong></span>
+      <a id="session-signout" class="session-signout">Not you?</a>
     </div>
 
     <div class="plan-badge"><span>Lifetime Plan</span></div>
@@ -359,6 +396,26 @@
         purchaseLink.href = '/purchase.html?' + purchaseParams.toString();
       }
 
+      if (userId && purchaseLink) {
+        purchaseLink.style.display = 'none';
+      }
+
+      var sessionBanner = document.getElementById('session-banner');
+      var sessionEmailText = document.getElementById('session-email-text');
+      var sessionSignout = document.getElementById('session-signout');
+      if (userId && customerEmail && sessionBanner) {
+        sessionEmailText.textContent = customerEmail;
+        sessionBanner.classList.add('visible');
+        sessionSignout.addEventListener('click', function () {
+          var keys = Object.keys(localStorage);
+          for (var i = 0; i < keys.length; i++) {
+            if (keys[i].indexOf('sb-') === 0) localStorage.removeItem(keys[i]);
+          }
+          var params = new URLSearchParams({ plan: plan, source: checkoutSource });
+          window.location.href = '/purchase.html?' + params.toString();
+        });
+      }
+
       if (toMessageText(rawUserId) && !userId) {
         console.warn('[Paddle checkout] Ignoring invalid supabase_user_id query parameter.');
       }
@@ -427,6 +484,9 @@
         }
         if (eventName === 'checkout.completed') {
           setStatus('Payment completed! Redirecting...');
+          setTimeout(function () {
+            window.location.href = '/download/windows.html?plan=' + plan;
+          }, 1500);
         }
       };
 

@@ -1,0 +1,39 @@
+Implementation Notes - 2026-03-05
+
+Branch
+- feat/login-first-web-checkout
+
+Shipped in this commit
+
+1) Desktop billing panel improvement
+- Added "View Plan Details" in desktop auth/billing panel.
+- Opens website pricing in default browser.
+- Added configurable website base URL via Vite env:
+  - VITE_WEBSITE_BASE_URL (fallback: https://habitglo.com)
+- Files:
+  - src/components/AuthPanel.tsx
+  - src/lib/billing.ts
+
+2) Checkout UX hardening (static web checkout pages)
+- Monthly + lifetime checkout pages now include signed-in session banner with email.
+- Added "Not you?" action that clears Supabase local session keys and routes back to purchase flow.
+- Hides "Sign In First" prompt when valid uid is already present.
+- Monthly page includes upgrade prompt/link to lifetime and preserves uid/email/source in query params.
+- On checkout completed event, page redirects to /download/windows.html?plan=<plan>.
+- Files:
+  - public/checkout/monthly.html
+  - public/checkout/lifetime.html
+
+3) Download page behavior
+- Kept simplified action area (no release notes link by design).
+- Direct download behavior and fallback logic remain unchanged.
+- File:
+  - public/download/windows.html
+
+Validation run
+- npm run lint: pass
+- npm run build: pass
+
+Known external follow-ups (not code changes)
+- tauri:build signing requires HABITGLO_CERT_THUMBPRINT and signing env/cert on build machine.
+- Production domain currently needs deployment update for new purchase flow endpoints.

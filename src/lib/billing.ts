@@ -35,6 +35,14 @@ const getFunctionEndpoint = (functionName: string): { endpoint: string; anonKey:
   return { endpoint, anonKey }
 }
 
+const getWebsiteBaseUrl = (): string => {
+  const raw = typeof import.meta.env.VITE_WEBSITE_BASE_URL === 'string'
+    ? import.meta.env.VITE_WEBSITE_BASE_URL.trim()
+    : ''
+  const base = raw.length > 0 ? raw : 'https://habitglo.com'
+  return base.replace(/\/+$/, '')
+}
+
 const getValidAccessToken = async (): Promise<string> => {
   assertSupabase()
 
@@ -184,4 +192,13 @@ export const startCheckout = async (
 export const openBillingPortal = async () => {
   const url = await createPaddlePortalSession()
   await openExternalUrl(url)
+}
+
+export const openWebsitePricing = async (plan?: BillingPlan) => {
+  const base = getWebsiteBaseUrl()
+  const params = new URLSearchParams({ source: 'desktop_app' })
+  if (plan) {
+    params.set('focus', plan)
+  }
+  await openExternalUrl(`${base}/pricing?${params.toString()}`)
 }

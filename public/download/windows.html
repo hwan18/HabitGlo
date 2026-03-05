@@ -114,7 +114,7 @@
     </dl>
     <div class="actions">
       <a id="download-link" class="primary" href="#">Download Installer</a>
-      <a id="release-link" href="#">Open Release Notes</a>
+      <a href="/">Back to Home</a>
       <a href="/pricing">Back to Pricing</a>
       <a href="/app?demoReset=1">Try in Browser</a>
     </div>
@@ -147,10 +147,7 @@
       document.getElementById('sha256').textContent = sha;
 
       const downloadLink = document.getElementById('download-link');
-      const releaseLink = document.getElementById('release-link');
       const status = document.getElementById('status');
-
-      releaseLink.href = releasePageUrl;
 
       if (directUrl) {
         downloadLink.href = directUrl;

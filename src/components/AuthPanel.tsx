@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { supabase, hasSupabase } from '@/lib/supabaseClient'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { Button } from './Button'
-import { billingProviderLabel, openBillingPortal, startCheckout as startBillingCheckout } from '@/lib/billing'
+import {
+  billingProviderLabel,
+  openBillingPortal,
+  openWebsitePricing,
+  startCheckout as startBillingCheckout,
+} from '@/lib/billing'
 
 export function AuthPanel() {
   const [email, setEmail] = useState('')
@@ -101,6 +106,20 @@ export function AuthPanel() {
       setStatus('Billing status refreshed.')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to refresh billing status'
+      setStatus(message)
+    } finally {
+      setBillingBusy(false)
+    }
+  }
+
+  const openPlanDetails = async (plan?: 'monthly' | 'lifetime') => {
+    try {
+      setBillingBusy(true)
+      setStatus('Opening plan details on the website...')
+      await openWebsitePricing(plan)
+      setStatus('Plan details opened in your browser.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to open plan details'
       setStatus(message)
     } finally {
       setBillingBusy(false)
@@ -213,6 +232,9 @@ export function AuthPanel() {
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => void handleCheckout('lifetime')} disabled={billingBusy}>
                     Buy Lifetime
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => void openPlanDetails()} disabled={billingBusy}>
+                    View Plan Details
                   </Button>
                 </>
               )}
