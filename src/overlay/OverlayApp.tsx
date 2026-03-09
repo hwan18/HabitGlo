@@ -1,11 +1,19 @@
 import { useEffect } from 'react'
 import { Marquee } from './Marquee'
 import { useHabitsStore } from '@/stores/useHabitsStore'
+import { applyUiTheme } from '@/lib/uiThemes'
+import { OVERLAY_SYNC_EVENT, type OverlaySyncPayload } from '@/lib/overlaySync'
+import { listen } from '@tauri-apps/api/event'
 import { WebviewWindow } from '@tauri-apps/api/window'
 
 export default function OverlayApp() {
   const overlay = useHabitsStore((s) => s.overlay)
+  const uiThemeId = useHabitsStore((s) => s.theme.uiThemeId)
   const setOverlay = useHabitsStore((s) => s.setOverlay)
+
+  useEffect(() => {
+    applyUiTheme(uiThemeId)
+  }, [uiThemeId])
 
   useEffect(() => {
     const overlayWindow = WebviewWindow.getByLabel('overlay')
@@ -13,9 +21,28 @@ export default function OverlayApp() {
     overlayWindow?.setAlwaysOnTop(overlay.alwaysOnTop)
   }, [overlay.clickThrough, overlay.alwaysOnTop])
 
+  useEffect(() => {
+    let unlisten: (() => void) | undefined
+
+    void listen<OverlaySyncPayload>(OVERLAY_SYNC_EVENT, ({ payload }) => {
+      applyUiTheme(payload.theme.uiThemeId)
+      useHabitsStore.setState({
+        theme: payload.theme,
+        overlay: payload.overlay,
+        habits: payload.habits,
+      })
+    }).then((dispose) => {
+      unlisten = dispose
+    })
+
+    return () => {
+      unlisten?.()
+    }
+  }, [])
+
   // Note: Overlay window doesn't have direct Supabase auth access
   // (Tauri webviews don't share localStorage/auth tokens)
-  // Instead, we sync user and habits from the dashboard via localStorage polling
+  // Keep the localStorage sync as a fallback; Tauri event sync is the primary path.
 
   useEffect(() => {
     const syncFromStorage = () => {
@@ -81,7 +108,7 @@ export default function OverlayApp() {
       title="Hold Ctrl or Alt, then drag to move"
       onMouseDown={handleMouseDown}
     >
-      <div className="h-full rounded-xl border border-white/10 shadow-2xl shadow-black/60">
+      <div className="overlay-shell h-full rounded-xl">
         <Marquee />
       </div>
     </div>

@@ -14,6 +14,7 @@ import {
   type SubscriptionStatus,
 } from '@/lib/db'
 import { hasSupabase, supabase } from '@/lib/supabaseClient'
+import { defaultUiThemeId, getUiThemeOverlayPalette } from '@/lib/uiThemes'
 import { useLeaderboardStore } from './useLeaderboardStore'
 import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
 import type { User } from '@supabase/supabase-js'
@@ -86,11 +87,14 @@ type StoreState = {
   toggleLeaderboardSharing: (enabled: boolean) => Promise<void>
 }
 
+const defaultUiThemePalette = getUiThemeOverlayPalette(defaultUiThemeId)
+
 const defaultTheme: ThemeSettings = {
+  uiThemeId: defaultUiThemeId,
   palette: 'classic',
-  primary: palettes.classic.primary,
-  secondary: palettes.classic.secondary,
-  accent: palettes.classic.accent,
+  primary: defaultUiThemePalette.primary,
+  secondary: defaultUiThemePalette.secondary,
+  accent: defaultUiThemePalette.accent,
   opacity: 0.9,
   glow: 0.65,
   ledShape: 'dot',
@@ -429,14 +433,28 @@ export const useHabitsStore = create<StoreState>()(
 
       setTheme: (input) => {
         const prevTheme = get().theme
+        const uiThemeId = input.uiThemeId ?? prevTheme.uiThemeId ?? defaultUiThemeId
         const palette = input.palette ?? prevTheme.palette
         const paletteColors = palettes[palette]
+        const overlayPalette = getUiThemeOverlayPalette(uiThemeId)
+        const paletteChanged = input.palette !== undefined && input.palette !== prevTheme.palette
+        const uiThemeSelected = input.uiThemeId !== undefined
         const nextTheme: ThemeSettings = {
           ...prevTheme,
           ...input,
-          primary: input.primary ?? paletteColors.primary,
-          secondary: input.secondary ?? paletteColors.secondary,
-          accent: input.accent ?? paletteColors.accent,
+          uiThemeId,
+          primary:
+            input.primary ??
+            (uiThemeSelected ? overlayPalette.primary : undefined) ??
+            (paletteChanged ? paletteColors.primary : prevTheme.primary),
+          secondary:
+            input.secondary ??
+            (uiThemeSelected ? overlayPalette.secondary : undefined) ??
+            (paletteChanged ? paletteColors.secondary : prevTheme.secondary),
+          accent:
+            input.accent ??
+            (uiThemeSelected ? overlayPalette.accent : undefined) ??
+            (paletteChanged ? paletteColors.accent : prevTheme.accent),
           palette,
           showSeparator: input.showSeparator ?? prevTheme.showSeparator ?? true,
         }

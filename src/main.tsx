@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './fonts'
 import './index.css'
 import App from './App'
+import { applyUiTheme } from './lib/uiThemes'
+import { emitOverlaySync } from './lib/overlaySync'
+import { isTauri } from './lib/platform'
 import { useHabitsStore } from './stores/useHabitsStore'
 
 const DEMO_RESET_QUERY_PARAM = 'demoReset'
@@ -58,7 +61,28 @@ if (shouldResetBrowserDemo()) {
   consumeDemoResetQueryParam()
 }
 
+applyUiTheme(useHabitsStore.getState().theme.uiThemeId)
+
 void useHabitsStore.getState().initializeAuth()
+
+if (isTauri) {
+  let lastOverlaySync = ''
+  const syncOverlay = () => {
+    const state = useHabitsStore.getState()
+    const payload = {
+      theme: state.theme,
+      overlay: state.overlay,
+      habits: state.habits,
+    }
+    const nextSerialized = JSON.stringify(payload)
+    if (nextSerialized === lastOverlaySync) return
+    lastOverlaySync = nextSerialized
+    void emitOverlaySync(payload)
+  }
+
+  syncOverlay()
+  useHabitsStore.subscribe(syncOverlay)
+}
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

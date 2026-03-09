@@ -50,7 +50,7 @@ export function HabitForm({ highlighted = false }: HabitFormProps) {
     <div
       className={`rounded-xl border bg-white/5 p-4 transition-all duration-300 ${
         highlighted
-          ? 'border-glow-pink/60 ring-2 ring-glow-blue/30 shadow-[0_0_30px_rgba(54,210,255,0.22)]'
+          ? 'border-glow-pink/60 ring-2 ring-glow-blue/30 shadow-glow'
           : 'border-white/10'
       }`}
     >
@@ -108,7 +108,7 @@ export function HabitForm({ highlighted = false }: HabitFormProps) {
             onPointerCancel={() => setIsAddAllPressed(false)}
             onClick={handleAddAll}
             disabled={habits.every((h) => !h.trim())}
-            className={`flex-1 transition-all duration-100 ease-out hover:-translate-y-0.5 hover:scale-[1.01] hover:border-glow-pink/90 hover:brightness-125 hover:shadow-[0_0_28px_rgba(255,90,217,0.55),0_0_48px_rgba(54,210,255,0.35)] active:shadow-[0_0_16px_rgba(54,210,255,0.45)] ${
+            className={`flex-1 transition-all duration-100 ease-out hover:-translate-y-0.5 hover:scale-[1.01] hover:border-glow-pink/90 hover:brightness-125 hover:shadow-glow active:shadow-glow ${
               isAddAllPressed ? 'scale-[0.99] brightness-110' : 'scale-100'
             }`}
           >

@@ -11,6 +11,7 @@ import { Marquee } from './overlay/Marquee'
 import { Rocket, Download, Monitor, Check } from 'lucide-react'
 import { hasSupabase } from './lib/supabaseClient'
 import { isTauri } from './lib/platform'
+import { applyUiTheme } from './lib/uiThemes'
 import './App.css'
 
 type OverlayToggleButtonProps = {
@@ -22,7 +23,7 @@ function PlayGlyph() {
   return (
     <span
       aria-hidden
-      className="block h-5 w-5 bg-black"
+      className="block h-5 w-5 bg-white"
       style={{ clipPath: 'polygon(24% 12%, 24% 88%, 88% 50%)' }}
     />
   )
@@ -31,8 +32,8 @@ function PlayGlyph() {
 function PauseGlyph() {
   return (
     <span aria-hidden className="flex h-5 w-5 items-center justify-center gap-[3px]">
-      <span className="h-4 w-[4px] rounded-sm bg-black" />
-      <span className="h-4 w-[4px] rounded-sm bg-black" />
+      <span className="h-4 w-[4px] rounded-sm bg-white" />
+      <span className="h-4 w-[4px] rounded-sm bg-white" />
     </span>
   )
 }
@@ -71,11 +72,11 @@ function OverlayToggleButton({ paused, onToggle }: OverlayToggleButtonProps) {
       onClick={handleClick}
       title={label}
       aria-label={label}
-      className={`group relative inline-flex h-14 w-20 items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 shadow-inner shadow-black/50 transition-all duration-100 ease-out hover:border-glow-pink/50 hover:bg-white/15 hover:shadow-[0_0_18px_rgba(255,90,217,0.3)] active:shadow-[0_0_14px_rgba(54,210,255,0.35)] ${isPressed ? 'scale-[0.96] brightness-110' : 'scale-100'}`}
+      className={`group relative inline-flex h-14 w-20 items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 shadow-inner shadow-black/50 transition-all duration-100 ease-out hover:border-glow-pink/50 hover:bg-white/15 hover:shadow-glow active:shadow-glow ${isPressed ? 'scale-[0.96] brightness-110' : 'scale-100'}`}
     >
       <span className="sr-only">{label}</span>
-      <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-glow-pink to-glow-blue text-black shadow-[0_0_22px_rgba(255,90,217,0.35)] transition-transform duration-100 ease-out group-hover:scale-105 ${isPressed ? 'scale-90' : 'scale-100'}`}>
-        {showTick ? <Check size={20} strokeWidth={3} className="text-black" /> : paused ? <PlayGlyph /> : <PauseGlyph />}
+      <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-glow-pink to-glow-blue text-white shadow-glow transition-transform duration-100 ease-out group-hover:scale-105 ${isPressed ? 'scale-90' : 'scale-100'}`}>
+        {showTick ? <Check size={20} strokeWidth={3} className="text-white" /> : paused ? <PlayGlyph /> : <PauseGlyph />}
       </span>
     </button>
   )
@@ -90,10 +91,11 @@ function App() {
   const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
   const subscriptionLoading = useHabitsStore((s) => s.subscriptionLoading)
   const hasHabits = useHabitsStore((s) => s.habits.length > 0)
+  const uiThemeId = useHabitsStore((s) => s.theme.uiThemeId)
 
   useEffect(() => {
-    document.body.classList.add('bg-slate-950')
-  }, [])
+    applyUiTheme(uiThemeId)
+  }, [uiThemeId])
 
   // In browser mode, never require auth — let users try freely with local storage
   const billingGateFlag = import.meta.env.VITE_BILLING_GATE
@@ -116,7 +118,7 @@ function App() {
     !hasPaidAccess
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-slate-950 px-6 pb-10 text-white">
+    <div className="app-shell min-h-screen px-6 pb-10 text-white">
       {/* Browser trial banner */}
       {!isTauri && (
         <div className="mx-auto mt-4 max-w-6xl rounded-xl border border-glow-pink/20 bg-gradient-to-r from-glow-pink/10 via-glow-blue/10 to-glow-green/10 px-5 py-3">

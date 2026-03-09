@@ -29,15 +29,25 @@ export const useMarqueeConfig = () => {
     const size = Math.floor(containerHeight * 0.6)
     return Math.max(14, Math.min(64, size))
   }, [containerHeight])
+  const paletteColors = useMemo(() => [theme.primary, theme.secondary, theme.accent], [theme.accent, theme.primary, theme.secondary])
 
   const marqueeHabits = useMemo(() => {
     const active = habitsRaw.filter((h) => h.is_active)
     if (active.length === 0) return []
     return [...active]
       .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-      .map((h) => ({ text: h.text, color: h.color ?? theme.primary }))
+      .map((habit) => {
+        const normalizedColor = habit.color?.toLowerCase()
+        const inferredIndex =
+          habit.colorIndex ?? paletteColors.findIndex((color) => color.toLowerCase() === normalizedColor)
+        const colorIndex = inferredIndex >= 0 ? inferredIndex : 0
+        return {
+          text: habit.text,
+          color: paletteColors[colorIndex] ?? theme.primary,
+        }
+      })
       .filter((h) => Boolean(h.text))
-  }, [habitsRaw, theme.primary])
+  }, [habitsRaw, paletteColors, theme.primary])
 
   return {
     ref,

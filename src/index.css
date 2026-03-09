@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Lora:wght@400;600&family=Montserrat:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,18 +21,144 @@
 }
 
 :root {
-  font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  background-color: #050505;
-  color: #f6f7fb;
+  --background: 45 100% 98%;
+  --foreground: 150 60% 5%;
+  --card: 0 0% 100%;
+  --card-foreground: 150 60% 5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 150 60% 5%;
+  --primary: 150 100% 28%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 100% 48%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 45 60% 90%;
+  --muted-foreground: 45 30% 20%;
+  --accent: 35 100% 52%;
+  --accent-foreground: 150 60% 5%;
+  --destructive: 0 100% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 0%;
+  --input: 0 0% 100%;
+  --ring: 150 100% 28%;
+  --chart-1: 150 100% 28%;
+  --chart-2: 0 100% 48%;
+  --chart-3: 35 100% 52%;
+  --chart-4: 320 100% 60%;
+  --chart-5: 190 100% 45%;
+  --sidebar: 150 100% 12%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 35 100% 52%;
+  --sidebar-primary-foreground: 150 100% 12%;
+  --sidebar-accent: 150 100% 18%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 0%;
+  --sidebar-ring: 35 100% 52%;
+  --font-sans: 'Montserrat', sans-serif;
+  --font-serif: 'Lora', serif;
+  --font-mono: 'Space Mono', monospace;
+  --radius: 0rem;
+  --shadow-x: 4px;
+  --shadow-y: 4px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 1;
+  --shadow-color: hsl(0 0% 0%);
+  --shadow-2xs: 4px 4px 0px 0px hsl(0 0% 0% / 0.5);
+  --shadow-xs: 4px 4px 0px 0px hsl(0 0% 0% / 0.5);
+  --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 1px 2px -1px hsl(0 0% 0% / 1);
+  --shadow: 4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 1px 2px -1px hsl(0 0% 0% / 1);
+  --shadow-md: 4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 2px 4px -1px hsl(0 0% 0% / 1);
+  --shadow-lg: 4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 4px 6px -1px hsl(0 0% 0% / 1);
+  --shadow-xl: 4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 8px 10px -1px hsl(0 0% 0% / 1);
+  --shadow-2xl: 4px 4px 0px 0px hsl(0 0% 0% / 1);
+  --tracking-normal: 0.02em;
+  --spacing: 0.25rem;
+  font-family: var(--font-mono);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark {
+  --background: 150 80% 4%;
+  --foreground: 45 100% 95%;
+  --card: 150 70% 8%;
+  --card-foreground: 45 100% 95%;
+  --popover: 150 70% 8%;
+  --popover-foreground: 45 100% 95%;
+  --primary: 150 100% 48%;
+  --primary-foreground: 150 100% 2%;
+  --secondary: 0 100% 60%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 150 50% 12%;
+  --muted-foreground: 45 20% 75%;
+  --accent: 35 100% 58%;
+  --accent-foreground: 150 100% 2%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 45 100% 95%;
+  --input: 150 40% 12%;
+  --ring: 35 100% 58%;
+  --chart-1: 150 100% 48%;
+  --chart-2: 0 100% 60%;
+  --chart-3: 35 100% 58%;
+  --chart-4: 320 100% 70%;
+  --chart-5: 190 100% 60%;
+  --sidebar: 150 100% 2%;
+  --sidebar-foreground: 45 100% 95%;
+  --sidebar-primary: 150 100% 48%;
+  --sidebar-primary-foreground: 150 100% 2%;
+  --sidebar-accent: 150 50% 10%;
+  --sidebar-accent-foreground: 45 100% 95%;
+  --sidebar-border: 45 100% 95%;
+  --sidebar-ring: 35 100% 58%;
+  --font-sans: 'Montserrat', sans-serif;
+  --font-serif: 'Lora', serif;
+  --font-mono: 'Space Mono', monospace;
+  --radius: 0rem;
+  --shadow-x: 4px;
+  --shadow-y: 4px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 1;
+  --shadow-color: hsl(45 100% 80%);
+  --shadow-2xs: 4px 4px 0px 0px hsl(45 100% 80% / 0.5);
+  --shadow-xs: 4px 4px 0px 0px hsl(45 100% 80% / 0.5);
+  --shadow-sm: 4px 4px 0px 0px hsl(45 100% 80% / 1), 4px 1px 2px -1px hsl(45 100% 80% / 1);
+  --shadow: 4px 4px 0px 0px hsl(45 100% 80% / 1), 4px 1px 2px -1px hsl(45 100% 80% / 1);
+  --shadow-md: 4px 4px 0px 0px hsl(45 100% 80% / 1), 4px 2px 4px -1px hsl(45 100% 80% / 1);
+  --shadow-lg: 4px 4px 0px 0px hsl(45 100% 80% / 1), 4px 4px 6px -1px hsl(45 100% 80% / 1);
+  --shadow-xl: 4px 4px 0px 0px hsl(45 100% 80% / 1), 4px 8px 10px -1px hsl(45 100% 80% / 1);
+  --shadow-2xl: 4px 4px 0px 0px hsl(45 100% 80% / 1);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html,
+body {
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
-  background-color: #050505;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
+    radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
+    linear-gradient(180deg, hsl(var(--background)), hsl(var(--sidebar)));
+  color: hsl(var(--foreground));
+}
+
+body.overlay-window {
+  background: transparent !important;
 }
 
 #root,
@@ -38,10 +166,22 @@ body {
   min-height: 100vh;
 }
 
+#overlay-root {
+  background: transparent;
+}
+
+.app-shell {
+  background:
+    radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
+    radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
+    linear-gradient(180deg, hsl(var(--background)), hsl(var(--sidebar)));
+  color: hsl(var(--foreground));
+}
+
 .burnin {
   background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.14) 0.9px, transparent 1.2px),
-    radial-gradient(circle, rgba(0, 0, 0, 0.75) 0.9px, transparent 1.2px);
+    radial-gradient(circle, hsl(var(--foreground) / 0.12) 0.9px, transparent 1.2px),
+    radial-gradient(circle, hsl(var(--background) / 0.72) 0.9px, transparent 1.2px);
   background-size: 5px 5px;
   background-position: 0 0, 2.5px 2.5px;
   mix-blend-mode: screen;
@@ -49,16 +189,148 @@ body {
 }
 
 .led-panel {
-  background-color: #070707;
+  background-color: hsl(var(--card) / 0.94);
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 1.4px),
-    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.55) 1px, transparent 1.6px);
-  background-size: 5px 5px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+    linear-gradient(135deg, hsl(var(--primary) / 0.22), transparent 42%),
+    linear-gradient(315deg, hsl(var(--accent) / 0.16), transparent 46%),
+    radial-gradient(circle at 1px 1px, hsl(var(--foreground) / 0.08) 1px, transparent 1.4px),
+    radial-gradient(circle at 1px 1px, hsl(var(--background) / 0.6) 1px, transparent 1.6px);
+  background-size: 100% 100%, 100% 100%, 5px 5px, 5px 5px;
+  border: 1px solid hsl(var(--primary) / 0.62);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.85),
-    inset 0 0 28px rgba(0, 0, 0, 0.9),
-    inset 0 0 10px rgba(255, 255, 255, 0.08);
+    0 0 0 1px hsl(var(--accent) / 0.28),
+    0 0 0 4px hsl(var(--background) / 0.45),
+    0 0 30px hsl(var(--primary) / 0.18),
+    var(--shadow-xl),
+    inset 0 0 24px hsl(var(--background) / 0.4);
+}
+
+.overlay-shell {
+  background:
+    linear-gradient(135deg, hsl(var(--primary) / 0.24), transparent 34%),
+    linear-gradient(315deg, hsl(var(--accent) / 0.18), transparent 40%),
+    hsl(var(--popover) / 0.82);
+  border: 1px solid hsl(var(--primary) / 0.78);
+  box-shadow:
+    0 0 0 1px hsl(var(--accent) / 0.34),
+    0 0 24px hsl(var(--primary) / 0.22),
+    inset 0 0 0 1px hsl(var(--foreground) / 0.08),
+    var(--shadow-lg);
+}
+
+[class~='bg-white/5'],
+[class~='bg-white/10'],
+[class~='bg-white/[0.03]'],
+[class~='bg-white/[0.02]'],
+[class~='bg-white/[0.05]'] {
+  background-color: hsl(var(--card) / 0.84) !important;
+}
+
+[class~='bg-black/30'],
+[class~='bg-black/40'],
+[class~='bg-black/50'],
+[class~='bg-black/60'],
+[class~='bg-black/80'],
+[class~='bg-black/90'] {
+  background-color: hsl(var(--popover) / 0.88) !important;
+}
+
+[class~='border-white/5'] {
+  border-color: hsl(var(--border) / 0.32) !important;
+}
+
+[class~='border-white/10'] {
+  border-color: hsl(var(--border) / 0.72) !important;
+}
+
+[class~='border-white/20'] {
+  border-color: hsl(var(--border) / 0.92) !important;
+}
+
+[class~='text-white'] {
+  color: hsl(var(--foreground)) !important;
+}
+
+[class~='text-white/90'] {
+  color: hsl(var(--foreground) / 0.92) !important;
+}
+
+[class~='text-white/80'] {
+  color: hsl(var(--foreground) / 0.84) !important;
+}
+
+[class~='text-white/70'] {
+  color: hsl(var(--foreground) / 0.76) !important;
+}
+
+[class~='text-white/60'] {
+  color: hsl(var(--muted-foreground) / 0.95) !important;
+}
+
+[class~='text-white/50'] {
+  color: hsl(var(--muted-foreground) / 0.82) !important;
+}
+
+[class~='text-white/40'] {
+  color: hsl(var(--muted-foreground) / 0.7) !important;
+}
+
+[class~='text-white/30'] {
+  color: hsl(var(--muted-foreground) / 0.56) !important;
+}
+
+[class~='text-white/20'] {
+  color: hsl(var(--muted-foreground) / 0.42) !important;
+}
+
+[class~='bg-red-500/10'] {
+  background-color: hsl(var(--destructive) / 0.14) !important;
+}
+
+[class~='border-red-500/10'] {
+  border-color: hsl(var(--destructive) / 0.18) !important;
+}
+
+[class~='border-red-500/20'] {
+  border-color: hsl(var(--destructive) / 0.28) !important;
+}
+
+[class~='bg-red-500/20'] {
+  background-color: hsl(var(--destructive) / 0.18) !important;
+}
+
+[class~='text-red-300'],
+[class~='text-red-400'] {
+  color: hsl(var(--destructive) / 0.95) !important;
+}
+
+[class~='text-green-400'] {
+  color: hsl(var(--chart-1) / 0.96) !important;
+}
+
+[class~='border-green-500/20'] {
+  border-color: hsl(var(--chart-1) / 0.28) !important;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+input[type='range'] {
+  accent-color: hsl(var(--primary));
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--muted-foreground) / 0.72);
+}
+
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
 }
 
 .led-font,

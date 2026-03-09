@@ -9,19 +9,19 @@ const config: Config = {
       },
       colors: {
         glow: {
-          red: '#ff3131',
-          amber: '#ffb000',
-          green: '#6bff6b',
-          pink: '#ff5ad9',
-          blue: '#36d2ff',
-          yellow: '#f5ff6b',
+          red: 'hsl(var(--destructive) / <alpha-value>)',
+          amber: 'hsl(var(--chart-3) / <alpha-value>)',
+          green: 'hsl(var(--chart-1) / <alpha-value>)',
+          pink: 'hsl(var(--primary) / <alpha-value>)',
+          blue: 'hsl(var(--chart-4) / <alpha-value>)',
+          yellow: 'hsl(var(--chart-5) / <alpha-value>)',
         },
       },
       boxShadow: {
-        glow: '0 0 18px rgba(255, 80, 80, 0.35), 0 0 38px rgba(255, 80, 80, 0.25)',
+        glow: '0 0 18px hsl(var(--primary) / 0.35), 0 0 38px hsl(var(--chart-4) / 0.25)',
       },
       backgroundImage: {
-        burn: 'radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05) 0, transparent 25%), radial-gradient(circle at 80% 40%, rgba(255,255,255,0.04) 0, transparent 20%), radial-gradient(circle at 50% 80%, rgba(255,255,255,0.05) 0, transparent 20%)',
+        burn: 'radial-gradient(circle at 10% 20%, hsl(var(--foreground) / 0.05) 0, transparent 25%), radial-gradient(circle at 80% 40%, hsl(var(--primary) / 0.04) 0, transparent 20%), radial-gradient(circle at 50% 80%, hsl(var(--chart-4) / 0.05) 0, transparent 20%)',
       },
     },
   },

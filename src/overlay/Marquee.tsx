@@ -24,6 +24,8 @@ export function Marquee() {
   })
   const showSeparator = theme.showSeparator ?? true
   const separator = showSeparator ? '\u00A0\u00A0•\u00A0\u00A0' : '\u00A0\u00A0\u00A0\u00A0'
+  const separatorColor = 'hsl(var(--destructive))'
+  const separatorGlow = 'hsl(var(--destructive) / 0.6)'
   const defaultMessage = 'Add your first habit/reminder'
   const shouldShowDefault = habits.length === 0 && showDefault
   const segments = useMemo(() => {
@@ -93,13 +95,11 @@ export function Marquee() {
       <div className="absolute inset-0 burnin opacity-70" />
       {hasText && (
         <motion.div
-          className={clsx(
-            `${ledFontClass} flex items-center whitespace-nowrap font-normal tracking-[0.3em]`,
-            'drop-shadow-[0_0_12px_rgba(255,99,132,0.55)]',
-          )}
+          className={clsx(`${ledFontClass} flex items-center whitespace-nowrap font-normal tracking-[0.3em]`)}
           style={{
             x,
             fontSize,
+            filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.55))',
           }}
         >
           {Array.from({ length: copies }).map((_, idx) => (
@@ -130,8 +130,8 @@ export function Marquee() {
                   <span
                     className="inline-block"
                     style={{
-                      color: showSeparator ? '#c83b3b' : 'transparent',
-                      textShadow: showSeparator ? `0 0 ${12 * theme.glow}px rgba(200,59,59,0.6)` : 'none',
+                      color: showSeparator ? separatorColor : 'transparent',
+                      textShadow: showSeparator ? `0 0 ${12 * theme.glow}px ${separatorGlow}` : 'none',
                       marginLeft: spacing > 0 ? spacing / 2 : undefined,
                       marginRight: spacing > 0 ? spacing / 2 : undefined,
                     }}

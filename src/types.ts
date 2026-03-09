@@ -9,6 +9,7 @@ export type Palette =
   | 'sunrise'
   | 'ocean'
   | 'nightOwl'
+export type UiThemeId = 'citrusPoster' | 'noirBloom' | 'midnightSignal'
 export type LedShape = 'dot' | 'square' | 'scanline'
 export type LedFont = 'dotGothic' | 'silkscreen' | 'pressStart' | 'vt323'
 
@@ -28,6 +29,7 @@ export type Habit = {
 }
 
 export type ThemeSettings = {
+  uiThemeId: UiThemeId
   palette: Palette
   primary: string
   secondary: string
