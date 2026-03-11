@@ -1,0 +1,133 @@
+Theme Feature Assessment — HabitGlo
+=====================================
+Date: March 11, 2026
+Branch: theme/tweakcn-lab (commit f890ad9)
+Scope: 19 files changed, 1203 insertions, 72 deletions (theme commit only)
+Full branch: 13 commits ahead of master, 51 files changed, 4411 insertions
+
+=====================================
+IS THE THEME FEATURE A GOOD IDEA?
+=====================================
+
+Short answer: Yes, but with caveats. It's a well-executed feature that adds
+real perceived value, but it needs strategic positioning to justify the 1,200+
+lines of added complexity.
+
+
+WHY IT'S A GOOD IDEA
+---------------------
+
+1. It directly increases perceived premium value.
+   HabitGlo is a $4/mo or $29 lifetime product. Theme customization is one of
+   the easiest ways to make a paid app feel premium. Users who can personalize
+   their always-visible overlay feel more ownership and are less likely to churn.
+
+2. The overlay is always on screen — personalization matters more here than in
+   most apps.
+   Unlike a typical SaaS dashboard you visit occasionally, HabitGlo's marquee
+   sits on your desktop all day. If the default colors clash with someone's
+   wallpaper, workflow, or dark-mode IDE, that's a real friction point. Themes
+   solve this without requiring per-user color pickers.
+
+3. The architecture is clean and extensible.
+   The implementation in src/lib/uiThemes.ts uses a token-based registry with
+   ~50 CSS custom properties per theme. Adding a new theme is just adding a new
+   object — no plumbing changes. The dual-sync (Tauri events + localStorage
+   fallback) to the overlay is resilient. This is solid engineering.
+
+4. It's a natural upsell lever.
+   Overlay palettes are already gated (only "Classic" is free in browser).
+   Themes fit the same model: ship 1-2 free themes, lock the rest behind the
+   paid plan. This gives free-tier users a taste and a reason to upgrade.
+
+
+CONCERNS AND RISKS
+-------------------
+
+1. Scope creep on the branch.
+   The theme/tweakcn-lab branch is 13 commits ahead of master with 51 files
+   changed and 4,411 insertions. Only the latest commit (f890ad9) is the actual
+   theme feature — the other 12 commits include billing improvements, checkout
+   redesigns, landing page overhauls, Windows signing, and Paddle webhook
+   hardening. This makes the branch very hard to review and risky to merge
+   as-is. You'd benefit from splitting theme work into its own clean PR.
+
+2. The CSS !important override bridge is fragile.
+   In src/index.css, there are attribute selectors like [class~='text-white/80']
+   that remap hardcoded Tailwind white/black classes to theme-aware
+   hsl(var(--foreground)) with !important. This works today, but every new
+   opacity variant someone uses (e.g., text-white/75) silently breaks theming.
+   The proper fix is migrating to semantic classes (text-foreground/80) over time.
+
+3. Light mode tokens are dead weight (for now).
+   Every theme defines both light and dark tokens, but the entire UI is
+   hardcoded to dark-mode aesthetics (bg-black/40, text-white/70). Unless you
+   plan to ship a light mode, those tokens are unused complexity. They double
+   the surface area of each theme definition for no current benefit.
+
+4. Three themes may feel thin at launch.
+   Three themes is enough to prove the concept but might feel underwhelming as
+   a "feature." Consider whether you want to ship with 5-6 to make the picker
+   feel substantial, or if 3 is intentionally an MVP to test demand.
+
+5. No transition animation on theme switch.
+   Switching themes is instant — all 50+ CSS variables change in one frame.
+   A 200-300ms CSS transition on background-color, color, and border-color
+   would make it feel polished rather than jarring.
+
+6. Token duplication between index.css and uiThemes.ts.
+   The default Citrus Poster tokens appear in both src/index.css (as CSS
+   fallbacks) and src/lib/uiThemes.ts (as the JS source of truth). If these
+   drift, users will see a flash of wrong colors on load.
+
+
+STRATEGIC RECOMMENDATION
+-------------------------
+
+Ship it, but first:
+
+1. Split the branch: isolate the theme commit from the 12 other unrelated
+   billing/checkout/landing changes. Cherry-pick or rebase the theme commit
+   into its own clean PR.
+
+2. Gate premium themes behind the paid plan. Free tier gets 1 theme +
+   Classic palette; paid gets all themes + all palettes.
+
+3. Add a quick CSS transition (~200-300ms) for smoother theme switching.
+
+4. Remove or hide light-mode tokens until a light mode is actually planned.
+
+5. Consider adding 2-3 more themes to make the picker feel substantial
+   at launch (5-6 total).
+
+
+ARCHITECTURE OVERVIEW
+----------------------
+
+The theme system has two layers:
+
+  UI Theme (desktop-wide):
+    Controls dashboard colors, cards, backgrounds, borders, shadows, fonts, radii.
+    Mechanism: CSS custom properties on :root via applyUiTheme().
+
+  Overlay Palette (marquee-specific):
+    Controls LED text colors (primary/secondary/accent), glow, opacity, font.
+    Mechanism: Inline styles on marquee segments.
+
+Three UI themes defined in src/lib/uiThemes.ts:
+  1. Citrus Poster (default) — Punchy green-and-orange poster palette, 0px radius
+  2. Noir Bloom — Editorial black chrome with hot-pink neon, 0px radius
+  3. Midnight Signal — CRT-inspired dark UI with neon pink, cyan, acid accents, 0.5rem radius
+
+Sync flow (main window -> overlay):
+  Primary: Tauri event bus (habitglo:overlay-sync) — instant
+  Fallback: localStorage polling every 200ms — resilient
+
+Key files:
+  src/lib/uiThemes.ts        — Theme registry, defines 3 themes with ~50 tokens each
+  src/main.tsx                — Applies theme on bootstrap, sets up overlay sync
+  src/components/SettingsPanel.tsx — Theme picker UI (3-column grid with swatches)
+  src/index.css               — Default CSS variable values, Tailwind bridge overrides
+  src/lib/overlaySync.ts      — Tauri event emitter wrapper
+  src/overlay/OverlayApp.tsx  — Overlay root, listens for sync events + polls localStorage
+  src/overlay/Marquee.tsx     — Scrolling LED marquee, applies palette colors inline
