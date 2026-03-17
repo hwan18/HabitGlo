@@ -186,51 +186,6 @@ export function SettingsPanel() {
         )}
       </div>
       <div className="mt-4 border-t border-white/10 pt-4">
-        <p className="text-sm font-semibold text-white">Desktop Theme</p>
-        <p className="mt-1 text-xs text-white/60">
-          Changes the desktop dashboard and overlay. You can still override the overlay text palette below.
-        </p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {uiThemesList.map((preset) => {
-            const active = theme.uiThemeId === preset.id
-
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => setTheme({ uiThemeId: preset.id })}
-                className={`rounded-xl border p-3 text-left transition-colors ${
-                  active
-                    ? 'border-glow-pink/60 bg-white/10 text-white shadow-glow'
-                    : 'border-white/10 bg-black/30 text-white/70 hover:border-glow-blue'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold">{preset.label}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] ${
-                    active ? 'bg-white/10 text-white' : 'bg-black/30 text-white/50'
-                  }`}>
-                    {active ? 'Active' : 'Theme'}
-                  </span>
-                </div>
-                <p className={`mt-2 text-[11px] leading-relaxed ${active ? 'text-white/70' : 'text-white/50'}`}>
-                  {preset.description}
-                </p>
-                <div className="mt-3 flex items-center gap-2">
-                  <span
-                    className="h-6 flex-1 rounded border border-white/10"
-                    style={{ background: `hsl(${preset.preview.surface})` }}
-                  />
-                  <span className="h-6 w-6 rounded border border-white/10" style={{ background: `hsl(${preset.preview.primary})` }} />
-                  <span className="h-6 w-6 rounded border border-white/10" style={{ background: `hsl(${preset.preview.secondary})` }} />
-                  <span className="h-6 w-6 rounded border border-white/10" style={{ background: `hsl(${preset.preview.accent})` }} />
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-      <div className="mt-4 border-t border-white/10 pt-4">
         <p className="text-sm font-semibold text-white">Overlay Style</p>
         <label className="mt-3 flex flex-col gap-2 text-xs text-white/70">
           LED Font
@@ -306,6 +261,43 @@ export function SettingsPanel() {
                   <span className="h-4 w-4 rounded" style={{ background: p.colors.primary }} />
                   <span className="h-4 w-4 rounded" style={{ background: p.colors.secondary }} />
                   <span className="h-4 w-4 rounded" style={{ background: p.colors.accent }} />
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <div className="mt-4 border-t border-white/10 pt-4">
+        <p className="text-sm font-semibold text-white">Desktop Theme</p>
+        <p className="mt-1 text-xs text-white/60">
+          Changes the desktop dashboard and overlay. You can still override the overlay text palette above.
+        </p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {uiThemesList.map((preset) => {
+            const active = theme.uiThemeId === preset.id
+
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => setTheme({ uiThemeId: preset.id })}
+                className={`rounded-lg border p-2 text-left text-xs transition-colors ${
+                  active
+                    ? 'border-primary bg-white/10 text-white'
+                    : 'border-white/10 bg-black/40 text-white/70 hover:border-white/20'
+                }`}
+              >
+                <div className={`mb-1 font-semibold text-[11px] ${active ? 'text-white' : 'text-white/70'}`}>
+                  {preset.label}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="h-4 flex-1 rounded border border-white/10"
+                    style={{ background: `hsl(${preset.preview.surface})` }}
+                  />
+                  <span className="h-4 w-4 rounded border border-white/10" style={{ background: `hsl(${preset.preview.primary})` }} />
+                  <span className="h-4 w-4 rounded border border-white/10" style={{ background: `hsl(${preset.preview.secondary})` }} />
+                  <span className="h-4 w-4 rounded border border-white/10" style={{ background: `hsl(${preset.preview.accent})` }} />
                 </div>
               </button>
             )
