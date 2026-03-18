@@ -9,7 +9,7 @@ export type Palette =
   | 'sunrise'
   | 'ocean'
   | 'nightOwl'
-export type UiThemeId = 'citrusPoster' | 'noirBloom' | 'midnightSignal'
+export type UiThemeId = 'citrusPoster' | 'noirBloom' | 'midnightSignal' | 'magentaPulse' | 'emberGlow' | 'matrixTerminal'
 export type LedShape = 'dot' | 'square' | 'scanline'
 export type LedFont = 'dotGothic' | 'silkscreen' | 'pressStart' | 'vt323'
 

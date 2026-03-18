@@ -290,14 +290,30 @@ export function SettingsPanel() {
                 <div className={`mb-1 font-semibold text-[11px] ${active ? 'text-white' : 'text-white/70'}`}>
                   {preset.label}
                 </div>
-                <div className="flex items-center gap-1">
-                  <span
-                    className="h-4 flex-1 rounded border border-white/10"
-                    style={{ background: `hsl(${preset.preview.surface})` }}
+                <div
+                  className="mt-1 flex h-8 overflow-hidden rounded border border-white/10"
+                  style={{ background: `hsl(${preset.preview.surface})` }}
+                >
+                  <div
+                    className="w-1.5 shrink-0 border-r border-white/5"
+                    style={{ background: `hsl(${preset.preview.primary} / 0.15)` }}
                   />
-                  <span className="h-4 w-4 rounded border border-white/10" style={{ background: `hsl(${preset.preview.primary})` }} />
-                  <span className="h-4 w-4 rounded border border-white/10" style={{ background: `hsl(${preset.preview.secondary})` }} />
-                  <span className="h-4 w-4 rounded border border-white/10" style={{ background: `hsl(${preset.preview.accent})` }} />
+                  <div className="flex flex-1 flex-col justify-center gap-[3px] px-1.5">
+                    <div
+                      className="h-[3px] w-3/5 rounded-full"
+                      style={{ background: `hsl(${preset.preview.primary})` }}
+                    />
+                    <div className="flex gap-1">
+                      <div
+                        className="h-[5px] flex-1 rounded-sm"
+                        style={{ background: `hsl(${preset.preview.secondary})` }}
+                      />
+                      <div
+                        className="h-[5px] flex-1 rounded-sm"
+                        style={{ background: `hsl(${preset.preview.accent})` }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </button>
             )
