@@ -365,21 +365,18 @@
   <!-- NAV -->
   <!-- ============================================ -->
   <nav class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-xl">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-      <a href="#top" class="flex items-center gap-2">
+    <div class="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-6 py-4">
+      <a href="#top" class="flex items-center gap-2 justify-self-start">
         <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-glow-pink to-glow-blue flex items-center justify-center text-sm font-bold">H</div>
         <span class="text-lg font-bold tracking-tight">HabitGlo</span>
       </a>
-      <div class="hidden md:flex items-center gap-8 text-sm text-white/60">
+      <div class="hidden md:flex items-center justify-center gap-8 text-sm text-white/60">
         <a href="#problem" class="hover:text-white transition-colors">Why HabitGlo</a>
         <a href="#features" class="hover:text-white transition-colors">Features</a>
         <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
         <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
       </div>
-      <div class="flex items-center gap-3">
-        <a href="/app?demoReset=1" class="rounded-lg border border-glow-blue/30 bg-glow-blue/10 px-4 py-2 text-sm font-medium text-white/80 hover:bg-glow-blue/20 transition-colors">
-          Feel It in Browser
-        </a>
+      <div class="flex items-center justify-self-end gap-3">
         <a href="#pricing" class="rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow">
           Take Back Control
         </a>
@@ -396,9 +393,6 @@
     <div class="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-glow-pink/5 blur-[120px] pointer-events-none"></div>
 
     <div class="relative mx-auto max-w-4xl text-center">
-      <div class="inline-block mb-6 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs tracking-widest uppercase text-white/60">
-        Peripheral Productivity
-      </div>
       <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
         Ambient reminders<br />
         <span class="glow-text bg-gradient-to-r from-glow-pink via-glow-blue to-glow-green bg-clip-text text-transparent">on your screen.</span>
@@ -406,19 +400,13 @@
       <p class="mx-auto mt-6 max-w-2xl text-lg text-white/60 leading-relaxed">
         Keep your habits and reminders visible all day, on your screen.
       </p>
-      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="#pricing" class="rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 px-8 py-3.5 text-base font-semibold shadow-xl shadow-glow-pink/25 hover:shadow-glow-pink/40 transition-all hover:-translate-y-0.5">
-          Start My Focus Reset
-        </a>
-        <a href="/app?demoReset=1" class="group rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-8 py-3.5 text-base font-medium text-white/90 hover:bg-glow-blue/20 hover:border-glow-blue/50 transition-all hover:-translate-y-0.5">
-          &#9654; Feel It in Browser
-        </a>
-      </div>
-      <p class="mt-4 text-xs text-white/40">Windows 10+ &middot; 2-minute setup &middot; Secure checkout via Paddle</p>
+      <p class="mx-auto mt-2 max-w-2xl text-base text-white/40 leading-relaxed">
+        A desktop LED sign that scrolls across your screen all day.
+      </p>
     </div>
 
     <!-- Live Marquee Demo -->
-    <div class="relative mx-auto mt-16 max-w-5xl">
+    <div class="relative mx-auto mt-10 mb-10 max-w-5xl">
       <div class="rounded-2xl border border-white/10 bg-black/60 p-1 glow-box">
         <div class="rounded-xl bg-black/80 overflow-hidden h-16 flex items-center">
           <div class="marquee-track whitespace-nowrap flex items-center text-2xl font-bold tracking-[0.25em]">
@@ -450,7 +438,18 @@
           </div>
         </div>
       </div>
-      <p class="mt-3 text-center text-xs text-white/30">Live preview - your reminders stay visible without interrupting your workflow</p>
+    </div>
+
+    <div class="relative mx-auto max-w-4xl text-center">
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#pricing" class="inline-flex min-w-[15rem] items-center justify-center rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 px-8 py-3.5 text-base font-semibold shadow-xl shadow-glow-pink/25 transition-all hover:-translate-y-0.5 hover:shadow-glow-pink/40">
+          Get started
+        </a>
+        <a href="/app?demoReset=1" class="group inline-flex min-w-[15rem] items-center justify-center rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-8 py-3.5 text-base font-medium text-white/90 transition-all hover:-translate-y-0.5 hover:border-glow-blue/50 hover:bg-glow-blue/20">
+          &#9654; View Demo
+        </a>
+      </div>
+      <p class="mt-4 text-xs text-white/40">Windows 10+ &middot; 2-minute setup &middot; Secure checkout via Paddle</p>
     </div>
   </section>
 
@@ -985,8 +984,8 @@
         <a href="#pricing" class="rounded-xl bg-gradient-to-r from-glow-pink/90 to-glow-blue/70 px-10 py-4 text-lg font-semibold shadow-xl shadow-glow-pink/25 hover:shadow-glow-pink/40 transition-all hover:-translate-y-0.5">
           Take Back Control
         </a>
-        <a href="/app?demoReset=1" class="rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-10 py-4 text-lg font-medium text-white/80 hover:bg-glow-blue/20 hover:border-glow-blue/50 transition-all hover:-translate-y-0.5">
-          &#9654; Feel It in Browser
+        <a href="/app?demoReset=1" class="inline-flex min-w-[17rem] items-center justify-center rounded-xl border border-glow-blue/30 bg-glow-blue/10 px-10 py-4 text-lg font-medium text-white/80 transition-all hover:-translate-y-0.5 hover:border-glow-blue/50 hover:bg-glow-blue/20">
+          &#9654; View Demo
         </a>
       </div>
     </div>
@@ -1029,4 +1028,3 @@
   </script>
 </body>
 </html>
-
