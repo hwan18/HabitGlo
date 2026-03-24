@@ -357,6 +357,17 @@
     .pain-line { position: relative; }
     .pain-line::before { content: ''; position: absolute; left: 19px; top: 40px; bottom: -24px; width: 1px; background: linear-gradient(to bottom, hsl(var(--border) / 0.8), transparent); }
     .pain-line:last-child::before { display: none; }
+
+    /* Timeline staggered reveal */
+    .timeline-row {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
+    .timeline-row.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body id="top" class="bg-black text-white font-sans antialiased overflow-x-hidden">
@@ -457,16 +468,22 @@
   <!-- SOCIAL PROOF BAR -->
   <!-- ============================================ -->
   <section class="border-y border-white/5 bg-white/[0.02] py-8 px-6">
-    <div class="mx-auto max-w-4xl flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-sm text-white/40">
-      <span>Built for people who want to <strong class="text-white/60">follow through</strong></span>
+    <div class="mx-auto max-w-4xl flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-white/40">
+      <span><span class="text-glow-green/70 mr-1.5">✓</span> Your screen reminds you — <strong class="text-white/60">willpower doesn't have to</strong></span>
       <span class="hidden sm:inline text-white/10">|</span>
-      <span><strong class="text-white/60">Visible reminders</strong> beat fragile willpower</span>
+      <span><span class="text-glow-green/70 mr-1.5">✓</span> <strong class="text-white/60">Set up in under 2 minutes</strong></span>
       <span class="hidden sm:inline text-white/10">|</span>
-      <span><strong class="text-white/60">2 minutes</strong> to set up your first protocol</span>
+      <span><span class="text-glow-green/70 mr-1.5">✓</span> <strong class="text-white/60">No contract</strong> · Cancel in one click</span>
       <span class="hidden sm:inline text-white/10">|</span>
-      <span><strong class="text-white/60">Cancel anytime</strong> on monthly</span>
-      <span class="hidden sm:inline text-white/10">|</span>
-      <span>Secure payments via <strong class="text-white/60">Paddle</strong></span>
+      <span><span class="text-glow-green/70 mr-1.5">✓</span> Secure checkout via <strong class="text-white/60">Paddle</strong></span>
+    </div>
+    <div class="mx-auto mt-5 max-w-3xl flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-white/30">
+      <span>People use it for</span>
+      <span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-white/50">Focus protocols</span>
+      <span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-white/50">Posture reminders</span>
+      <span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-white/50">Hydration cues</span>
+      <span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-white/50">Affirmations</span>
+      <span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-white/50">Deep work rules</span>
     </div>
   </section>
 
@@ -476,8 +493,8 @@
   <section id="problem" class="py-24 px-6 fade-section">
     <div class="mx-auto max-w-6xl">
       <div class="text-center mb-16">
-        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">Your habits are<br /><span class="glow-text text-glow-pink">invisible.</span></h2>
-        <p class="mt-4 text-white/50 max-w-xl mx-auto">You set intentions every morning. By noon, you&rsquo;ve forgotten them all. Sound familiar?</p>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">You&rsquo;ve tried<br /><span class="glow-text text-glow-pink">everything.</span></h2>
+        <p class="mt-4 text-white/50 max-w-xl mx-auto">Sticky notes, phone alarms, habit apps &mdash; none of them stuck. Here&rsquo;s why.</p>
       </div>
 
       <div class="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -488,8 +505,8 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
             <div>
-              <h3 class="text-lg font-semibold mb-1">Forgotten by Noon</h3>
-              <p class="text-sm text-white/50 leading-relaxed">You set intentions in the morning. By lunchtime, you&rsquo;ve opened 30 tabs and haven&rsquo;t done any of them. Your best plans evaporate the moment the screen lights up.</p>
+              <h3 class="text-lg font-semibold mb-1">Sticky Notes</h3>
+              <p class="text-sm text-white/50 leading-relaxed">Fell off the monitor. Blended into the background. Ignored within a day. Physical reminders can&rsquo;t compete with a dynamic, moving reminder on your screen.</p>
             </div>
           </div>
           <div class="pain-line flex gap-4">
@@ -497,8 +514,8 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             </div>
             <div>
-              <h3 class="text-lg font-semibold mb-1">Willpower Runs Out</h3>
-              <p class="text-sm text-white/50 leading-relaxed">You rely on motivation and memory, but both fail by mid-afternoon. The habits that matter most get pushed to &ldquo;tomorrow&rdquo; &mdash; again.</p>
+              <h3 class="text-lg font-semibold mb-1">Phone Reminders</h3>
+              <p class="text-sm text-white/50 leading-relaxed">Swiped away in 0.3 seconds. You&rsquo;ve trained yourself to dismiss them without thinking. The notification is gone before the thought even registers.</p>
             </div>
           </div>
           <div class="pain-line flex gap-4">
@@ -506,66 +523,58 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
             </div>
             <div>
-              <h3 class="text-lg font-semibold mb-1">Death by Distraction</h3>
-              <p class="text-sm text-white/50 leading-relaxed">A quick check here, a notification there. Each one seems harmless, but they quietly steal hours from your day and weeks from your goals.</p>
+              <h3 class="text-lg font-semibold mb-1">Habit Tracker Apps</h3>
+              <p class="text-sm text-white/50 leading-relaxed">Opened it for a week, felt productive, then forgot it existed. Now it&rsquo;s another forgotten app on page 3 of your phone.</p>
             </div>
           </div>
         </div>
 
-        <!-- Visual (Right) - Stylized "lost day" screen -->
-        <div class="relative">
-          <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-6 overflow-hidden">
-            <div class="text-xs text-white/30 uppercase tracking-widest mb-4">Your typical day</div>
-            <div class="space-y-3">
-              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-white/5">
-                <div class="flex items-center gap-3">
-                  <span class="text-green-400 text-sm">9:00 AM</span>
-                  <span class="text-white/70 text-sm">Set intentions, feeling motivated</span>
+        <!-- Visual (Right) - HabitGlo solution preview -->
+        <div class="relative" id="timeline-card">
+          <div class="rounded-2xl border border-glow-green/20 bg-glow-green/[0.03] p-6 overflow-hidden">
+            <div class="text-xs text-glow-green/50 uppercase tracking-widest mb-5">With HabitGlo</div>
+            <div class="space-y-5">
+              <div class="timeline-row flex gap-4">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-glow-green/10 text-glow-green">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 </div>
-                <span class="text-green-400/60 text-xs">&#10003;</span>
+                <div>
+                  <h4 class="text-sm font-semibold text-white/80 mb-0.5">Always on your screen</h4>
+                  <p class="text-sm text-white/40 leading-relaxed">A scrolling LED reminder you literally can&rsquo;t miss. No app to open, no notification to swipe.</p>
+                </div>
               </div>
-              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-white/5">
-                <div class="flex items-center gap-3">
-                  <span class="text-amber-400 text-sm">10:30 AM</span>
-                  <span class="text-white/70 text-sm">Quick email check... 45 min gone</span>
+              <div class="timeline-row flex gap-4">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-glow-green/10 text-glow-green">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 </div>
-                <span class="text-amber-400/60 text-xs">&#9888;</span>
+                <div>
+                  <h4 class="text-sm font-semibold text-white/80 mb-0.5">Impossible to ignore</h4>
+                  <p class="text-sm text-white/40 leading-relaxed">It moves. It glows. It&rsquo;s right where you&rsquo;re already looking &mdash; your desktop.</p>
+                </div>
               </div>
-              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-white/5">
-                <div class="flex items-center gap-3">
-                  <span class="text-amber-400 text-sm">12:00 PM</span>
-                  <span class="text-white/70 text-sm">Forgot about posture, deep work</span>
+              <div class="timeline-row flex gap-4">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-glow-green/10 text-glow-green">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 </div>
-                <span class="text-red-400/60 text-xs">&#10007;</span>
-              </div>
-              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-red-500/10">
-                <div class="flex items-center gap-3">
-                  <span class="text-red-400 text-sm">3:00 PM</span>
-                  <span class="text-white/70 text-sm">Scrolled phone for 2 hours</span>
+                <div>
+                  <h4 class="text-sm font-semibold text-white/80 mb-0.5">Works all day</h4>
+                  <p class="text-sm text-white/40 leading-relaxed">Not a one-time ping. Your intentions scroll across your screen continuously, keeping you anchored.</p>
                 </div>
-                <span class="text-red-400/60 text-xs">&#10007;</span>
-              </div>
-              <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 border border-red-500/10">
-                <div class="flex items-center gap-3">
-                  <span class="text-red-400 text-sm">6:00 PM</span>
-                  <span class="text-white/70 text-sm">Where did the day go?</span>
-                </div>
-                <span class="text-red-400/60 text-xs">&#10007;</span>
               </div>
             </div>
           </div>
-          <div class="absolute -bottom-3 -right-3 w-32 h-32 rounded-full bg-red-500/5 blur-[60px] pointer-events-none"></div>
+          <div class="absolute -bottom-3 -right-3 w-32 h-32 rounded-full bg-glow-green/5 blur-[60px] pointer-events-none"></div>
         </div>
       </div>
 
-      <!-- Stat callout -->
-      <div class="mt-16 rounded-2xl border border-red-500/20 bg-red-500/[0.04] px-8 py-5 flex flex-col sm:flex-row items-center gap-4 max-w-3xl mx-auto">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <!-- Visibility callout -->
+      <div class="mt-16 rounded-2xl border border-glow-green/20 bg-glow-green/[0.04] px-8 py-5 flex flex-col sm:flex-row items-center gap-4 max-w-3xl mx-auto">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-glow-green/10 text-glow-green">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
         </div>
         <div>
-          <p class="text-sm text-white/80"><strong class="text-red-400">The average person checks their phone 96 times a day</strong></p>
-          <p class="text-xs text-white/40 mt-0.5">Without visible reminders, your best intentions don&rsquo;t stand a chance against the pull of distraction.</p>
+          <p class="text-sm text-white/80"><strong class="text-glow-green">People act on what they see.</strong></p>
+          <p class="text-xs text-white/40 mt-0.5">Out of sight, out of mind isn&rsquo;t just a saying &mdash; it&rsquo;s why every reminder you&rsquo;ve tried has failed. HabitGlo keeps your intentions visible, all day, on the screen you&rsquo;re already looking at.</p>
         </div>
       </div>
     </div>
@@ -1025,6 +1034,22 @@
       { threshold: 0.1 }
     );
     document.querySelectorAll('.fade-section').forEach((el) => observer.observe(el));
+
+    const timelineCard = document.getElementById('timeline-card');
+    if (timelineCard) {
+      const timelineObs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            const rows = timelineCard.querySelectorAll('.timeline-row');
+            rows.forEach((row, i) => {
+              setTimeout(() => row.classList.add('revealed'), i * 250);
+            });
+            timelineObs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.3 });
+      timelineObs.observe(timelineCard);
+    }
   </script>
 </body>
 </html>
