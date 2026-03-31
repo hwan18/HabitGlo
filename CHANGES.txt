@@ -39,7 +39,7 @@ CHANGE 3: Bento Grid Features Section (V6 - fixed layout)
   - Heading: "Everything you need to stay on track."
   - 7 feature cards in clean 3-row bento layout:
     Row 1: LED Reminder Marquee (full-width hero, col-span-3, glow-box border, h-14 marquee)
-    Row 2: Click-Through Mode | Streak Tracking | Habit Packs
+    Row 2: Reserve Screen Space | Streak Tracking | Habit Packs
     Row 3: Color Palettes (compact 1-col, 3 swatches + "+7 more") | Leaderboard | Desktop App + Cloud Sync (merged)
   - Every row fills all 3 columns, zero gaps
   - CSS animations: float, pulse-soft, slide-in-right, hover lift
