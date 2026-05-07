@@ -231,3 +231,13 @@ $$ language sql security definer stable;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS streak_best integer default 0;
 -- ALTER TABLE habits ADD COLUMN IF NOT EXISTS show_on_leaderboard boolean default false;
 -- ALTER TABLE habits DROP COLUMN IF EXISTS speed;
+
+-- macOS waitlist (public landing page signups, no auth required)
+create table if not exists macos_waitlist (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  created_at timestamptz default now()
+);
+
+alter table macos_waitlist enable row level security;
+create policy "Anyone can insert" on macos_waitlist for insert with check (true);
