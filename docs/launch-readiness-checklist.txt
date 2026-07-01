@@ -1,0 +1,70 @@
+HabitGlo Launch Readiness Checklist
+Generated: 2026-07-01
+
+Launch blockers
+
+1. Payments are still in sandbox.
+   public/download/config.js currently uses environment: 'sandbox' and a test_ Paddle client token.
+   Before public launch, switch to production, use a live_ client token, and use production price IDs.
+
+2. Production checkout needs real end-to-end testing.
+   Test monthly purchase, lifetime purchase, Paddle webhook delivery, Supabase profiles update,
+   desktop app access unlock, cancellation, and billing portal flow.
+
+3. Download page is not payment-gated.
+   docs/deployment-download-flow.md notes that /download/windows.html does not verify payment.
+   Anyone with the URL can download the installer. For a paid launch, consider a backend-gated
+   short-lived signed download URL.
+
+4. Public pages still visually mismatch the main site/app.
+   public/purchase.html has been updated, but these pages still need the same HabitGlo visual system:
+   - public/pricing.html
+   - public/checkout/monthly.html
+   - public/checkout/lifetime.html
+   - public/download/windows.html
+   - public/legal/terms.html
+   - public/legal/privacy.html
+   - public/legal/refund.html
+
+5. Broken encoded characters are visible in user-facing strings.
+   Clean mojibake such as "â€”", "Â·", and similar title/copy issues in:
+   - src/App.tsx
+   - public/pricing.html
+   - public/checkout/monthly.html
+   - public/checkout/lifetime.html
+
+Should fix before public
+
+1. Align app copy with the new website positioning.
+   The website now emphasizes goals scrolling all day, while the app still says
+   "Ambient reminders on your screen."
+
+2. Change the Tauri main window title.
+   src-tauri/tauri.conf.json currently uses "HabitGlo Vault". Consider changing it to "HabitGlo".
+
+3. Verify Windows installer signing.
+   Confirm the public MSI shows a trusted publisher and does not trigger "Unknown publisher".
+
+4. Tighten Tauri security settings.
+   Review allowlist.all: true and the broad CSP before public release.
+
+5. Confirm support operations.
+   Make sure support@habitglo.com is live, monitored, and referenced consistently.
+
+6. Replace the default Vite README content.
+   README.md still contains template Vite text. Replace it with HabitGlo-specific setup and release notes.
+
+Nice-to-have polish
+
+1. Bring pricing, checkout, download, and legal pages onto one shared visual system.
+2. Add a launch QA checklist to the repo.
+3. Add screenshots or a short demo video to the landing/download flow.
+4. Add analytics or error reporting for checkout failures and app startup issues.
+5. Update versioning from 0.1.0 if this is intended to be the first public release.
+
+Current verification
+
+- npm run build passes.
+- npm run lint passes.
+- git diff --check -- public/purchase.html passes.
+- http://localhost:4173/purchase.html?plan=monthly&source=website_landing returned 200 during local check.
