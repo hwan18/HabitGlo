@@ -4,54 +4,80 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HabitGlo Refund Policy</title>
+  <link rel="icon" type="image/png" href="/icons/favicon.png" />
+  <link rel="apple-touch-icon" href="/icons/app-icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
       color-scheme: dark;
-      --bg: #070a12;
-      --panel: #121827;
-      --border: #27324a;
-      --text: #f3f6ff;
-      --muted: #b2bdd7;
-      --accent: #ffcb6e;
+      --background: 150 80% 4%;
+      --foreground: 45 100% 95%;
+      --card: 150 70% 8%;
+      --popover: 150 70% 8%;
+      --primary: 150 100% 48%;
+      --accent: 35 100% 58%;
+      --glow-blue: 320 100% 70%;
+      --border: 45 100% 95%;
+      --panel: hsl(var(--card) / 0.84);
+      --panel-strong: hsl(var(--popover) / 0.9);
+      --card-border: hsl(var(--border) / 0.14);
+      --text: hsl(var(--foreground));
+      --soft-text: hsl(var(--foreground) / 0.68);
+      --muted: hsl(var(--foreground) / 0.46);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: radial-gradient(circle at top, #2d2415 0%, var(--bg) 55%);
+      background:
+        radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
+        radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
+        linear-gradient(180deg, hsl(var(--background)), hsl(150 100% 2%));
       color: var(--text);
-      font-family: Inter, Segoe UI, Arial, sans-serif;
+      font-family: Montserrat, Segoe UI, Arial, sans-serif;
       line-height: 1.6;
       padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
     .wrap {
       width: min(900px, 100%);
       margin: 0 auto;
-      border: 1px solid var(--border);
+      border: 1px solid var(--card-border);
       border-radius: 16px;
-      background: linear-gradient(180deg, #22202f, var(--panel));
-      padding: 24px;
+      background:
+        linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 38%),
+        linear-gradient(315deg, hsl(var(--glow-blue) / 0.08), transparent 46%),
+        var(--panel);
+      padding: 32px;
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.08),
+        0 24px 80px rgba(0, 0, 0, 0.38),
+        0 0 34px hsl(var(--primary) / 0.12);
+      backdrop-filter: blur(18px);
     }
-    h1 { margin: 0 0 8px; font-size: 2rem; }
+    h1 { margin: 0 0 8px; font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }
     h2 { margin: 24px 0 8px; font-size: 1.1rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .meta { margin-bottom: 16px; color: #d7e2ff; }
+    p { margin: 0 0 10px; color: var(--soft-text); }
+    .meta { margin-bottom: 16px; color: var(--muted); }
     .nav {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-top: 24px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid hsl(var(--border) / 0.12);
       padding-top: 16px;
     }
     a {
-      color: var(--accent);
+      color: hsl(var(--primary));
       text-decoration: none;
-      border: 1px solid #3f3a2f;
+      border: 1px solid hsl(var(--border) / 0.14);
       border-radius: 10px;
       padding: 8px 12px;
-      background: #17151c;
+      background: transparent;
+      transition: opacity 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
-    a:hover { border-color: #6b624d; }
+    a:hover { border-color: hsl(var(--glow-blue) / 0.42); box-shadow: 0 0 20px hsl(var(--glow-blue) / 0.08); }
     .inline-link {
       border: 0;
       border-radius: 0;
@@ -61,6 +87,11 @@
       text-underline-offset: 2px;
     }
     .inline-link:hover { border-color: transparent; }
+    @media (max-width: 640px) {
+      body { padding: 16px; }
+      .wrap { padding: 24px 20px; }
+      h1 { font-size: 1.65rem; }
+    }
   </style>
 </head>
 <body>

@@ -8,23 +8,29 @@
   <link rel="apple-touch-icon" href="/icons/app-icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="/download/config.js"></script>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #08080d;
-      --card: #111118;
-      --card-border: #1e1e28;
-      --text: #f0f0f5;
-      --muted: #7a7a8c;
-      --accent: #d4a574;
-      --accent-hover: #e0b688;
-      --input-bg: #0c0c14;
-      --warn-bg: #2a1f12;
-      --warn-border: #6f5a23;
-      --warn-text: #ffe4a6;
-      --success: #6bff6b;
+      --background: 150 80% 4%;
+      --foreground: 45 100% 95%;
+      --card: 150 70% 8%;
+      --popover: 150 70% 8%;
+      --primary: 150 100% 48%;
+      --accent: 35 100% 58%;
+      --glow-blue: 320 100% 70%;
+      --border: 45 100% 95%;
+      --panel: hsl(var(--card) / 0.84);
+      --panel-strong: hsl(var(--popover) / 0.9);
+      --card-border: hsl(var(--border) / 0.14);
+      --text: hsl(var(--foreground));
+      --soft-text: hsl(var(--foreground) / 0.68);
+      --muted: hsl(var(--foreground) / 0.46);
+      --warn-bg: hsl(var(--accent) / 0.11);
+      --warn-border: hsl(var(--accent) / 0.32);
+      --warn-text: hsl(var(--foreground) / 0.92);
+      --success: hsl(var(--primary));
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; }
     body {
@@ -33,8 +39,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: var(--bg);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
+        radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
+        linear-gradient(180deg, hsl(var(--background)), hsl(150 100% 2%));
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
       padding: 24px;
       -webkit-font-smoothing: antialiased;
@@ -55,10 +64,18 @@
     .card {
       width: 100%;
       max-width: 460px;
-      background: var(--card);
+      background:
+        linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 38%),
+        linear-gradient(315deg, hsl(var(--glow-blue) / 0.08), transparent 46%),
+        var(--panel);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 40px 32px 32px;
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.08),
+        0 24px 80px rgba(0, 0, 0, 0.38),
+        0 0 34px hsl(var(--primary) / 0.12);
+      backdrop-filter: blur(18px);
     }
     .logo-wrap {
       display: flex;
@@ -70,6 +87,7 @@
       height: 48px;
       border-radius: 14px;
       display: block;
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.22), 0 0 28px hsl(var(--glow-blue) / 0.14);
     }
     .plan-badge {
       display: flex;
@@ -81,17 +99,18 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: var(--accent);
-      background: rgba(212, 165, 116, 0.1);
-      border: 1px solid rgba(212, 165, 116, 0.2);
+      color: hsl(var(--accent));
+      background: hsl(var(--accent) / 0.1);
+      border: 1px solid hsl(var(--accent) / 0.22);
       padding: 4px 14px;
       border-radius: 20px;
     }
     h1 {
       text-align: center;
       font-size: 1.5rem;
-      font-weight: 700;
+      font-weight: 800;
       margin-bottom: 4px;
+      letter-spacing: -0.01em;
     }
     .price-display {
       text-align: center;
@@ -104,13 +123,13 @@
     }
     .price-period {
       font-size: 1rem;
-      color: var(--muted);
+      color: var(--soft-text);
       font-weight: 400;
     }
     .price-note {
       text-align: center;
       font-size: 0.82rem;
-      color: var(--muted);
+      color: var(--soft-text);
       margin-bottom: 24px;
     }
     .features {
@@ -125,22 +144,23 @@
       align-items: center;
       gap: 12px;
       font-size: 0.9rem;
-      color: #c0c0cc;
+      color: var(--soft-text);
     }
     .check-icon {
       flex-shrink: 0;
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background: rgba(212, 165, 116, 0.12);
+      background: hsl(var(--primary) / 0.12);
+      color: hsl(var(--primary));
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .checkout-btn {
       width: 100%;
-      background: linear-gradient(135deg, var(--accent), #c49560);
-      color: #0a0a0f;
+      background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--glow-blue) / 0.72));
+      color: var(--text);
       border: none;
       border-radius: 10px;
       padding: 14px 0;
@@ -148,12 +168,16 @@
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
       text-decoration: none;
       display: block;
       text-align: center;
+      box-shadow: 0 12px 30px hsl(var(--primary) / 0.18);
     }
-    .checkout-btn:hover { opacity: 0.92; }
+    .checkout-btn:hover {
+      opacity: 0.94;
+      box-shadow: 0 16px 34px hsl(var(--primary) / 0.24), 0 0 24px hsl(var(--glow-blue) / 0.14);
+    }
     .checkout-btn:active { transform: scale(0.99); }
     .checkout-btn[aria-disabled="true"] {
       opacity: 0.45;
@@ -169,7 +193,7 @@
       display: none;
     }
     .status-msg.visible { display: block; }
-    .status-msg.info { color: var(--muted); background: transparent; }
+    .status-msg.info { color: var(--soft-text); background: transparent; }
     .status-msg.warn {
       background: var(--warn-bg);
       border: 1px solid var(--warn-border);
@@ -185,7 +209,7 @@
       content: '';
       flex: 1;
       height: 1px;
-      background: var(--card-border);
+      background: hsl(var(--border) / 0.12);
     }
     .divider-text {
       font-size: 0.72rem;
@@ -201,7 +225,7 @@
       gap: 8px 20px;
     }
     .ghost-link {
-      color: var(--muted);
+      color: var(--soft-text);
       text-decoration: none;
       font-size: 0.82rem;
       transition: color 0.2s;
@@ -212,8 +236,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      background: rgba(212, 165, 116, 0.08);
-      border: 1px solid rgba(212, 165, 116, 0.18);
+      background: hsl(var(--accent) / 0.08);
+      border: 1px solid hsl(var(--accent) / 0.18);
       border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 20px;
@@ -221,7 +245,7 @@
     }
     .session-banner.visible { display: flex; }
     .session-email {
-      color: #c0c0cc;
+      color: var(--soft-text);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -242,7 +266,7 @@
     .secure-note {
       text-align: center;
       font-size: 0.75rem;
-      color: #555566;
+      color: var(--muted);
       margin-top: 20px;
       display: flex;
       align-items: center;
@@ -281,19 +305,19 @@
 
     <ul class="features">
       <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         One payment, lifetime access
       </li>
       <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         All current features included
       </li>
       <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         All future updates included
       </li>
       <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         No recurring billing ever
       </li>
     </ul>
@@ -311,7 +335,7 @@
     </div>
 
     <div class="secure-note">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="6" width="8" height="6" rx="1.5" stroke="#555566" stroke-width="1.2"/><path d="M5 6V4.5a2 2 0 0 1 4 0V6" stroke="#555566" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="6" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 6V4.5a2 2 0 0 1 4 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       Secured by Paddle. Payments are encrypted and PCI-compliant.
     </div>
   </main>

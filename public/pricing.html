@@ -3,23 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HabitGlo – Pricing</title>
+  <title>HabitGlo - Pricing</title>
   <link rel="icon" type="image/png" href="/icons/favicon.png" />
   <link rel="apple-touch-icon" href="/icons/app-icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="/download/config.js"></script>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #08080d;
-      --card: #111118;
-      --card-border: #1e1e28;
-      --text: #f0f0f5;
-      --muted: #7a7a8c;
-      --accent: #d4a574;
-      --accent-hover: #e0b688;
+      --background: 150 80% 4%;
+      --foreground: 45 100% 95%;
+      --card: 150 70% 8%;
+      --popover: 150 70% 8%;
+      --primary: 150 100% 48%;
+      --accent: 35 100% 58%;
+      --glow-blue: 320 100% 70%;
+      --border: 45 100% 95%;
+      --panel: hsl(var(--card) / 0.84);
+      --panel-strong: hsl(var(--popover) / 0.9);
+      --card-border: hsl(var(--border) / 0.14);
+      --text: hsl(var(--foreground));
+      --soft-text: hsl(var(--foreground) / 0.68);
+      --muted: hsl(var(--foreground) / 0.46);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; }
     body {
@@ -27,8 +34,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: var(--bg);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
+        radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
+        linear-gradient(180deg, hsl(var(--background)), hsl(150 100% 2%));
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
       padding: 48px 24px 40px;
       -webkit-font-smoothing: antialiased;
@@ -56,6 +66,7 @@
       height: 48px;
       border-radius: 14px;
       display: block;
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.22), 0 0 28px hsl(var(--glow-blue) / 0.14);
     }
     .page-header {
       text-align: center;
@@ -63,12 +74,12 @@
     }
     .page-header h1 {
       font-size: 2rem;
-      font-weight: 700;
+      font-weight: 800;
       margin-bottom: 8px;
       letter-spacing: -0.02em;
     }
     .page-header p {
-      color: var(--muted);
+      color: var(--soft-text);
       font-size: 1rem;
       line-height: 1.6;
       max-width: 420px;
@@ -83,19 +94,29 @@
       margin-bottom: 40px;
     }
     .plan-card {
-      background: var(--card);
+      background:
+        linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 38%),
+        linear-gradient(315deg, hsl(var(--glow-blue) / 0.08), transparent 46%),
+        var(--panel);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 32px 28px;
       position: relative;
-      transition: border-color 0.3s;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.04),
+        0 18px 60px rgba(0, 0, 0, 0.28);
     }
     .plan-card:hover {
-      border-color: #2a2a38;
+      border-color: hsl(var(--glow-blue) / 0.32);
+      transform: translateY(-2px);
     }
     .plan-card.popular {
-      border-color: rgba(212, 165, 116, 0.35);
-      box-shadow: 0 0 40px rgba(212, 165, 116, 0.06);
+      border-color: hsl(var(--primary) / 0.32);
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.08),
+        0 24px 80px rgba(0, 0, 0, 0.38),
+        0 0 34px hsl(var(--primary) / 0.12);
     }
     .popular-badge {
       position: absolute;
@@ -106,8 +127,8 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: #0a0a0f;
-      background: var(--accent);
+      color: var(--text);
+      background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--glow-blue) / 0.72));
       padding: 4px 16px;
       border-radius: 20px;
     }
@@ -126,12 +147,12 @@
     }
     .plan-price .period {
       font-size: 1rem;
-      color: var(--muted);
+      color: var(--soft-text);
       font-weight: 400;
     }
     .plan-desc {
       font-size: 0.85rem;
-      color: var(--muted);
+      color: var(--soft-text);
       margin-bottom: 24px;
       line-height: 1.5;
     }
@@ -147,14 +168,15 @@
       align-items: center;
       gap: 10px;
       font-size: 0.875rem;
-      color: #b8b8c8;
+      color: var(--soft-text);
     }
     .check-icon {
       flex-shrink: 0;
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: rgba(212, 165, 116, 0.12);
+      background: hsl(var(--primary) / 0.12);
+      color: hsl(var(--primary));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -169,22 +191,26 @@
       font-family: inherit;
       font-size: 0.95rem;
       font-weight: 600;
-      transition: opacity 0.2s, transform 0.1s;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
     }
-    .plan-cta:hover { opacity: 0.92; }
+    .plan-cta:hover { opacity: 0.94; }
     .plan-cta:active { transform: scale(0.99); }
     .plan-cta.primary {
-      background: linear-gradient(135deg, var(--accent), #c49560);
-      color: #0a0a0f;
+      background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--glow-blue) / 0.72));
+      color: var(--text);
+      box-shadow: 0 12px 30px hsl(var(--primary) / 0.18);
+    }
+    .plan-cta.primary:hover {
+      box-shadow: 0 16px 34px hsl(var(--primary) / 0.24), 0 0 24px hsl(var(--glow-blue) / 0.14);
     }
     .plan-cta.secondary {
       background: transparent;
-      border: 1px solid #2a2a3a;
+      border: 1px solid hsl(var(--border) / 0.14);
       color: var(--text);
     }
     .plan-cta.secondary:hover {
-      background: #161620;
-      border-color: #3a3a4a;
+      border-color: hsl(var(--glow-blue) / 0.42);
+      box-shadow: 0 0 20px hsl(var(--glow-blue) / 0.08);
     }
     .footer-section {
       text-align: center;
@@ -207,7 +233,7 @@
     .footer-link:hover { color: var(--text); }
     .footer-support {
       font-size: 0.8rem;
-      color: #555566;
+      color: var(--muted);
     }
     @media (max-width: 640px) {
       .plans {
@@ -246,19 +272,19 @@
       <p class="plan-desc">Full access with flexibility. Cancel anytime.</p>
       <ul class="plan-features">
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           Unlimited habits and streak tracking
         </li>
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           All themes and habit packs
         </li>
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           Cloud sync and leaderboard
         </li>
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           Cancel anytime, no commitment
         </li>
       </ul>
@@ -274,19 +300,19 @@
       <p class="plan-desc">Pay once. Own it forever.</p>
       <ul class="plan-features">
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           One payment, lifetime access
         </li>
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           Includes all current features
         </li>
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           All future updates included
         </li>
         <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           No recurring billing ever
         </li>
       </ul>

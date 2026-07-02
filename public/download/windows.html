@@ -4,19 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HabitGlo Windows Download</title>
+  <link rel="icon" type="image/png" href="/icons/favicon.png" />
+  <link rel="apple-touch-icon" href="/icons/app-icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="/download/config.js"></script>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #05060a;
-      --panel: #121522;
-      --text: #eef2ff;
-      --muted: #9ea8c7;
-      --accent: #36d2ff;
-      --accent-2: #6bff6b;
-      --warn-bg: #2f2512;
-      --warn-border: #6f5a23;
-      --warn-text: #ffe4a6;
+      --background: 150 80% 4%;
+      --foreground: 45 100% 95%;
+      --card: 150 70% 8%;
+      --popover: 150 70% 8%;
+      --primary: 150 100% 48%;
+      --accent: 35 100% 58%;
+      --glow-blue: 320 100% 70%;
+      --border: 45 100% 95%;
+      --panel: hsl(var(--card) / 0.84);
+      --panel-strong: hsl(var(--popover) / 0.9);
+      --card-border: hsl(var(--border) / 0.14);
+      --text: hsl(var(--foreground));
+      --soft-text: hsl(var(--foreground) / 0.68);
+      --muted: hsl(var(--foreground) / 0.46);
+      --warn-bg: hsl(var(--accent) / 0.11);
+      --warn-border: hsl(var(--accent) / 0.32);
+      --warn-text: hsl(var(--foreground) / 0.92);
     }
     * { box-sizing: border-box; }
     body {
@@ -24,20 +37,37 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: radial-gradient(circle at top, #112b19 0%, var(--bg) 52%);
-      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      background:
+        radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
+        radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
+        linear-gradient(180deg, hsl(var(--background)), hsl(150 100% 2%));
+      font-family: "Montserrat", "Segoe UI", sans-serif;
       color: var(--text);
       padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
     .card {
       width: min(820px, 100%);
-      border: 1px solid #2a2f42;
+      border: 1px solid var(--card-border);
       border-radius: 16px;
-      background: linear-gradient(180deg, #161b2f, var(--panel));
-      padding: 24px;
+      background:
+        linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 38%),
+        linear-gradient(315deg, hsl(var(--glow-blue) / 0.08), transparent 46%),
+        var(--panel);
+      padding: 32px;
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.08),
+        0 24px 80px rgba(0, 0, 0, 0.38),
+        0 0 34px hsl(var(--primary) / 0.12);
+      backdrop-filter: blur(18px);
     }
-    h1 { margin: 0 0 10px; font-size: 1.8rem; }
-    p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    p { margin: 0 0 12px; color: var(--soft-text); line-height: 1.5; }
     .meta {
       display: grid;
       grid-template-columns: 150px 1fr;
@@ -46,27 +76,27 @@
       margin-bottom: 16px;
       padding: 12px;
       border-radius: 10px;
-      border: 1px solid #2a2f42;
-      background: #0f1426;
+      border: 1px solid hsl(var(--border) / 0.12);
+      background: var(--panel-strong);
       font-size: 0.95rem;
     }
     .meta dt {
-      color: #c8d1f0;
+      color: var(--text);
       font-weight: 600;
       margin: 0;
     }
     .meta dd {
       margin: 0;
-      color: #e8ecff;
+      color: var(--soft-text);
       word-break: break-word;
     }
     .status {
       margin-top: 8px;
-      border: 1px solid #2d3552;
+      border: 1px solid hsl(var(--border) / 0.12);
       border-radius: 10px;
-      background: #0f1426;
+      background: var(--panel-strong);
       padding: 10px 12px;
-      color: #d4dbf7;
+      color: var(--soft-text);
       font-size: 0.95rem;
     }
     .status.warn {
@@ -80,20 +110,36 @@
       border-radius: 10px;
       padding: 10px 14px;
       font-weight: 600;
-      border: 1px solid #2d3552;
+      border: 1px solid hsl(var(--border) / 0.14);
       color: var(--text);
+      transition: opacity 0.2s, transform 0.1s, border-color 0.2s, box-shadow 0.2s;
     }
+    a:hover {
+      border-color: hsl(var(--glow-blue) / 0.42);
+      opacity: 0.94;
+    }
+    a:active { transform: scale(0.99); }
     .primary {
       border: none;
-      background: linear-gradient(120deg, var(--accent), var(--accent-2));
-      color: #03040a;
+      background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--glow-blue) / 0.72));
+      color: var(--text);
+      box-shadow: 0 12px 30px hsl(var(--primary) / 0.18);
+    }
+    .primary:hover {
+      box-shadow: 0 16px 34px hsl(var(--primary) / 0.24), 0 0 24px hsl(var(--glow-blue) / 0.14);
     }
     code {
-      background: #0d1120;
-      border: 1px solid #2a2f42;
+      background: var(--panel-strong);
+      border: 1px solid hsl(var(--border) / 0.12);
       border-radius: 6px;
       padding: 2px 6px;
-      color: #d7deff;
+      color: var(--text);
+    }
+    @media (max-width: 640px) {
+      .card { padding: 28px 20px; }
+      .meta { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      .actions a { text-align: center; }
     }
   </style>
 </head>
