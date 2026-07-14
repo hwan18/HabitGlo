@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "HabitGlo Vault",
+        "title": "HabitGlo",
         "width": 1280,
         "height": 860,
         "resizable": true,
@@ -41,8 +41,7 @@
       "active": true,
       "targets": "msi",
       "windows": {
-        "digestAlgorithm": "sha256",
-        "signCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/sign-windows.ps1 -TargetPath \"%1\""
+        "digestAlgorithm": "sha256"
       },
       "icon": [
         "icons/icon.ico",
@@ -50,10 +49,16 @@
       ]
     },
     "security": {
-      "csp": "default-src 'self' tauri://* data: blob: filesystem: ws: http://localhost:* https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://* ws://localhost:*"
+      "csp": "default-src 'self' tauri://* data: blob:; script-src 'self' tauri://* https://cdn.paddle.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://cdn.paddle.com https://checkout.paddle.com https://sandbox-checkout.paddle.com https://habitglo.com ws://localhost:*"
     },
     "allowlist": {
-      "all": true
+      "all": false,
+      "window": {
+        "all": true
+      },
+      "shell": {
+        "open": true
+      }
     },
     "systemTray": {
       "iconPath": "icons/icon.png",

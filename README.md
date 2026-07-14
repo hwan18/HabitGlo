@@ -1,79 +1,85 @@
-# React + TypeScript + Vite
+# HabitGlo
 
-## HabitGlo deployment notes
+A desktop LED-style habit tracker that scrolls your goals, tasks, and reminders across your screen all day — so you never drift, never forget, and always know what to do next.
 
-- Website pricing/download flow doc: `docs/deployment-download-flow.md`
-- Website checkout/download config: `public/download/config.js`
-- Paddle setup doc: `docs/paddle-setup.md`
+## Tech Stack
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, TypeScript, Tailwind CSS, Zustand |
+| Desktop | Tauri v1 (Rust) |
+| Backend | Supabase (Auth, Database, Edge Functions) |
+| Payments | Paddle (checkout, subscriptions, webhooks) |
+| Hosting | Vercel (landing page + public pages) |
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/                  # React app (main window + overlay)
+  components/         # UI components (HabitList, HabitForm, Settings, etc.)
+  overlay/            # Marquee overlay window (OverlayApp, Marquee)
+  stores/             # Zustand stores (habits, leaderboard)
+  lib/                # Utilities (Supabase client, billing, platform detection)
+src-tauri/            # Tauri / Rust backend (system tray, window management)
+public/               # Static pages (pricing, checkout, download, legal)
+supabase/             # Edge Functions (Paddle webhooks, checkout gating, billing portal)
+landing.html          # Marketing landing page
+docs/                 # Internal docs (Paddle setup, deployment flow, changelogs)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js 18+
+- Rust toolchain ([rustup.rs](https://rustup.rs))
+- Tauri v1 CLI (`npm install -g @tauri-apps/cli@^1`)
+
+### Install Dependencies
+
+```bash
+npm install
 ```
+
+### Run in Browser (dev mode)
+
+```bash
+npm run dev
+```
+
+Opens at `http://localhost:4173`.
+
+### Run as Desktop App
+
+```bash
+npm run tauri:dev
+```
+
+### Build for Production
+
+```bash
+npm run tauri:build
+```
+
+The Windows installer (MSI) is output to `src-tauri/target/release/bundle/msi/`.
+
+## Environment Setup
+
+Copy the example env file and fill in your Supabase credentials:
+
+```bash
+cp supabase.env.example .env
+```
+
+For Paddle checkout configuration, see `public/download/config.js` and `docs/paddle-setup.md`.
+
+## Docs
+
+- [Paddle Setup](docs/paddle-setup.md) — payment integration setup
+- [Deployment & Download Flow](docs/deployment-download-flow.md) — how checkout → download works
+- [Launch Readiness Checklist](docs/launch-readiness-checklist.txt) — pre-launch task list
+- [Instruction Manual](docs/instruction-manual.md) — user-facing guide
+
+## License
+
+Proprietary. All rights reserved.
