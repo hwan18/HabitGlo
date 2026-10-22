@@ -2,22 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'Galmuri9Local';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/galmuri9.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'FusionPixelLocal';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/fusion-pixel.ttf') format('truetype');
-}
-
 /* HabitGlo has a single dark theme. The HSL triplets below only style the LED strip. */
 :root {
   --background: 225 25% 5%;
@@ -98,48 +82,32 @@ dialog::backdrop {
   border: 1px solid hsl(var(--foreground) / 0.12);
 }
 
-.led-font,
 .led-font-dot {
-  font-family: 'DotGothic16', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-weight: 400;
-}
-
-.led-font-silk {
-  font-family: 'Silkscreen', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-weight: 400;
-}
-
-.led-font-press {
-  font-family: 'Press Start 2P', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-weight: 400;
-}
-
-.led-font-vt323 {
-  font-family: 'VT323', 'DM Mono', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'DotGothic16', 'Noto Sans', 'Segoe UI', monospace;
   font-weight: 400;
 }
 
 .led-font-ko {
-  font-family: 'Galmuri9Local', 'Galmuri9', 'NeoDunggeunmo Pro', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-family: 'Noto Sans KR', 'Malgun Gothic', 'Noto Sans', sans-serif;
   font-weight: 400;
 }
 
 .led-font-ja {
-  font-family: 'DotGothic16', 'Noto Sans', 'MS Gothic', sans-serif;
+  font-family: 'DotGothic16', 'Noto Sans', 'Yu Gothic', 'MS Gothic', sans-serif;
   font-weight: 400;
 }
 
 .led-font-zh {
-  font-family: 'FusionPixelLocal', 'Fusion Pixel', 'Noto Sans SC', 'Noto Sans TC', 'Microsoft YaHei', 'Microsoft JhengHei', sans-serif;
+  font-family: 'Microsoft YaHei', 'Microsoft JhengHei', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
   font-weight: 400;
 }
 
 .led-font-cygr {
-  font-family: 'DotGothic16', 'Noto Sans', 'DejaVu Sans Mono', monospace;
+  font-family: 'Noto Sans', 'Segoe UI', sans-serif;
   font-weight: 400;
 }
 
 .led-font-fallback {
-  font-family: 'Noto Sans', 'Segoe UI', sans-serif;
+  font-family: 'Noto Sans', 'Segoe UI', 'Segoe UI Emoji', sans-serif;
   font-weight: 400;
 }

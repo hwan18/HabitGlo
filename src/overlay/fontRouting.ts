@@ -1,5 +1,3 @@
-import type { LedFont } from '@/types'
-
 export type ScriptGroup = 'latin' | 'hangul' | 'japanese' | 'han' | 'cyrillic' | 'greek' | 'other' | 'common'
 export type ScriptRunGroup = Exclude<ScriptGroup, 'common'>
 
@@ -63,15 +61,8 @@ export const splitScriptRuns = (text: string): ScriptRun[] => {
   return runs
 }
 
-export const getLedLatinFontClass = (ledFont: LedFont): string => {
-  if (ledFont === 'silkscreen') return 'led-font-silk'
-  if (ledFont === 'pressStart') return 'led-font-press'
-  if (ledFont === 'vt323') return 'led-font-vt323'
-  return 'led-font-dot'
-}
-
-export const getFontClassForScript = (script: ScriptRunGroup, selectedLatinClass: string): string => {
-  if (script === 'latin') return selectedLatinClass
+export const getFontClassForScript = (script: ScriptRunGroup): string => {
+  if (script === 'latin') return 'led-font-dot'
   if (script === 'hangul') return 'led-font-ko'
   if (script === 'japanese') return 'led-font-ja'
   if (script === 'han') return 'led-font-zh'

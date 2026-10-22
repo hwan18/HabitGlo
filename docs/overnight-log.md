@@ -131,3 +131,29 @@ Decisions:
 Owner must test by hand:
 - Drag a reminder by its handle; also Tab to the handle, press Space, use the arrow keys, then Space to drop.
 - Type Korean with the Windows IME and press Enter once: the full word is added once.
+
+## Slice 5: delete what is no longer used
+
+Gate: build pass, lint pass, test pass (58 tests), cargo check pass.
+
+Removed:
+- Components: `Leaderboard`, `HabitPacks`, `BulkImport`, `CompletedToday`, `OnboardingTour` (the Tips panel went with the old `App.tsx` in slice 4). Data: `src/data/habitPacks.ts`. Store: `useLeaderboardStore`. Theme system: `src/lib/uiThemes.ts`. Also the unused `src/assets/react.svg`.
+- Store: the theme object (UI themes, 10 palettes, glow, opacity, LED shape, LED font, separator toggle), the completed-today list, `markDone` streak logging, `setHabitColor`, `clearAllHabits`, `toggleLeaderboardSharing`, `hydrate`, and the overlay fields `gap`, `spacing`, `clickThrough`, `alwaysOnTop`, `monitorIndex`.
+- `src/lib/db.ts`: `computeStreak` and the three leaderboard RPC helpers (the database functions themselves are untouched).
+- LED fonts: Silkscreen, Press Start 2P, VT323, DM Mono, and the Galmuri9 (Korean) and Fusion Pixel (Chinese) pixel fonts in `public/fonts` (3.9 MB). Kept: DotGothic16 (Latin + Japanese) and Noto Sans (Cyrillic/Greek fallback). Korean now uses Malgun Gothic and Chinese uses Microsoft YaHei, both always present on Windows.
+- npm packages: `papaparse`, `@types/papaparse`, `tailwind-merge`, `@fontsource/dm-mono`, `@fontsource/press-start-2p`, `@fontsource/silkscreen`, `@fontsource/vt323`, `galmuri`, `@fontpkg/fusion-pixel`. `framer-motion` is still used by the marquee and goes in slice 6.
+- Rust: the commands `set_click_through`, `set_always_on_top`, `snap_to_top`, `snap_to_bottom`, `set_reserve_space`, `set_overlay_size` and the helper `infer_snap_edge_for_window`. Ctrl/Alt-drag of the strip is gone; it is always docked.
+- Tailwind: the `glow-*` colours, glow shadow, burn background and `fatdot` font.
+
+Migration (persist version 5):
+- Saved state now holds only `habits`, `habitsOwner` and `overlay` (speed, color, position, reserveSpace, paused). Old keys are dropped on load: `theme`, `completedToday` and the old overlay fields.
+- Every saved reminder with an id and text is kept. Missing `is_active` means on, a missing priority keeps list order, and a missing `colorIndex` becomes 0. Server-side fields (`streak_*`, `show_on_leaderboard`, `color`) are carried through untouched so syncing never resets them.
+- Test: a full v4 state with every removed field present loads with the 3 valid reminders intact and only the 5 overlay settings left.
+
+Grep check: no references remain to the removed components, stores, functions, fonts, Tauri commands or theme fields (only the `show_on_leaderboard` database column, kept on purpose).
+
+Size: dist 17,712,188 → 13,597,327 bytes (66 → 52 files). The main-window script went from 114 KB to 78 KB.
+
+Decisions:
+- The strip is never click-through. With "Keep windows from covering it" on (the default), nothing sits under it anyway.
+- The `shadcn` dev dependency stays (owner tooling for the shadcn MCP server).

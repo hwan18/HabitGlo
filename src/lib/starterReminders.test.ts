@@ -21,12 +21,11 @@ describe('claimFirstLaunchSeed', () => {
 })
 
 describe('buildStarterHabits', () => {
-  it('builds the five starters in order with unique ids and palette colors', () => {
-    const habits = buildStarterHabits(['#a', '#b', '#c'])
+  it('builds the five starters in order with unique ids, all switched on', () => {
+    const habits = buildStarterHabits()
     expect(habits.map((h) => h.text)).toEqual([...STARTER_REMINDERS])
     expect(habits.map((h) => h.priority)).toEqual([0, 1, 2, 3, 4])
     expect(new Set(habits.map((h) => h.id)).size).toBe(5)
     expect(habits.every((h) => h.is_active)).toBe(true)
-    expect(habits.map((h) => h.color)).toEqual(['#a', '#b', '#c', '#a', '#b'])
   })
 })

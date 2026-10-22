@@ -1,10 +1,9 @@
-import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
+import type { Habit, OverlaySettings } from '@/types'
 import { isTauri } from './platform'
 
 export const OVERLAY_SYNC_EVENT = 'habitglo:overlay-sync'
 
 export type OverlaySyncPayload = {
-  theme: ThemeSettings
   overlay: OverlaySettings
   habits: Habit[]
   userId: string | null

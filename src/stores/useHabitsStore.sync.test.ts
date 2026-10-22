@@ -42,8 +42,6 @@ vi.mock('@/lib/db', async (importOriginal) => {
   }
 })
 
-vi.mock('./useLeaderboardStore', () => ({ useLeaderboardStore: { getState: () => ({ refresh: async () => {} }) } }))
-
 const { useHabitsStore } = await import('./useHabitsStore')
 const { readQueue } = await import('@/lib/syncQueue')
 

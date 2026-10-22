@@ -23,8 +23,6 @@ vi.mock('@/lib/db', async (importOriginal) => {
   }
 })
 
-vi.mock('./useLeaderboardStore', () => ({ useLeaderboardStore: { getState: () => ({ refresh: async () => {} }) } }))
-
 const DAY = 24 * 60 * 60 * 1000
 
 const startOffline = async (cacheAgeMs: number | null) => {

@@ -1,6 +1,6 @@
 import { supabase, hasSupabase } from './supabaseClient'
 import type { RemoteHabitsApi } from './syncQueue'
-import type { Habit, PersonalLeaderboardEntry, GlobalLeaderboardEntry, MyGlobalRank } from '@/types'
+import type { Habit } from '@/types'
 
 export const isSupabaseReady = () => hasSupabase && !!supabase
 
@@ -135,35 +135,6 @@ export const remoteHabitsApi: RemoteHabitsApi = {
   },
 }
 
-// Helper to get local date string (YYYY-MM-DD) for a given timestamp
-const toLocalDateString = (isoString: string | null | undefined): string | null => {
-  if (!isoString) return null
-  const d = new Date(isoString)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-// Compute streak based on unique daily logs.
-// Missing days do not reset streak; each new logged day increments it.
-export const computeStreak = (
-  lastDoneAt: string | null | undefined,
-  currentStreak: number = 0,
-  bestStreak: number = 0
-): { streak_current: number; streak_best: number; alreadyLoggedToday: boolean } => {
-  const now = new Date()
-  const todayStr = toLocalDateString(now.toISOString())
-  const lastDoneStr = toLocalDateString(lastDoneAt)
-
-  // If already logged today, no change
-  if (lastDoneStr === todayStr) {
-    return { streak_current: currentStreak, streak_best: bestStreak, alreadyLoggedToday: true }
-  }
-
-  const normalizedCurrentStreak = Math.max(0, currentStreak)
-  const newStreak = normalizedCurrentStreak + 1
-  const newBest = Math.max(bestStreak, newStreak)
-  return { streak_current: newStreak, streak_best: newBest, alreadyLoggedToday: false }
-}
-
 export const subscribeHabits = (userId: string, onChange: () => void) => {
   if (!isSupabaseReady() || !userId) return () => {}
   const channel = supabase!
@@ -177,45 +148,4 @@ export const subscribeHabits = (userId: string, onChange: () => void) => {
   return () => {
     void supabase!.removeChannel(channel)
   }
-}
-
-// ── Leaderboard queries (call Supabase RPC functions) ─────────
-
-export const getPersonalLeaderboard = async (
-  userId: string,
-  limit = 5
-): Promise<PersonalLeaderboardEntry[]> => {
-  if (!isSupabaseReady() || !userId) return []
-  const { data, error } = await supabase!.rpc('get_personal_leaderboard', { lim: limit })
-  if (error) {
-    console.warn('Failed to fetch personal leaderboard:', error.message)
-    return []
-  }
-  return (data ?? []) as PersonalLeaderboardEntry[]
-}
-
-export const getGlobalLeaderboard = async (
-  limit = 5
-): Promise<GlobalLeaderboardEntry[]> => {
-  if (!isSupabaseReady()) return []
-  const { data, error } = await supabase!.rpc('get_global_leaderboard', { lim: limit })
-  if (error) {
-    console.warn('Failed to fetch global leaderboard:', error.message)
-    return []
-  }
-  return (data ?? []) as GlobalLeaderboardEntry[]
-}
-
-export const getMyGlobalRank = async (
-  userId: string
-): Promise<MyGlobalRank> => {
-  if (!isSupabaseReady() || !userId) return { rank: null, habit_text: null, streak_days: 0 }
-  const { data, error } = await supabase!.rpc('get_my_global_rank')
-  if (error) {
-    console.warn('Failed to fetch global rank:', error.message)
-    return { rank: null, habit_text: null, streak_days: 0 }
-  }
-  if (!data || data.length === 0) return { rank: null, habit_text: null, streak_days: 0 }
-  const row = data[0]
-  return { rank: row.rank, habit_text: row.habit_text ?? null, streak_days: row.streak_days }
 }

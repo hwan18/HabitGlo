@@ -3,7 +3,6 @@ import { createJSONStorage, persist, type StateStorage } from 'zustand/middlewar
 import { isOverlayWindow } from '@/lib/platform'
 import {
   checkSubscriptionOnline,
-  computeStreak,
   fetchRemoteHabits,
   hasLiveSessionFor,
   isSupabaseReady,
@@ -30,51 +29,10 @@ import { applyPendingOps, enqueue, flushQueue, readQueue, type SyncOp } from '@/
 import { hasSupabase, supabase } from '@/lib/supabaseClient'
 import { isAuthRetryableFetchError } from '@supabase/supabase-js'
 import posthog, { identifyPostHogUser, isPostHogConfigured, resetPostHogUser } from '@/lib/posthog'
-import { defaultUiThemeId, getUiThemeOverlayPalette } from '@/lib/uiThemes'
-import { useLeaderboardStore } from './useLeaderboardStore'
-import type { AppUser, Habit, OverlaySettings, ThemeSettings } from '@/types'
+import type { AppUser, Habit, OverlaySettings } from '@/types'
 import { nanoid } from 'nanoid/non-secure'
 
-const palettes: Record<ThemeSettings['palette'], { primary: string; secondary: string; accent: string }> = {
-  classic: { primary: '#ff3131', secondary: '#ffb000', accent: '#6bff6b' },
-  synthwave: { primary: '#ff5ad9', secondary: '#36d2ff', accent: '#f5ff6b' },
-  focus: { primary: '#64B5F6', secondary: '#90CAF9', accent: '#BBDEFB' },
-  warmAmber: { primary: '#FFB74D', secondary: '#FFCC80', accent: '#FFE0B2' },
-  forest: { primary: '#81C784', secondary: '#A5D6A7', accent: '#C8E6C9' },
-  lavender: { primary: '#B39DDB', secondary: '#CE93D8', accent: '#E1BEE7' },
-  minimal: { primary: '#B0BEC5', secondary: '#CFD8DC', accent: '#ECEFF1' },
-  sunrise: { primary: '#FF8A65', secondary: '#FFAB91', accent: '#FFF176' },
-  ocean: { primary: '#4DD0E1', secondary: '#80DEEA', accent: '#B2EBF2' },
-  nightOwl: { primary: '#7986CB', secondary: '#9FA8DA', accent: '#5C6BC0' },
-}
-
-const ledFonts: Record<ThemeSettings['ledFont'], { label: string; className: string; preview: string }> = {
-  dotGothic: { label: 'Dot Gothic', className: 'led-font-dot', preview: 'HABITGLO' },
-  silkscreen: { label: 'Silkscreen', className: 'led-font-silk', preview: 'HABITGLO' },
-  pressStart: { label: 'Press Start', className: 'led-font-press', preview: 'HABITGLO' },
-  vt323: { label: 'VT323', className: 'led-font-vt323', preview: 'HABITGLO' },
-}
-
-const paletteColorsForTheme = (theme: ThemeSettings) => [theme.primary, theme.secondary, theme.accent]
-
-const normalizeHabitColor = (habit: Habit, theme: ThemeSettings) => {
-  const paletteColors = paletteColorsForTheme(theme)
-  const normalizedColor = habit.color?.toLowerCase()
-  const inferredIndex =
-    habit.colorIndex ?? paletteColors.findIndex((c) => c.toLowerCase() === normalizedColor)
-  const colorIndex = inferredIndex >= 0 ? inferredIndex : 0
-  const color = habit.color ?? paletteColors[colorIndex]
-  return { ...habit, colorIndex, color }
-}
-
 const sortByPriority = (habits: Habit[]) => [...habits].sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-
-type CompletedEntry = {
-  id: string
-  text: string
-  streak: number
-  loggedAt: string
-}
 
 /**
  * Whose reminders the local list holds: a user id, `null` for signed-out (anonymous) data,
@@ -98,8 +56,6 @@ type StoreState = {
   cachedEntitlement: CachedEntitlement | null
   habits: Habit[]
   habitsOwner: HabitsOwner
-  completedToday: CompletedEntry[]
-  theme: ThemeSettings
   overlay: OverlaySettings
   initializeAuth: () => Promise<void>
   applyAuthState: (user: AppUser | null, source?: string) => Promise<void>
@@ -110,53 +66,47 @@ type StoreState = {
   addHabit: (text: string, options?: Partial<Habit>) => Promise<void>
   updateHabitText: (id: string, text: string) => Promise<void>
   toggleHabit: (id: string, active: boolean) => Promise<void>
-  setHabitColor: (id: string, colorIndex: number) => Promise<void>
   removeHabit: (id: string) => Promise<void>
-  clearAllHabits: () => Promise<void>
   reorder: (ids: string[]) => Promise<void>
-  hydrate: () => Promise<void>
   syncNow: (options?: { pull?: boolean }) => Promise<void>
-  setTheme: (input: Partial<ThemeSettings>) => void
   setOverlay: (input: Partial<OverlaySettings>) => void
-  markDone: (id: string) => Promise<void>
-  toggleLeaderboardSharing: (enabled: boolean) => Promise<void>
-}
-
-const defaultUiThemePalette = getUiThemeOverlayPalette(defaultUiThemeId)
-
-const defaultTheme: ThemeSettings = {
-  uiThemeId: defaultUiThemeId,
-  palette: 'classic',
-  primary: defaultUiThemePalette.primary,
-  secondary: defaultUiThemePalette.secondary,
-  accent: defaultUiThemePalette.accent,
-  opacity: 0.9,
-  glow: 0.65,
-  ledShape: 'dot',
-  ledFont: 'dotGothic',
-  showSeparator: true,
 }
 
 const defaultOverlay: OverlaySettings = {
   speed: DEFAULT_SPEED,
   color: DEFAULT_COLOR,
-  gap: 0,
-  spacing: 0,
-  clickThrough: false,
-  alwaysOnTop: true,
   position: 'top',
   reserveSpace: true,
   paused: false,
 }
 
-const sanitizeOverlay = (overlay: OverlaySettings): OverlaySettings => ({
-  ...overlay,
-  speed: isSpeedPreset(overlay.speed) ? overlay.speed : speedFromLegacy(overlay.speed),
-  color: isColorPreset(overlay.color) ? overlay.color : DEFAULT_COLOR,
-  position: overlay.position === 'bottom' ? 'bottom' : 'top',
-  reserveSpace: overlay.reserveSpace !== false,
-  paused: overlay.paused === true,
-})
+/** Builds clean settings from whatever was saved; unknown or removed fields are dropped. */
+const sanitizeOverlay = (saved: unknown): OverlaySettings => {
+  const overlay = (saved && typeof saved === 'object' ? saved : {}) as Record<string, unknown>
+  return {
+    speed: isSpeedPreset(overlay.speed) ? overlay.speed : speedFromLegacy(overlay.speed),
+    color: isColorPreset(overlay.color) ? overlay.color : DEFAULT_COLOR,
+    position: overlay.position === 'bottom' ? 'bottom' : 'top',
+    reserveSpace: overlay.reserveSpace !== false,
+    paused: overlay.paused === true,
+  }
+}
+
+/** Keeps every saved reminder that has an id and text, filling in fields older versions may lack. */
+const restoreHabits = (saved: unknown): Habit[] => {
+  if (!Array.isArray(saved)) return []
+  const habits = saved.filter(
+    (h): h is Habit => Boolean(h) && typeof h.id === 'string' && typeof h.text === 'string',
+  )
+  return sortByPriority(
+    habits.map((h, index) => ({
+      ...h,
+      colorIndex: typeof h.colorIndex === 'number' ? h.colorIndex : 0,
+      is_active: h.is_active !== false,
+      priority: typeof h.priority === 'number' && Number.isFinite(h.priority) ? h.priority : index,
+    })),
+  )
+}
 
 // Only the main window owns persisted state; the overlay window reads it but must never write it back,
 // otherwise a stale overlay snapshot can overwrite the user's latest changes.
@@ -175,15 +125,6 @@ const persistStorage: StateStorage = {
     window.localStorage.removeItem(name)
   },
 }
-
-const isDateToday = (isoStr: string): boolean => {
-  const d = new Date(isoStr)
-  const now = new Date()
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
-}
-
-const pruneStaleCompleted = (entries: CompletedEntry[]): CompletedEntry[] =>
-  entries.filter((e) => isDateToday(e.loggedAt))
 
 const readLegacyLocalHabits = (): Habit[] => {
   try {
@@ -313,7 +254,7 @@ export const useHabitsStore = create<StoreState>()(
           return
         }
 
-        const merged = applyPendingOps(remote, readQueue(userId)).map((habit) => normalizeHabitColor(habit, state.theme))
+        const merged = applyPendingOps(remote, readQueue(userId))
         if (JSON.stringify(merged) !== JSON.stringify(state.habits) || state.habitsOwner !== userId) {
           set({ habits: merged, habitsOwner: userId })
         }
@@ -346,8 +287,6 @@ export const useHabitsStore = create<StoreState>()(
         cachedEntitlement: isOverlayWindow ? null : readCachedEntitlement(),
         habits: [],
         habitsOwner: null,
-        completedToday: [],
-        theme: defaultTheme,
         overlay: defaultOverlay,
 
         initializeAuth: async () => {
@@ -459,7 +398,7 @@ export const useHabitsStore = create<StoreState>()(
               subscriptionStatus: 'free',
               subscriptionCheck: 'idle',
               cachedEntitlement: null,
-              ...(clearLocal ? { habits: [], habitsOwner: null, completedToday: [] } : {}),
+              ...(clearLocal ? { habits: [], habitsOwner: null } : {}),
             })
             return
           }
@@ -478,13 +417,10 @@ export const useHabitsStore = create<StoreState>()(
             offlineSession: source === 'offline-cache',
             subscriptionStatus: cache?.userId === user.id ? cache.status : 'free',
             subscriptionCheck: 'idle',
-            ...(foreignList ? { habits: [], habitsOwner: null, completedToday: [] } : {}),
+            ...(foreignList ? { habits: [], habitsOwner: null } : {}),
           })
 
-          if (source !== 'offline-cache') {
-            startRealtime(user.id)
-            void useLeaderboardStore.getState().refresh(user.id)
-          }
+          if (source !== 'offline-cache') startRealtime(user.id)
           await Promise.all([
             runSubscriptionCheck(user, epoch, `${source}:refresh`),
             get().syncNow({ pull: true }),
@@ -526,10 +462,6 @@ export const useHabitsStore = create<StoreState>()(
             }
           }
           await get().applyAuthState(null, 'signOut')
-        },
-
-        hydrate: async () => {
-          await get().syncNow({ pull: true })
         },
 
         syncNow: async (options) => {
@@ -590,18 +522,13 @@ export const useHabitsStore = create<StoreState>()(
         addHabit: async (text, options) => {
           const trimmed = text.trim().slice(0, MAX_REMINDER_LENGTH)
           if (!trimmed) return
-          const { habits, theme } = get()
-          const paletteColors = paletteColorsForTheme(theme)
-          const inferredIndex =
-            options?.colorIndex ??
-            (options?.color ? paletteColors.findIndex((c) => c.toLowerCase() === options.color?.toLowerCase()) : 0)
-          const colorIndex = inferredIndex >= 0 ? inferredIndex : 0
+          const { habits } = get()
           const nextPriority = habits.reduce((max, h) => Math.max(max, h.priority ?? 0), -1) + 1
           const habit: Habit = {
             id: options?.id ?? nanoid(),
             text: trimmed,
-            color: options?.color ?? paletteColors[colorIndex],
-            colorIndex,
+            color: options?.color,
+            colorIndex: options?.colorIndex ?? 0,
             is_active: options?.is_active ?? true,
             priority: options?.priority ?? nextPriority,
             last_done_at: null,
@@ -633,18 +560,6 @@ export const useHabitsStore = create<StoreState>()(
           }
         },
 
-        setHabitColor: async (id, colorIndex) => {
-          const found = get().habits.find((h) => h.id === id)
-          if (!found) return
-          const paletteColors = paletteColorsForTheme(get().theme)
-          const normalizedIndex = Math.max(0, Math.min(2, Math.round(colorIndex)))
-          const updated = { ...found, colorIndex: normalizedIndex, color: paletteColors[normalizedIndex] ?? paletteColors[0] }
-          commitHabits(get().habits.map((h) => (h.id === id ? updated : h)), [upsertOp(updated)])
-          if (isPostHogConfigured) {
-            posthog.capture('habit_color_changed', { color_index: normalizedIndex })
-          }
-        },
-
         removeHabit: async (id) => {
           if (!get().habits.some((h) => h.id === id)) return
           commitHabits(
@@ -653,15 +568,6 @@ export const useHabitsStore = create<StoreState>()(
           )
           if (isPostHogConfigured) {
             posthog.capture('habit_deleted')
-          }
-        },
-
-        clearAllHabits: async () => {
-          const all = get().habits
-          if (all.length === 0) return
-          commitHabits([], all.map((h) => ({ kind: 'delete', id: h.id }) as SyncOp))
-          if (isPostHogConfigured) {
-            posthog.capture('habits_cleared', { habit_count: all.length })
           }
         },
 
@@ -679,98 +585,22 @@ export const useHabitsStore = create<StoreState>()(
           }
         },
 
-        setTheme: (input) => {
-          const prevTheme = get().theme
-          const uiThemeId = input.uiThemeId ?? prevTheme.uiThemeId ?? defaultUiThemeId
-          const palette = input.palette ?? prevTheme.palette
-          const paletteColors = palettes[palette]
-          const overlayPalette = getUiThemeOverlayPalette(uiThemeId)
-          const paletteChanged = input.palette !== undefined && input.palette !== prevTheme.palette
-          const uiThemeSelected = input.uiThemeId !== undefined
-          const nextTheme: ThemeSettings = {
-            ...prevTheme,
-            ...input,
-            uiThemeId,
-            primary:
-              input.primary ??
-              (uiThemeSelected ? overlayPalette.primary : undefined) ??
-              (paletteChanged ? paletteColors.primary : prevTheme.primary),
-            secondary:
-              input.secondary ??
-              (uiThemeSelected ? overlayPalette.secondary : undefined) ??
-              (paletteChanged ? paletteColors.secondary : prevTheme.secondary),
-            accent:
-              input.accent ??
-              (uiThemeSelected ? overlayPalette.accent : undefined) ??
-              (paletteChanged ? paletteColors.accent : prevTheme.accent),
-            palette,
-            showSeparator: input.showSeparator ?? prevTheme.showSeparator ?? true,
-          }
-          const nextPaletteColors = paletteColorsForTheme(nextTheme)
-          const ops: SyncOp[] = []
-          const updatedHabits = get().habits.map((habit) => {
-            const colorIndex = normalizeHabitColor(habit, prevTheme).colorIndex ?? 0
-            const color = nextPaletteColors[colorIndex] ?? nextPaletteColors[0]
-            if (habit.color === color && habit.colorIndex === colorIndex) return habit
-            const updated = { ...habit, colorIndex, color }
-            ops.push(upsertOp(updated))
-            return updated
-          })
-          set({ theme: nextTheme })
-          commitHabits(updatedHabits, ops)
-        },
-
         setOverlay: (input) => {
-          set({ overlay: { ...get().overlay, ...input } })
-        },
-
-        markDone: async (id) => {
-          const found = get().habits.find((h) => h.id === id)
-          if (!found) return
-          const { streak_current, streak_best, alreadyLoggedToday } = computeStreak(
-            found.last_done_at,
-            found.streak_current ?? 0,
-            found.streak_best ?? 0,
-          )
-          if (alreadyLoggedToday) return
-          const loggedAt = new Date().toISOString()
-          const updated = { ...found, last_done_at: loggedAt, streak_current, streak_best }
-          commitHabits(get().habits.map((h) => (h.id === id ? updated : h)), [upsertOp(updated)])
-          set((state) => ({
-            completedToday: pruneStaleCompleted([
-              ...state.completedToday,
-              { id: found.id, text: found.text, streak: streak_current, loggedAt },
-            ]),
-          }))
-          if (isPostHogConfigured) {
-            posthog.capture('habit_completion_logged', { streak_current, streak_best })
-          }
-        },
-
-        toggleLeaderboardSharing: async (enabled) => {
-          const updatedHabits = get().habits.map((h) => ({ ...h, show_on_leaderboard: enabled }))
-          commitHabits(updatedHabits, updatedHabits.map((h) => upsertOp(h)))
+          set({ overlay: sanitizeOverlay({ ...get().overlay, ...input }) })
         },
       }
     },
     {
       name: 'habitglo-store',
-      version: 4,
+      version: 5,
       storage: createJSONStorage(() => persistStorage),
       partialize: (state) => ({
         habits: state.habits,
         habitsOwner: state.habitsOwner,
-        completedToday: pruneStaleCompleted(state.completedToday),
-        theme: state.theme,
         overlay: state.overlay,
       }),
       migrate: (persistedState, version) => {
-        const persisted = (persistedState ?? {}) as Record<string, unknown>
-        const next = { ...persisted }
-        delete next.user
-        delete next.subscriptionStatus
-        delete next.subscriptionLoading
-        delete next.loading
+        const next = { ...((persistedState ?? {}) as Record<string, unknown>) }
         if (version < 3) {
           const habits = Array.isArray(next.habits) ? (next.habits as Habit[]) : []
           if (habits.length > 0) {
@@ -790,44 +620,19 @@ export const useHabitsStore = create<StoreState>()(
             color: colorFromLegacyPalette(theme.palette),
           }
         }
+        // v5 dropped the theme, streak log, leaderboard and old overlay fields; merge keeps only known keys.
         return next
       },
       merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<StoreState> | undefined
+        const persisted = (persistedState ?? {}) as Record<string, unknown>
+        const owner = persisted.habitsOwner
         return {
           ...currentState,
-          ...persisted,
-          habits: Array.isArray(persisted?.habits) ? sortByPriority(persisted.habits) : currentState.habits,
-          habitsOwner: persisted?.habitsOwner ?? null,
-          completedToday: pruneStaleCompleted(persisted?.completedToday ?? []),
-          theme: {
-            ...currentState.theme,
-            ...persisted?.theme,
-            showSeparator: persisted?.theme?.showSeparator ?? currentState.theme.showSeparator,
-          },
-          overlay: sanitizeOverlay({ ...currentState.overlay, ...persisted?.overlay }),
+          habits: Array.isArray(persisted.habits) ? restoreHabits(persisted.habits) : currentState.habits,
+          habitsOwner: typeof owner === 'string' ? owner : null,
+          overlay: sanitizeOverlay(persisted.overlay),
         }
       },
     },
   ),
 )
-
-export const palettesList = [
-  { id: 'classic', label: 'Classic', colors: palettes.classic },
-  { id: 'synthwave', label: 'Synthwave', colors: palettes.synthwave },
-  { id: 'focus', label: 'Focus', colors: palettes.focus },
-  { id: 'warmAmber', label: 'Warm Amber', colors: palettes.warmAmber },
-  { id: 'forest', label: 'Forest', colors: palettes.forest },
-  { id: 'lavender', label: 'Lavender', colors: palettes.lavender },
-  { id: 'minimal', label: 'Minimal', colors: palettes.minimal },
-  { id: 'sunrise', label: 'Sunrise', colors: palettes.sunrise },
-  { id: 'ocean', label: 'Ocean', colors: palettes.ocean },
-  { id: 'nightOwl', label: 'Night Owl', colors: palettes.nightOwl },
-] as const
-
-export const ledFontList = [
-  { id: 'dotGothic', ...ledFonts.dotGothic },
-  { id: 'silkscreen', ...ledFonts.silkscreen },
-  { id: 'pressStart', ...ledFonts.pressStart },
-  { id: 'vt323', ...ledFonts.vt323 },
-] as const

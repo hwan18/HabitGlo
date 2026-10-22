@@ -11,9 +11,7 @@ import { useHabitsStore } from './stores/useHabitsStore'
 import './lib/posthog'
 
 if (claimFirstLaunchSeed(window.localStorage)) {
-  const { theme } = useHabitsStore.getState()
-  const starters = buildStarterHabits([theme.primary, theme.secondary, theme.accent])
-  useHabitsStore.setState({ habits: starters, habitsOwner: null })
+  useHabitsStore.setState({ habits: buildStarterHabits(), habitsOwner: null })
 }
 
 const DEMO_RESET_QUERY_PARAM = 'demoReset'
@@ -41,7 +39,7 @@ const clearBrowserDemoHabits = () => {
 
   const rawStore = window.localStorage.getItem(PERSISTED_STORE_KEY)
   if (!rawStore) {
-    useHabitsStore.setState({ habits: [], completedToday: [] })
+    useHabitsStore.setState({ habits: [] })
     return
   }
 
@@ -51,7 +49,6 @@ const clearBrowserDemoHabits = () => {
       parsed.state = {
         ...parsed.state,
         habits: [],
-        completedToday: [],
       }
       window.localStorage.setItem(PERSISTED_STORE_KEY, JSON.stringify(parsed))
     } else {
@@ -61,7 +58,7 @@ const clearBrowserDemoHabits = () => {
     window.localStorage.removeItem(PERSISTED_STORE_KEY)
   }
 
-  useHabitsStore.setState({ habits: [], completedToday: [] })
+  useHabitsStore.setState({ habits: [] })
 }
 
 if (shouldResetBrowserDemo()) {
@@ -76,7 +73,6 @@ if (isTauri) {
   const syncOverlay = () => {
     const state = useHabitsStore.getState()
     const payload = {
-      theme: state.theme,
       overlay: state.overlay,
       habits: state.habits,
       userId: state.user?.id ?? null,
