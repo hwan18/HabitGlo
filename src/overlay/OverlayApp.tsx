@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { Marquee } from './Marquee'
 import { useHabitsStore } from '@/stores/useHabitsStore'
-import { applyUiTheme } from '@/lib/uiThemes'
 import { identifyPostHogUser, resetPostHogUser } from '@/lib/posthog'
 import { OVERLAY_SYNC_EVENT, type OverlaySyncPayload } from '@/lib/overlaySync'
 import { listen } from '@tauri-apps/api/event'
@@ -9,12 +8,7 @@ import { WebviewWindow } from '@tauri-apps/api/window'
 
 export default function OverlayApp() {
   const overlay = useHabitsStore((s) => s.overlay)
-  const uiThemeId = useHabitsStore((s) => s.theme.uiThemeId)
   const setOverlay = useHabitsStore((s) => s.setOverlay)
-
-  useEffect(() => {
-    applyUiTheme(uiThemeId)
-  }, [uiThemeId])
 
   useEffect(() => {
     const overlayWindow = WebviewWindow.getByLabel('overlay')
@@ -33,7 +27,6 @@ export default function OverlayApp() {
         identifiedUserId = payload.userId
       }
 
-      applyUiTheme(payload.theme.uiThemeId)
       useHabitsStore.setState({
         theme: payload.theme,
         overlay: payload.overlay,
@@ -117,7 +110,7 @@ export default function OverlayApp() {
       onMouseDown={handleMouseDown}
     >
       <div className="overlay-shell h-full rounded-xl">
-        <Marquee />
+        <Marquee emptyMessage="Add a reminder in HabitGlo" />
       </div>
     </div>
   )

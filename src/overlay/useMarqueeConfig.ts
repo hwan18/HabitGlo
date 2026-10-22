@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useHabitsStore } from '@/stores/useHabitsStore'
+import { ledColorAt, SPEED_PX_PER_SEC } from '@/lib/ledSettings'
 
 export const useMarqueeConfig = () => {
   const overlay = useHabitsStore((s) => s.overlay)
@@ -24,30 +25,20 @@ export const useMarqueeConfig = () => {
 
   const gap = useMemo(() => Math.max(0, overlay.gap), [overlay.gap])
   const spacing = useMemo(() => Math.max(0, overlay.spacing ?? 0), [overlay.spacing])
-  const speed = overlay.speed
+  const speed = SPEED_PX_PER_SEC[overlay.speed] ?? SPEED_PX_PER_SEC.medium
   const fontSize = useMemo(() => {
     const size = Math.floor(containerHeight * 0.6)
     return Math.max(14, Math.min(64, size))
   }, [containerHeight])
-  const paletteColors = useMemo(() => [theme.primary, theme.secondary, theme.accent], [theme.accent, theme.primary, theme.secondary])
 
-  const marqueeHabits = useMemo(() => {
-    const active = habitsRaw.filter((h) => h.is_active)
-    if (active.length === 0) return []
-    return [...active]
-      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-      .map((habit) => {
-        const normalizedColor = habit.color?.toLowerCase()
-        const inferredIndex =
-          habit.colorIndex ?? paletteColors.findIndex((color) => color.toLowerCase() === normalizedColor)
-        const colorIndex = inferredIndex >= 0 ? inferredIndex : 0
-        return {
-          text: habit.text,
-          color: paletteColors[colorIndex] ?? theme.primary,
-        }
-      })
-      .filter((h) => Boolean(h.text))
-  }, [habitsRaw, paletteColors, theme.primary])
+  const marqueeHabits = useMemo(
+    () =>
+      habitsRaw
+        .filter((h) => h.is_active && Boolean(h.text))
+        .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+        .map((habit, index) => ({ text: habit.text, color: ledColorAt(overlay.color, index) })),
+    [habitsRaw, overlay.color],
+  )
 
   return {
     ref,

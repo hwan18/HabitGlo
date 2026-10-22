@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { supabase, hasSupabase } from '@/lib/supabaseClient'
 import { useHabitsStore } from '@/stores/useHabitsStore'
+import { isPaidStatus } from '@/lib/entitlement'
+import type { SubscriptionStatus } from '@/lib/db'
 import { Button } from './Button'
 import {
   billingProviderLabel,
@@ -10,268 +12,223 @@ import {
 } from '@/lib/billing'
 import posthog, { isPostHogConfigured } from '@/lib/posthog'
 
-export function AuthPanel() {
+const PLAN_LABELS: Record<SubscriptionStatus, string> = {
+  free: 'No plan',
+  trialing: 'Trial',
+  active: 'Active',
+  past_due: 'Payment due',
+  canceled: 'Canceled',
+  lifetime: 'Lifetime',
+}
+
+const inputClass =
+  'h-10 w-full rounded-lg border border-app-border bg-app-bg px-3 text-sm text-app-text placeholder:text-app-muted focus:border-app-accent focus:outline-none'
+
+function SignInForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<'login' | 'signup' | 'magic'>('login')
   const [status, setStatus] = useState<string | null>(null)
-  const [billingBusy, setBillingBusy] = useState(false)
-  const user = useHabitsStore((s) => s.user)
-  const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
-  const refreshSubscriptionStatus = useHabitsStore((s) => s.refreshSubscriptionStatus)
+  const [busy, setBusy] = useState(false)
 
-  const isPaid =
-    subscriptionStatus === 'active' ||
-    subscriptionStatus === 'trialing' ||
-    subscriptionStatus === 'lifetime'
-  const isLifetime = subscriptionStatus === 'lifetime'
-
-  const sendMagicLink = async () => {
-    if (!supabase) return
-    setStatus('Sending magic link...')
-    const { error } = await supabase.auth.signInWithOtp({ email })
-    if (error) {
-      setStatus(error.message)
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!supabase || busy) return
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setStatus('Enter your email.')
       return
     }
-    setStatus('Check your email for the login link.')
-    if (isPostHogConfigured) {
-      posthog.capture('magic_link_requested')
-    }
-  }
-
-  const signInWithPassword = async () => {
-    if (!supabase) return
-    setStatus('Signing in...')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setStatus(error.message)
+    if (!navigator.onLine) {
+      setStatus('You are offline. Connect to the internet to sign in.')
       return
     }
-    setStatus(null)
-    if (isPostHogConfigured) {
-      posthog.capture('sign_in_completed', { authentication_method: 'password' })
-    }
-  }
-
-  const signUpWithPassword = async () => {
-    if (!supabase) return
-    setStatus('Creating account...')
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) {
-      setStatus(error.message)
-      return
-    }
-    setStatus('Check your email to confirm your account.')
-    if (isPostHogConfigured) {
-      posthog.capture('account_created', { authentication_method: 'password' })
-    }
-  }
-
-  const signOut = async () => {
-    await useHabitsStore.getState().signOut()
-  }
-
-  const handleCheckout = async (plan: 'monthly' | 'lifetime') => {
+    setBusy(true)
     try {
-      setBillingBusy(true)
-      setStatus(`Opening ${billingProviderLabel} checkout...`)
-      const result = await startBillingCheckout(plan, { email: user?.email ?? null, userId: user?.id ?? null })
-      if (result.action === 'checkout_opened') {
-        setStatus('Checkout opened. Complete payment, then click "Refresh billing status".')
-        if (isPostHogConfigured) {
-          posthog.capture('checkout_started', { billing_plan: plan })
-        }
-        return
-      }
-      if (result.action === 'portal_opened') {
-        setStatus('You already have an active recurring plan. Billing portal opened instead.')
-        return
-      }
-      setStatus('This account already has lifetime access.')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to start checkout'
-      setStatus(message)
-    } finally {
-      setBillingBusy(false)
-    }
-  }
-
-  const openPortal = async () => {
-    try {
-      setBillingBusy(true)
-      setStatus(`Opening ${billingProviderLabel} billing portal...`)
-      await openBillingPortal()
-      setStatus('Billing portal opened.')
-      if (isPostHogConfigured) {
-        posthog.capture('billing_portal_opened')
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to open billing portal'
-      setStatus(message)
-    } finally {
-      setBillingBusy(false)
-    }
-  }
-
-  const refreshBilling = async () => {
-    try {
-      setBillingBusy(true)
-      setStatus('Refreshing billing status...')
-      await refreshSubscriptionStatus()
-      setStatus('Billing status refreshed.')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to refresh billing status'
-      setStatus(message)
-    } finally {
-      setBillingBusy(false)
-    }
-  }
-
-  const openPlanDetails = async (plan?: 'monthly' | 'lifetime') => {
-    try {
-      setBillingBusy(true)
-      setStatus('Opening plan details on the website...')
-      await openWebsitePricing(plan)
-      setStatus('Plan details opened in your browser.')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to open plan details'
-      setStatus(message)
-    } finally {
-      setBillingBusy(false)
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
       if (mode === 'magic') {
-        void sendMagicLink()
+        setStatus('Sending link…')
+        const { error } = await supabase.auth.signInWithOtp({ email: trimmedEmail })
+        if (error) return setStatus(error.message)
+        setStatus('Check your email for the sign-in link.')
+        if (isPostHogConfigured) posthog.capture('magic_link_requested')
       } else if (mode === 'signup') {
-        void signUpWithPassword()
+        setStatus('Creating account…')
+        const { error } = await supabase.auth.signUp({ email: trimmedEmail, password })
+        if (error) return setStatus(error.message)
+        setStatus('Check your email to confirm your account.')
+        if (isPostHogConfigured) posthog.capture('account_created', { authentication_method: 'password' })
       } else {
-        void signInWithPassword()
+        setStatus('Signing in…')
+        const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password })
+        if (error) return setStatus(error.message)
+        setStatus(null)
+        if (isPostHogConfigured) posthog.capture('sign_in_completed', { authentication_method: 'password' })
       }
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Something went wrong. Try again.')
+    } finally {
+      setBusy(false)
     }
   }
 
-  if (!hasSupabase) {
-    return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
-        <div className="font-semibold text-white">Offline demo</div>
-        <p className="mt-2">No Supabase keys detected. Data will be stored locally.</p>
-      </div>
-    )
+  const switchMode = (next: typeof mode) => {
+    setMode(next)
+    setStatus(null)
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-white/80">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-white">Account</p>
-          <p className="text-xs text-white/60">
-            {user ? 'Signed in' : mode === 'magic' ? 'Magic link login' : mode === 'signup' ? 'Create account' : 'Sign in'}
-          </p>
-        </div>
-        {user && (
-          <Button size="sm" variant="ghost" onClick={signOut}>
-            Sign out
-          </Button>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-2">
+      <label className="text-xs text-app-muted" htmlFor="auth-email">
+        Email
+      </label>
+      <input
+        id="auth-email"
+        type="email"
+        autoComplete="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className={inputClass}
+      />
+      {mode !== 'magic' && (
+        <>
+          <label className="text-xs text-app-muted" htmlFor="auth-password">
+            Password
+          </label>
+          <input
+            id="auth-password"
+            type="password"
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
+        </>
+      )}
+      <Button type="submit" disabled={busy} className="mt-1">
+        {mode === 'magic' ? 'Email me a sign-in link' : mode === 'signup' ? 'Create account' : 'Sign in'}
+      </Button>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+        {mode !== 'login' && (
+          <button type="button" className="text-app-muted underline hover:text-app-text" onClick={() => switchMode('login')}>
+            Sign in with password
+          </button>
+        )}
+        {mode !== 'signup' && (
+          <button type="button" className="text-app-muted underline hover:text-app-text" onClick={() => switchMode('signup')}>
+            Create account
+          </button>
+        )}
+        {mode !== 'magic' && (
+          <button type="button" className="text-app-muted underline hover:text-app-text" onClick={() => switchMode('magic')}>
+            Email me a link instead
+          </button>
         )}
       </div>
-      {!user ? (
-        <div className="mt-3 space-y-3">
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant={mode === 'login' ? 'primary' : 'ghost'}
-              onClick={() => setMode('login')}
-            >
-              Sign in
-            </Button>
-            <Button
-              size="sm"
-              variant={mode === 'signup' ? 'primary' : 'ghost'}
-              onClick={() => setMode('signup')}
-            >
-              Sign up
-            </Button>
-            <Button
-              size="sm"
-              variant={mode === 'magic' ? 'primary' : 'ghost'}
-              onClick={() => setMode('magic')}
-            >
-              Magic link
-            </Button>
-          </div>
-          <div className="flex flex-col gap-2">
-            <input
-              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-glow-pink"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            {mode !== 'magic' && (
-              <input
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-glow-pink"
-                placeholder="••••••••"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            )}
-          </div>
-          {mode === 'magic' ? (
-            <Button onClick={sendMagicLink}>Send link</Button>
-          ) : mode === 'signup' ? (
-            <Button onClick={signUpWithPassword}>Create account</Button>
-          ) : (
-            <Button onClick={signInWithPassword}>Sign in</Button>
-          )}
-        </div>
-      ) : (
-        <div className="mt-3 space-y-3 text-xs text-white/70">
-          <div>Logged in as {user.email}</div>
-          <div className="rounded-lg border border-white/10 bg-black/30 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-white/70">Subscription</span>
-              <span className="rounded bg-white/10 px-2 py-0.5 uppercase tracking-wide text-white">
-                {subscriptionStatus}
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {!isPaid && (
-                <>
-                  <Button size="sm" onClick={() => void handleCheckout('monthly')} disabled={billingBusy}>
-                    Start Monthly
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => void handleCheckout('lifetime')} disabled={billingBusy}>
-                    Buy Lifetime
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => void openPlanDetails()} disabled={billingBusy}>
-                    View Plan Details
-                  </Button>
-                </>
-              )}
-              {isPaid && !isLifetime && (
-                <>
-                  <Button size="sm" variant="ghost" onClick={() => void handleCheckout('lifetime')} disabled={billingBusy}>
-                    Upgrade to Lifetime
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => void openPortal()} disabled={billingBusy}>
-                    Manage Billing
-                  </Button>
-                </>
-              )}
-              <Button size="sm" variant="ghost" onClick={() => void refreshBilling()} disabled={billingBusy}>
-                Refresh Billing Status
-              </Button>
-            </div>
-          </div>
-        </div>
+      {status && (
+        <p role="status" className="text-xs text-app-accent">
+          {status}
+        </p>
       )}
-      {status && <div className="mt-2 text-xs text-glow-amber">{status}</div>}
+    </form>
+  )
+}
+
+export function AuthPanel() {
+  const user = useHabitsStore((s) => s.user)
+  const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
+  const offlineSession = useHabitsStore((s) => s.offlineSession)
+  const refreshSubscriptionStatus = useHabitsStore((s) => s.refreshSubscriptionStatus)
+  const [status, setStatus] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  if (!hasSupabase) {
+    return <p className="text-sm text-app-muted">Accounts are not set up in this build. Your reminders are saved on this PC.</p>
+  }
+
+  if (!user) return <SignInForm />
+
+  const isPaid = isPaidStatus(subscriptionStatus)
+  const isLifetime = subscriptionStatus === 'lifetime'
+
+  const run = async (pending: string, action: () => Promise<string | null>) => {
+    setBusy(true)
+    setStatus(pending)
+    try {
+      setStatus(await action())
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Something went wrong. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const subscribe = () =>
+    run(`Opening ${billingProviderLabel} checkout…`, async () => {
+      const result = await startBillingCheckout('monthly', { email: user.email ?? null, userId: user.id })
+      if (result.action === 'checkout_opened') {
+        if (isPostHogConfigured) posthog.capture('checkout_started', { billing_plan: 'monthly' })
+        return 'Checkout opened. When you are done, click "Refresh status".'
+      }
+      if (result.action === 'portal_opened') return 'You already have a plan. Billing page opened instead.'
+      return 'This account already has lifetime access.'
+    })
+
+  const manageBilling = () =>
+    run('Opening billing…', async () => {
+      await openBillingPortal()
+      if (isPostHogConfigured) posthog.capture('billing_portal_opened')
+      return null
+    })
+
+  const refresh = () =>
+    run('Checking your plan…', async () => {
+      await refreshSubscriptionStatus()
+      return null
+    })
+
+  return (
+    <div className="flex flex-col gap-3 text-sm">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        <dt className="text-app-muted">Email</dt>
+        <dd className="min-w-0 truncate text-app-text" title={user.email ?? undefined}>
+          {user.email ?? 'Signed in'}
+        </dd>
+        <dt className="text-app-muted">Plan</dt>
+        <dd className="text-app-text">
+          {PLAN_LABELS[subscriptionStatus]}
+          {offlineSession && <span className="text-app-muted"> (offline)</span>}
+        </dd>
+      </dl>
+      <div className="flex flex-wrap gap-2">
+        {!isPaid && (
+          <Button size="sm" onClick={() => void subscribe()} disabled={busy}>
+            Subscribe
+          </Button>
+        )}
+        {isPaid && !isLifetime && (
+          <Button size="sm" variant="ghost" onClick={() => void manageBilling()} disabled={busy}>
+            Manage billing
+          </Button>
+        )}
+        {!isPaid && (
+          <Button size="sm" variant="ghost" onClick={() => void openWebsitePricing()} disabled={busy}>
+            See plans
+          </Button>
+        )}
+        {!isPaid && (
+          <Button size="sm" variant="ghost" onClick={() => void refresh()} disabled={busy}>
+            Refresh status
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" onClick={() => void useHabitsStore.getState().signOut()} disabled={busy}>
+          Sign out
+        </Button>
+      </div>
+      {status && (
+        <p role="status" className="text-xs text-app-accent">
+          {status}
+        </p>
+      )}
     </div>
   )
 }

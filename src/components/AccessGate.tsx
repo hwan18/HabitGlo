@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { WifiOff } from 'lucide-react'
 import type { AccessDecision } from '@/lib/entitlement'
 import { useHabitsStore } from '@/stores/useHabitsStore'
@@ -7,10 +7,17 @@ import { Button } from './Button'
 
 type Props = { decision: Exclude<AccessDecision, { kind: 'open' }> }
 
+function Card({ children, busy }: { children: ReactNode; busy?: boolean }) {
+  return (
+    <section aria-busy={busy || undefined} className="rounded-xl border border-app-border bg-app-card p-5">
+      {children}
+    </section>
+  )
+}
+
 /** Full-screen state shown instead of the app when desktop access is not (yet) confirmed. */
 export function AccessGate({ decision }: Props) {
   const refreshSubscriptionStatus = useHabitsStore((s) => s.refreshSubscriptionStatus)
-  const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
   const [retrying, setRetrying] = useState(false)
 
   const retry = async () => {
@@ -24,52 +31,50 @@ export function AccessGate({ decision }: Props) {
 
   if (decision.kind === 'restoring') {
     return (
-      <section className="rounded-xl border border-white/10 bg-white/5 p-6" aria-busy="true">
-        <h2 className="text-lg font-semibold text-white">Opening HabitGlo…</h2>
-        <p className="mt-2 text-sm text-white/70">Checking your account.</p>
-      </section>
+      <Card busy>
+        <h2 className="text-lg font-semibold">Opening HabitGlo…</h2>
+        <p className="mt-2 text-sm text-app-muted">Checking your account.</p>
+      </Card>
     )
   }
 
   if (decision.kind === 'verify-offline') {
     return (
-      <section className="flex flex-col gap-4">
-        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-          <WifiOff size={22} className="text-white/70" aria-hidden />
-          <h2 className="mt-3 text-lg font-semibold text-white">Connect to the internet to verify your HabitGlo subscription</h2>
-          <p className="mt-2 text-sm text-white/70">
+      <div className="flex flex-col gap-4">
+        <Card>
+          <WifiOff size={22} className="text-app-muted" aria-hidden />
+          <h2 className="mt-3 text-lg font-semibold">Connect to the internet to verify your HabitGlo subscription</h2>
+          <p className="mt-2 text-sm text-app-muted">
             HabitGlo works offline for 14 days after your last check. Your reminders are saved on this PC.
           </p>
           <Button className="mt-4" onClick={() => void retry()} disabled={retrying}>
             {retrying ? 'Checking…' : 'Retry'}
           </Button>
-        </div>
-        {decision.showSignIn && <AuthPanel />}
-      </section>
+        </Card>
+        {decision.showSignIn && (
+          <Card>
+            <AuthPanel />
+          </Card>
+        )}
+      </div>
     )
   }
 
   if (decision.kind === 'subscribe') {
     return (
-      <section className="flex flex-col gap-4">
-        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-lg font-semibold text-white">Subscription required</h2>
-          <p className="mt-2 text-sm text-white/70">
-            You are signed in, but the desktop app needs an active plan. Current status: {subscriptionStatus}.
-          </p>
-        </div>
+      <Card>
+        <h2 className="text-lg font-semibold">Subscription required</h2>
+        <p className="mb-4 mt-2 text-sm text-app-muted">You are signed in, but the desktop app needs an active plan.</p>
         <AuthPanel />
-      </section>
+      </Card>
     )
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white">Sign in to HabitGlo</h2>
-        <p className="mt-2 text-sm text-white/70">Sign in once; after that HabitGlo also works offline.</p>
-      </div>
+    <Card>
+      <h2 className="text-lg font-semibold">Sign in to HabitGlo</h2>
+      <p className="mb-4 mt-2 text-sm text-app-muted">Sign in once; after that HabitGlo also works offline.</p>
       <AuthPanel />
-    </section>
+    </Card>
   )
 }

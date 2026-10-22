@@ -104,3 +104,30 @@ Decisions:
 Owner must test by hand:
 - Signed in + paid: Wi-Fi off, quit from tray, relaunch: the app opens straight to the reminders.
 - Wi-Fi off with no account on a fresh Windows user: the connect screen with Retry and the sign-in form.
+
+## Slice 4: one simple screen
+
+Gate: build pass, lint pass, test pass (57 tests), cargo check pass.
+
+Shipped (`src/App.tsx` is now about 70 lines):
+- From top to bottom: the live LED preview with a big Start/Pause button and Show/Hide LED; the "Add a reminder" input (Enter adds); then the list with a drag handle, on/off switch and delete. Empty state: "Add something you want to see all day."
+- Gear icon opens the Settings popup (native `<dialog>`: Escape and backdrop click close it, focus stays inside). It has Speed (Slow / Medium / Fast = 30 / 55 / 90 px/s), Position (Top / Bottom) + "Keep windows from covering it", Color (Classic LED, Neon, Calm blue, Mono white) and Account.
+- One built-in dark theme: system font (Segoe UI), amber accent, high-contrast text. The `!important` colour overrides and per-theme CSS variables are gone from `src/index.css`.
+- Settings model: `overlay.speed` is now a preset and `overlay.color` was added. Persist version 4 maps the old speed slider to the nearest preset (old speed was slider value / 2 px/s) and the old palette to the nearest of the 4 colour presets. Corrupt saved values fall back to defaults.
+- Browser `/app` uses the same screen. Show/Hide LED, Position and "Keep windows from covering it" are disabled there, with a short note.
+- Removed in this slice because the new screen replaces them: `SettingsPanel`, `HabitForm`, `HabitList`.
+- Tests: `src/App.test.tsx` (Testing Library) covers the empty state; add with Enter; blank input ignored; Korean/Japanese/Chinese text; 400 pasted characters capped at 220; toggle; delete; inline edit with Enter and Escape; Start/Pause; and settings for speed, colour and the disabled desktop controls. `src/lib/ledSettings.test.ts` covers the mappings. The migration test covers v3 → v4 and corrupt values.
+
+Decisions:
+- Colours now cycle by position in the strip (neighbours always differ), not per reminder. The old per-reminder colour button is gone. The `color` / `colorIndex` database columns are left untouched.
+- Clicking a reminder's text edits it in place: Enter saves, Escape cancels, and an empty edit keeps the old text.
+- Delete is immediate (no confirm, no undo) to keep the screen simple.
+- Enter is handled in the input itself, ignoring Enter while an IME is composing (Korean/Japanese/Chinese), so half-typed syllables are never added.
+- Account in the browser preview says "Sign in from the HabitGlo desktop app" (the browser never had sign-in before either).
+- Unpaid accounts see Subscribe (monthly checkout), See plans (website, includes lifetime) and Refresh status. Recurring plans see Manage billing; lifetime sees no billing button.
+- The overlay strip shows "Add a reminder in HabitGlo" when nothing is active. The preview shows "Your reminders will scroll here."
+- Dev dependencies added: `@testing-library/react`, `@testing-library/dom`, `@testing-library/user-event` (tests only, not shipped).
+
+Owner must test by hand:
+- Drag a reminder by its handle; also Tab to the handle, press Space, use the arrow keys, then Space to drop.
+- Type Korean with the Windows IME and press Enter once: the full word is added once.

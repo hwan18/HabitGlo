@@ -8,6 +8,17 @@ const config: Config = {
         fatdot: ['"DM Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       colors: {
+        app: {
+          bg: '#0d0f14',
+          card: '#151922',
+          raised: '#1d2230',
+          border: '#2b3142',
+          text: '#f4f4f5',
+          muted: '#a6a8b4',
+          accent: '#ffb000',
+          'accent-text': '#1a1200',
+          danger: '#ff7b72',
+        },
         glow: {
           red: 'hsl(var(--destructive) / <alpha-value>)',
           amber: 'hsl(var(--chart-3) / <alpha-value>)',

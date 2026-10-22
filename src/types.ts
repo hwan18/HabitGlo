@@ -48,9 +48,12 @@ export type ThemeSettings = {
 }
 
 export type OverlayPosition = 'top' | 'bottom'
+export type SpeedPreset = 'slow' | 'medium' | 'fast'
+export type ColorPreset = 'classic' | 'neon' | 'calm' | 'mono'
 
 export type OverlaySettings = {
-  speed: number
+  speed: SpeedPreset
+  color: ColorPreset
   gap: number
   spacing: number
   clickThrough: boolean

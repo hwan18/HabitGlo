@@ -18,6 +18,14 @@ import {
   type CachedEntitlement,
   type SubscriptionCheck,
 } from '@/lib/entitlement'
+import {
+  colorFromLegacyPalette,
+  DEFAULT_COLOR,
+  DEFAULT_SPEED,
+  isColorPreset,
+  isSpeedPreset,
+  speedFromLegacy,
+} from '@/lib/ledSettings'
 import { applyPendingOps, enqueue, flushQueue, readQueue, type SyncOp } from '@/lib/syncQueue'
 import { hasSupabase, supabase } from '@/lib/supabaseClient'
 import { isAuthRetryableFetchError } from '@supabase/supabase-js'
@@ -130,7 +138,8 @@ const defaultTheme: ThemeSettings = {
 }
 
 const defaultOverlay: OverlaySettings = {
-  speed: 40,
+  speed: DEFAULT_SPEED,
+  color: DEFAULT_COLOR,
   gap: 0,
   spacing: 0,
   clickThrough: false,
@@ -139,6 +148,15 @@ const defaultOverlay: OverlaySettings = {
   reserveSpace: true,
   paused: false,
 }
+
+const sanitizeOverlay = (overlay: OverlaySettings): OverlaySettings => ({
+  ...overlay,
+  speed: isSpeedPreset(overlay.speed) ? overlay.speed : speedFromLegacy(overlay.speed),
+  color: isColorPreset(overlay.color) ? overlay.color : DEFAULT_COLOR,
+  position: overlay.position === 'bottom' ? 'bottom' : 'top',
+  reserveSpace: overlay.reserveSpace !== false,
+  paused: overlay.paused === true,
+})
 
 // Only the main window owns persisted state; the overlay window reads it but must never write it back,
 // otherwise a stale overlay snapshot can overwrite the user's latest changes.
@@ -737,7 +755,7 @@ export const useHabitsStore = create<StoreState>()(
     },
     {
       name: 'habitglo-store',
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => persistStorage),
       partialize: (state) => ({
         habits: state.habits,
@@ -763,6 +781,15 @@ export const useHabitsStore = create<StoreState>()(
             next.habitsOwner = null
           }
         }
+        if (version < 4) {
+          const overlay = (next.overlay ?? {}) as Record<string, unknown>
+          const theme = (next.theme ?? {}) as Record<string, unknown>
+          next.overlay = {
+            ...overlay,
+            speed: speedFromLegacy(overlay.speed),
+            color: colorFromLegacyPalette(theme.palette),
+          }
+        }
         return next
       },
       merge: (persistedState, currentState) => {
@@ -778,10 +805,7 @@ export const useHabitsStore = create<StoreState>()(
             ...persisted?.theme,
             showSeparator: persisted?.theme?.showSeparator ?? currentState.theme.showSeparator,
           },
-          overlay: {
-            ...currentState.overlay,
-            ...persisted?.overlay,
-          },
+          overlay: sanitizeOverlay({ ...currentState.overlay, ...persisted?.overlay }),
         }
       },
     },

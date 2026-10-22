@@ -3,40 +3,23 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useMarqueeConfig } from './useMarqueeConfig'
 import { getFontClassForScript, getLedLatinFontClass, splitScriptRuns } from './fontRouting'
-import { isTauri } from '@/lib/platform'
+import { ledColorAt } from '@/lib/ledSettings'
 
-export function Marquee() {
+export function Marquee({ emptyMessage }: { emptyMessage?: string }) {
   const { ref: containerRef, gap, spacing, speed, habits, overlay, theme, fontSize, containerWidth } = useMarqueeConfig()
   const loopWidthRef = useRef(0)
   const x = useMotionValue(0)
   const copyRef = useRef<HTMLSpanElement | null>(null)
   const [copyWidth, setCopyWidth] = useState(0)
-  const [showDefault] = useState(() => {
-    if (!isTauri) return true
-    if (typeof window === 'undefined') return false
-    const key = 'habitglo-has-opened'
-    const alreadyOpened = window.localStorage.getItem(key)
-    if (!alreadyOpened) {
-      window.localStorage.setItem(key, '1')
-      return true
-    }
-    return false
-  })
   const showSeparator = theme.showSeparator ?? true
   const separator = showSeparator ? '\u00A0\u00A0•\u00A0\u00A0' : '\u00A0\u00A0\u00A0\u00A0'
   const separatorColor = 'hsl(var(--destructive))'
   const separatorGlow = 'hsl(var(--destructive) / 0.6)'
-  const defaultMessage = 'Add your first habit/reminder'
-  const shouldShowDefault = habits.length === 0 && showDefault
   const segments = useMemo(() => {
-    if (habits.length > 0) {
-      return habits
-    }
-    if (shouldShowDefault) {
-      return [{ text: defaultMessage, color: theme.primary }]
-    }
+    if (habits.length > 0) return habits
+    if (emptyMessage) return [{ text: emptyMessage, color: ledColorAt(overlay.color, 0) }]
     return []
-  }, [defaultMessage, habits, shouldShowDefault, theme.primary])
+  }, [emptyMessage, habits, overlay.color])
   const hasText = segments.length > 0
   const ledFontClass = getLedLatinFontClass(theme.ledFont)
   const segmentsWithRuns = useMemo(
@@ -68,8 +51,7 @@ export function Marquee() {
     if (overlay.paused) return
     const loopWidth = loopWidthRef.current
     if (!loopWidth) return
-    const pxPerSec = Math.max(1, speed / 2)
-    const deltaPx = (pxPerSec * delta) / 1000
+    const deltaPx = (speed * delta) / 1000
     let next = x.get() - deltaPx
     if (next <= -loopWidth) {
       next += loopWidth
@@ -99,7 +81,6 @@ export function Marquee() {
           style={{
             x,
             fontSize,
-            filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.55))',
           }}
         >
           {Array.from({ length: copies }).map((_, idx) => (
@@ -115,7 +96,7 @@ export function Marquee() {
                     className="inline-block"
                     style={{
                       color: segment.color,
-                      textShadow: `0 0 ${18 * theme.glow}px ${segment.color}, 0 0 ${16 * theme.glow}px ${theme.secondary}`,
+                      textShadow: `0 0 ${18 * theme.glow}px ${segment.color}`,
                     }}
                   >
                     {segment.runs.map((run, runIdx) => (

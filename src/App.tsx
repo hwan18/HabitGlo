@@ -1,337 +1,72 @@
-import { useEffect, useRef, useState } from 'react'
-import { AuthPanel } from './components/AuthPanel'
-import { HabitForm } from './components/HabitForm'
-import { HabitPacks } from './components/HabitPacks'
-import { CompletedToday } from './components/CompletedToday'
-import { HabitList } from './components/HabitList'
-import { SettingsPanel } from './components/SettingsPanel'
-import { OnboardingTour, type OnboardingStep } from './components/OnboardingTour'
-import { Leaderboard } from './components/Leaderboard'
+import { useState } from 'react'
+import { Settings } from 'lucide-react'
 import { useHabitsStore } from './stores/useHabitsStore'
-import { Marquee } from './overlay/Marquee'
-import { Rocket, Download, Monitor, Check, ArrowLeft, CircleHelp, Eye, EyeOff } from 'lucide-react'
 import { isTauri } from './lib/platform'
 import { useAccess } from './lib/useAccess'
 import { AccessGate } from './components/AccessGate'
-import { isOverlayVisible, onOverlayVisibilityChange, setOverlayVisible } from './lib/overlayWindow'
-import { applyUiTheme } from './lib/uiThemes'
+import { LedPreview } from './components/LedPreview'
+import { ReminderInput } from './components/ReminderInput'
+import { ReminderList } from './components/ReminderList'
+import { SettingsDialog } from './components/SettingsDialog'
 import './App.css'
 
-type OverlayToggleButtonProps = {
-  paused: boolean
-  onToggle: () => void
-}
-
-const ONBOARDING_COMPLETE_KEY = 'habitglo-onboarding-complete-v1'
-const onboardingSteps: OnboardingStep[] = [
-  {
-    selector: '[data-onboarding="add"]',
-    title: 'Add habits and reminders',
-    description: 'Type anything you want to keep visible, then press Enter or Add All Habits. It appears in your scrolling LED strip immediately.',
-  },
-  {
-    selector: '[data-onboarding="settings"]',
-    title: 'Adjust your overlay',
-    description: 'Set the scroll speed, spacing, font, glow, colors, and desktop behavior here. Changes update the LED strip as you make them.',
-  },
-  {
-    selector: '[data-onboarding="manage"]',
-    title: 'Manage your habits',
-    description: 'Log a habit when it is done, pause it, reorder it, change its color, or remove it from your active cycle.',
-  },
-  {
-    selector: '[data-onboarding="ticker"]',
-    title: 'Control the LED strip',
-    description: 'Pause or resume the LED strip, and use Show/Hide LED whenever you want it on or off. To move it, hold Ctrl or Alt, then click and drag it across the screen.',
-  },
-  {
-    selector: '[data-onboarding="progress"]',
-    title: 'Build your streak',
-    description: 'HabitGlo tracks completed habits and streaks for you. Sign in on desktop to sync progress and optionally join the leaderboard.',
-  },
-]
-
-function PlayGlyph() {
-  return (
-    <span
-      aria-hidden
-      className="block h-5 w-5 bg-white"
-      style={{ clipPath: 'polygon(24% 12%, 24% 88%, 88% 50%)' }}
-    />
-  )
-}
-
-function PauseGlyph() {
-  return (
-    <span aria-hidden className="flex h-5 w-5 items-center justify-center gap-[3px]">
-      <span className="h-4 w-[4px] rounded-sm bg-white" />
-      <span className="h-4 w-[4px] rounded-sm bg-white" />
-    </span>
-  )
-}
-
-function OverlayToggleButton({ paused, onToggle }: OverlayToggleButtonProps) {
-  const [showTick, setShowTick] = useState(false)
-  const [isPressed, setIsPressed] = useState(false)
-  const timeoutRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current != null) {
-        window.clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [])
-
-  const label = paused ? 'Start Glo' : 'Pause Glo'
-
-  const handleClick = () => {
-    onToggle()
-    setShowTick(true)
-    if (timeoutRef.current != null) {
-      window.clearTimeout(timeoutRef.current)
-    }
-    timeoutRef.current = window.setTimeout(() => setShowTick(false), 110)
-  }
-
-  return (
-    <button
-      type="button"
-      onPointerDown={() => setIsPressed(true)}
-      onPointerUp={() => setIsPressed(false)}
-      onPointerLeave={() => setIsPressed(false)}
-      onPointerCancel={() => setIsPressed(false)}
-      onClick={handleClick}
-      title={label}
-      aria-label={label}
-      className={`group relative inline-flex h-14 w-20 items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 shadow-inner shadow-black/50 transition-all duration-100 ease-out hover:border-glow-pink/50 hover:bg-white/15 hover:shadow-glow active:shadow-glow ${isPressed ? 'scale-[0.96] brightness-110' : 'scale-100'}`}
-    >
-      <span className="sr-only">{label}</span>
-      <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-glow-pink to-glow-blue text-white shadow-glow transition-transform duration-100 ease-out group-hover:scale-105 ${isPressed ? 'scale-90' : 'scale-100'}`}>
-        {showTick ? <Check size={20} strokeWidth={3} className="text-white" /> : paused ? <PlayGlyph /> : <PauseGlyph />}
-      </span>
-    </button>
-  )
-}
-
-function OverlayVisibilityButton() {
-  const [visible, setVisible] = useState(true)
-  const [updating, setUpdating] = useState(false)
-
-  useEffect(() => {
-    if (!isTauri) return
-    let active = true
-    void isOverlayVisible().then((isVisible) => {
-      if (active) setVisible(isVisible)
-    })
-    const unsubscribe = onOverlayVisibilityChange((isVisible) => setVisible(isVisible))
-    return () => {
-      active = false
-      unsubscribe()
-    }
-  }, [])
-
-  const toggleVisibility = async () => {
-    setUpdating(true)
-    try {
-      const isVisible = await isOverlayVisible()
-      await setOverlayVisible(!isVisible)
-    } finally {
-      setUpdating(false)
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={toggleVisibility}
-      disabled={updating}
-      className="flex h-14 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-xs font-semibold text-white/70 transition-colors hover:border-glow-blue/40 hover:bg-white/10 hover:text-white disabled:opacity-50"
-      title={visible ? 'Hide the LED overlay' : 'Show the LED overlay'}
-    >
-      {visible ? <EyeOff size={17} /> : <Eye size={17} />}
-      {visible ? 'Hide LED' : 'Show LED'}
-    </button>
-  )
-}
-
 function App() {
-  const [tourOpen, setTourOpen] = useState(() => window.localStorage.getItem(ONBOARDING_COMPLETE_KEY) !== 'true')
-  const setOverlay = useHabitsStore((s) => s.setOverlay)
-  const paused = useHabitsStore((s) => s.overlay.paused)
   const access = useAccess()
-  const hasHabits = useHabitsStore((s) => s.habits.length > 0)
-  const uiThemeId = useHabitsStore((s) => s.theme.uiThemeId)
-
-  useEffect(() => {
-    applyUiTheme(uiThemeId)
-  }, [uiThemeId])
-
-  const closeTour = () => {
-    setTourOpen(false)
-    window.localStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true')
-  }
-
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const reminderCount = useHabitsStore((s) => s.habits.length)
   const isOpen = access.kind === 'open'
 
   return (
-    <div className="app-shell min-h-screen px-6 pb-10 text-white">
-      {/* Browser trial banner */}
-      {!isTauri && (
-        <div className="mx-auto mt-4 max-w-6xl rounded-xl border border-glow-pink/20 bg-gradient-to-r from-glow-pink/10 via-glow-blue/10 to-glow-green/10 px-5 py-3">
-          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <div className="flex items-center gap-3">
-              <Monitor size={18} className="text-glow-blue" />
-              <div>
-                <p className="text-sm font-semibold text-white">Browser Preview — Try HabitGlo</p>
-                <p className="text-xs text-white/50">
-                  Add habits, choose themes, and preview the overlay. Get the desktop app for always-on-top, click-through mode, and cloud sync.
-                </p>
-              </div>
-            </div>
-            <div className="flex shrink-0 flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setTourOpen(true)}
-                className="flex items-center gap-2 rounded-lg border border-glow-blue/25 bg-glow-blue/5 px-4 py-2 text-sm font-semibold text-glow-blue/90 transition-colors hover:bg-glow-blue/10"
-              >
-                <CircleHelp size={14} />
-                Quick tour
-              </button>
-              <a
-                href="/"
-                className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <ArrowLeft size={14} />
-                Back to home
-              </a>
-              <a
-                href="/pricing"
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2 text-sm font-semibold shadow-lg shadow-glow-pink/20 transition-shadow hover:shadow-glow-pink/40"
-              >
-                <Download size={14} />
-                Get HabitGlo
-              </a>
-            </div>
+    <div className="min-h-screen bg-app-bg text-app-text">
+      <div className="mx-auto flex max-w-xl flex-col gap-4 px-5 pb-8 pt-4">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src="/icons/favicon.png" alt="" className="h-6 w-6" />
+            <h1 className="text-lg font-semibold">HabitGlo</h1>
           </div>
-        </div>
-      )}
+          {isOpen && (
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Settings"
+              title="Settings"
+              className="rounded-lg p-2 text-app-muted hover:bg-app-raised hover:text-app-text"
+            >
+              <Settings size={20} aria-hidden />
+            </button>
+          )}
+        </header>
 
-      <header className="mx-auto max-w-6xl pt-8">
-        {/* Desktop: message left, preview right (original layout) */}
-        {isTauri ? (
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
-              <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">Ambient reminders on your screen.</h1>
-              <p className="mt-2 max-w-xl text-sm text-white/70">
-                Keep your habits and reminders visible—all day, on your screen.
-              </p>
-              {isOpen && (
-                <div className="mt-4 flex items-center gap-3" data-onboarding="ticker">
-                  <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
-                  <OverlayVisibilityButton />
-                  <button type="button" onClick={() => setTourOpen(true)} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/65 hover:bg-white/10 hover:text-white">
-                    <CircleHelp size={14} /> Quick tour
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-glow-pink/20">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
-                <Rocket size={14} />
-                Live Overlay Preview
-              </div>
-              <div className="mt-2 h-24 w-[480px] max-w-full overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-inner shadow-black/70">
-                <Marquee />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-glow-pink/20">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
-                <Rocket size={14} />
-                Live Overlay Preview
-              </div>
-              <div className="mt-2 h-24 w-full overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-inner shadow-black/70">
-                <Marquee />
-              </div>
-            </div>
-            <div className="mt-6">
-              <p className="text-center text-xs uppercase tracking-[0.3em] text-white/60">HabitGlo · Peripheral productivity</p>
-              <div className="mt-2 flex items-center justify-center gap-4">
-                <h1 className="min-w-0 text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                  Ambient reminders on your screen.
-                </h1>
-                {isOpen && (
-                  <div className="shrink-0">
-                    <div data-onboarding="ticker"><OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} /></div>
-                  </div>
-                )}
-              </div>
-              <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/70">
-                Keep your habits and reminders visible—all day, on your screen.
-              </p>
-            </div>
-          </>
+        {!isTauri && (
+          <p className="rounded-lg border border-app-border bg-app-card px-3 py-2 text-xs text-app-muted">
+            Browser preview. The LED strip on your desktop needs the{' '}
+            <a href="/pricing" className="text-app-accent underline">
+              HabitGlo app
+            </a>
+            .
+          </p>
         )}
-      </header>
 
-      {access.kind !== 'open' ? (
-        <main className="mx-auto mt-8 grid max-w-4xl gap-4">
-          <AccessGate decision={access} />
-        </main>
-      ) : (
-        <main className="mx-auto mt-8 grid max-w-6xl gap-4 md:grid-cols-3">
-          <div className="md:col-span-2 flex flex-col gap-4">
-            <div data-onboarding="add"><HabitForm highlighted={!isTauri && !hasHabits} /></div>
-            <div data-onboarding="manage"><HabitList /></div>
-            <HabitPacks />
-            <CompletedToday />
-            {isTauri && <AuthPanel />}
-          </div>
-          <div className="flex flex-col gap-4">
-            <div data-onboarding="settings"><SettingsPanel /></div>
-            <div data-onboarding="progress"><Leaderboard /></div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-              <p className="text-sm font-semibold text-white">Tips</p>
-              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
-                <li>Use click-through mode when coding or presenting.</li>
-                <li>Hold Ctrl or Alt, then click and drag the overlay to move it.</li>
-                <li>Snap the overlay to the top or bottom, then enable Reserve screen space to dock the LED strip and keep other windows from covering it.</li>
-                <li>Drag habits to prioritize what appears most often.</li>
-                <li>Use Synthwave palette + high glow for neon effect.</li>
-              </ul>
-            </div>
-            {/* Browser-only download CTA card */}
-            {!isTauri && (
-              <div className="rounded-xl border border-glow-pink/20 bg-gradient-to-br from-glow-pink/10 to-glow-blue/10 p-4 text-sm">
-                <p className="font-semibold text-white">Want the full experience?</p>
-                <p className="mt-1 text-xs text-white/50">
-                  The desktop app adds always-on-top overlay, click-through mode, cloud sync, streak leaderboards, and more.
-                </p>
-                <a
-                  href="/pricing"
-                  className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-glow-pink/80 to-glow-blue/60 px-4 py-2.5 text-sm font-semibold shadow-lg shadow-glow-pink/20 hover:shadow-glow-pink/40 transition-shadow"
-                >
-                  <Download size={14} />
-                  Get HabitGlo
-                </a>
-              </div>
-            )}
-          </div>
-        </main>
-      )}
-
-      <footer className="mx-auto mt-8 max-w-6xl border-t border-white/10 pt-4 text-xs text-white/50">
-        {isTauri
-          ? 'Sync ready: Supabase Realtime. Overlay: Tauri always-on-top with click-through toggle.'
-          : 'Browser preview mode — Download the desktop app for the full always-on-top overlay experience.'}
-      </footer>
-      {isOpen && tourOpen && (
-        <OnboardingTour open={tourOpen} steps={onboardingSteps} onClose={closeTour} />
-      )}
+        {isOpen ? (
+          <main className="flex flex-col gap-4">
+            <LedPreview />
+            <ReminderInput />
+            <section aria-label="Reminders" className="flex flex-col gap-2">
+              {reminderCount > 0 && (
+                <h2 className="text-xs font-medium uppercase tracking-wide text-app-muted">
+                  Your reminders ({reminderCount})
+                </h2>
+              )}
+              <ReminderList />
+            </section>
+          </main>
+        ) : (
+          <main>
+            <AccessGate decision={access} />
+          </main>
+        )}
+      </div>
+      <SettingsDialog open={isOpen && settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }

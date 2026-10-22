@@ -3,13 +3,11 @@ import { createRoot } from 'react-dom/client'
 import '../fonts'
 import '../index.css'
 import OverlayApp from './OverlayApp'
-import { applyUiTheme } from '@/lib/uiThemes'
 import { dockOverlay, setOverlayVisible } from '@/lib/overlayWindow'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import '../lib/posthog'
 
 // The overlay renders whatever the main window last saved; it never loads or writes data itself.
-applyUiTheme(useHabitsStore.getState().theme.uiThemeId)
 
 createRoot(document.getElementById('overlay-root') as HTMLElement).render(
   <StrictMode>

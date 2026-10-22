@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import './fonts'
 import './index.css'
 import App from './App'
-import { applyUiTheme } from './lib/uiThemes'
 import { emitOverlaySync } from './lib/overlaySync'
 import { dockOverlay } from './lib/overlayWindow'
 import { isTauri } from './lib/platform'
@@ -69,8 +68,6 @@ if (shouldResetBrowserDemo()) {
   clearBrowserDemoHabits()
   consumeDemoResetQueryParam()
 }
-
-applyUiTheme(useHabitsStore.getState().theme.uiThemeId)
 
 void useHabitsStore.getState().initializeAuth()
 
