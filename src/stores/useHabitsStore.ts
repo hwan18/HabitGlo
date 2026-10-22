@@ -2,17 +2,25 @@ import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { isOverlayWindow } from '@/lib/platform'
 import {
+  checkSubscriptionOnline,
   computeStreak,
   fetchRemoteHabits,
-  getSubscriptionStatus,
   hasLiveSessionFor,
   isSupabaseReady,
   remoteHabitsApi,
   subscribeHabits,
   type SubscriptionStatus,
 } from '@/lib/db'
+import {
+  clearCachedEntitlement,
+  readCachedEntitlement,
+  writeCachedEntitlement,
+  type CachedEntitlement,
+  type SubscriptionCheck,
+} from '@/lib/entitlement'
 import { applyPendingOps, enqueue, flushQueue, readQueue, type SyncOp } from '@/lib/syncQueue'
 import { hasSupabase, supabase } from '@/lib/supabaseClient'
+import { isAuthRetryableFetchError } from '@supabase/supabase-js'
 import posthog, { identifyPostHogUser, isPostHogConfigured, resetPostHogUser } from '@/lib/posthog'
 import { defaultUiThemeId, getUiThemeOverlayPalette } from '@/lib/uiThemes'
 import { useLeaderboardStore } from './useLeaderboardStore'
@@ -74,8 +82,12 @@ type StoreState = {
   user: AppUser | null
   authReady: boolean
   authInitializing: boolean
+  /** Last known status: from the server when `subscriptionCheck` is `ok`, otherwise from the offline cache. */
   subscriptionStatus: SubscriptionStatus
-  subscriptionLoading: boolean
+  subscriptionCheck: SubscriptionCheck
+  /** Signed in from the cached entitlement because the session could not be restored (offline). */
+  offlineSession: boolean
+  cachedEntitlement: CachedEntitlement | null
   habits: Habit[]
   habitsOwner: HabitsOwner
   completedToday: CompletedEntry[]
@@ -84,7 +96,9 @@ type StoreState = {
   initializeAuth: () => Promise<void>
   applyAuthState: (user: AppUser | null, source?: string) => Promise<void>
   setUser: (user: AppUser | null) => Promise<void>
+  /** Re-verifies the subscription (and tries to restore the session first when offline-signed-in). */
   refreshSubscriptionStatus: () => Promise<void>
+  signOut: () => Promise<void>
   addHabit: (text: string, options?: Partial<Habit>) => Promise<void>
   updateHabitText: (id: string, text: string) => Promise<void>
   toggleHabit: (id: string, active: boolean) => Promise<void>
@@ -232,16 +246,40 @@ export const useHabitsStore = create<StoreState>()(
         return authRequestEpoch === epoch && currentUserId === userId
       }
 
-      const runRefreshSubscriptionForUser = async (userId: string, epoch: number, source: string) => {
-        set({ subscriptionLoading: true })
-        devAuthLog('subscription:start', { source, userId, epoch })
-        const subscriptionStatus = await getSubscriptionStatus(userId)
-        if (!isAuthEpochCurrent(epoch, userId)) {
-          devAuthLog('subscription:stale', { source, userId, epoch })
+      /** Online subscription check; caches the answer for offline starts. A failed check never means "unpaid". */
+      const runSubscriptionCheck = async (user: AppUser, epoch: number, source: string) => {
+        set({ subscriptionCheck: 'pending' })
+        devAuthLog('subscription:start', { source, userId: user.id, epoch })
+        const result = await checkSubscriptionOnline(user.id)
+        if (!isAuthEpochCurrent(epoch, user.id)) {
+          devAuthLog('subscription:stale', { source, userId: user.id, epoch })
           return
         }
-        set({ subscriptionStatus, subscriptionLoading: false })
-        devAuthLog('subscription:end', { source, userId, epoch, subscriptionStatus })
+        if (result.ok) {
+          const entry: CachedEntitlement = {
+            userId: user.id,
+            email: user.email ?? get().cachedEntitlement?.email ?? null,
+            status: result.status,
+            checkedAt: Date.now(),
+          }
+          writeCachedEntitlement(entry)
+          set({ subscriptionStatus: result.status, subscriptionCheck: 'ok', cachedEntitlement: entry })
+        } else {
+          const cache = get().cachedEntitlement
+          set({
+            subscriptionCheck: 'failed',
+            subscriptionStatus: cache?.userId === user.id ? cache.status : get().subscriptionStatus,
+          })
+        }
+        devAuthLog('subscription:end', { source, userId: user.id, epoch, ok: result.ok })
+      }
+
+      /** Called when a real Supabase session appears for the user we were showing from the offline cache. */
+      const recoverFromOfflineSession = (user: AppUser, source: string) => {
+        set({ user, offlineSession: false })
+        startRealtime(user.id)
+        void runSubscriptionCheck(user, authRequestEpoch, `${source}:recovered`)
+        void get().syncNow({ pull: true })
       }
 
       /** Fetches the server list and merges still-pending local changes on top. */
@@ -274,6 +312,8 @@ export const useHabitsStore = create<StoreState>()(
         if (onlineListenerInstalled || typeof window === 'undefined') return
         onlineListenerInstalled = true
         window.addEventListener('online', () => {
+          const { user, subscriptionCheck, offlineSession } = get()
+          if (user && (subscriptionCheck === 'failed' || offlineSession)) void get().refreshSubscriptionStatus()
           void get().syncNow({ pull: true })
         })
       }
@@ -283,7 +323,9 @@ export const useHabitsStore = create<StoreState>()(
         authReady: false,
         authInitializing: false,
         subscriptionStatus: 'free',
-        subscriptionLoading: false,
+        subscriptionCheck: 'idle',
+        offlineSession: false,
+        cachedEntitlement: isOverlayWindow ? null : readCachedEntitlement(),
         habits: [],
         habitsOwner: null,
         completedToday: [],
@@ -302,7 +344,7 @@ export const useHabitsStore = create<StoreState>()(
                 authReady: true,
                 authInitializing: false,
                 subscriptionStatus: 'free',
-                subscriptionLoading: false,
+                subscriptionCheck: 'idle',
               })
               return
             }
@@ -310,9 +352,10 @@ export const useHabitsStore = create<StoreState>()(
             installOnlineListener()
 
             if (!authListenerCleanup) {
+              // INITIAL_SESSION is not handled: offline it reports "no session" even though the session is
+              // still stored, which would sign the user out. The startup state comes from getSession below.
               const { data } = supabase.auth.onAuthStateChange((event, session) => {
                 if (
-                  event === 'INITIAL_SESSION' ||
                   event === 'SIGNED_IN' ||
                   event === 'SIGNED_OUT' ||
                   event === 'TOKEN_REFRESHED' ||
@@ -329,11 +372,29 @@ export const useHabitsStore = create<StoreState>()(
             }
 
             set({ authInitializing: true })
-            const { data, error } = await supabase.auth.getSession()
-            if (error) {
-              devAuthLog('getSession:error', error.message)
+            let sessionUser: AppUser | null = null
+            let networkProblem = isOffline()
+            try {
+              const { data, error } = await supabase.auth.getSession()
+              sessionUser = data.session?.user ?? null
+              if (error) {
+                devAuthLog('getSession:error', error.message)
+                networkProblem = networkProblem || isAuthRetryableFetchError(error)
+              }
+            } catch (err) {
+              devAuthLog('getSession:threw', err)
+              networkProblem = true
             }
-            await get().applyAuthState(data.session?.user ?? null, 'initializeAuth:getSession')
+
+            const cache = get().cachedEntitlement
+            if (!sessionUser && networkProblem && cache) {
+              // The stored session could not be refreshed without a network. Open as the cached user;
+              // supabase-js keeps the session and will refresh it once the connection is back.
+              set({ offlineSession: true })
+              await get().applyAuthState({ id: cache.userId, email: cache.email }, 'offline-cache')
+              return
+            }
+            await get().applyAuthState(sessionUser, 'initializeAuth:getSession')
           })().finally(() => {
             set({ authInitializing: false, authReady: true })
             authInitPromise = null
@@ -348,6 +409,11 @@ export const useHabitsStore = create<StoreState>()(
 
           if (prevUserId === nextUserId && get().authReady && source !== 'setUser') {
             set({ authInitializing: false, authReady: true })
+            if (user && get().offlineSession && source !== 'offline-cache') {
+              devAuthLog('apply:recovered', { source, userId: nextUserId })
+              recoverFromOfflineSession(user, source)
+              return
+            }
             if (user && user.email !== get().user?.email) set({ user })
             devAuthLog('apply:no-op', { source, userId: nextUserId })
             // A refreshed or restored session is a good moment to push anything queued while offline.
@@ -365,12 +431,16 @@ export const useHabitsStore = create<StoreState>()(
             const owner = get().habitsOwner
             // Signing out removes that account's reminders from this screen. Its unsynced changes stay queued.
             const clearLocal = Boolean(prevUserId) || (owner !== null && owner !== LEGACY_OWNER)
+            // No session for real (not a network problem): the offline grace must not outlive the sign-out.
+            clearCachedEntitlement()
             set({
               user: null,
               authReady: true,
               authInitializing: false,
+              offlineSession: false,
               subscriptionStatus: 'free',
-              subscriptionLoading: false,
+              subscriptionCheck: 'idle',
+              cachedEntitlement: null,
               ...(clearLocal ? { habits: [], habitsOwner: null, completedToday: [] } : {}),
             })
             return
@@ -382,17 +452,23 @@ export const useHabitsStore = create<StoreState>()(
           const owner = get().habitsOwner
           // Never show another account's reminders while this account's list loads.
           const foreignList = owner !== null && owner !== LEGACY_OWNER && owner !== user.id
+          const cache = get().cachedEntitlement
           set({
             user,
             authReady: true,
             authInitializing: false,
+            offlineSession: source === 'offline-cache',
+            subscriptionStatus: cache?.userId === user.id ? cache.status : 'free',
+            subscriptionCheck: 'idle',
             ...(foreignList ? { habits: [], habitsOwner: null, completedToday: [] } : {}),
           })
 
-          startRealtime(user.id)
-          void useLeaderboardStore.getState().refresh(user.id)
+          if (source !== 'offline-cache') {
+            startRealtime(user.id)
+            void useLeaderboardStore.getState().refresh(user.id)
+          }
           await Promise.all([
-            runRefreshSubscriptionForUser(user.id, epoch, `${source}:refresh`),
+            runSubscriptionCheck(user, epoch, `${source}:refresh`),
             get().syncNow({ pull: true }),
           ])
         },
@@ -402,12 +478,36 @@ export const useHabitsStore = create<StoreState>()(
         },
 
         refreshSubscriptionStatus: async () => {
-          const userId = get().user?.id ?? null
-          if (!userId) {
-            set({ subscriptionStatus: 'free', subscriptionLoading: false })
-            return
+          if (supabase && (!get().user || get().offlineSession)) {
+            // Retry restoring the session first; a recovered session runs its own check.
+            const result = await supabase.auth.getSession().catch(() => null)
+            const sessionUser = result?.data.session?.user ?? null
+            if (sessionUser) {
+              await get().applyAuthState(sessionUser, 'retry')
+              return
+            }
           }
-          await runRefreshSubscriptionForUser(userId, authRequestEpoch, 'manual_refresh')
+          const user = get().user
+          if (!user) return
+          await runSubscriptionCheck(user, authRequestEpoch, 'manual_refresh')
+        },
+
+        signOut: async () => {
+          if (!supabase) return
+          let failed = false
+          try {
+            const { error } = await supabase.auth.signOut({ scope: 'local' })
+            failed = Boolean(error)
+          } catch {
+            failed = true
+          }
+          if (failed) {
+            // Offline: supabase-js keeps the session when the server call fails. Drop it on this device anyway.
+            for (const key of Object.keys(window.localStorage)) {
+              if (key.startsWith('sb-') && key.includes('-auth-token')) window.localStorage.removeItem(key)
+            }
+          }
+          await get().applyAuthState(null, 'signOut')
         },
 
         hydrate: async () => {

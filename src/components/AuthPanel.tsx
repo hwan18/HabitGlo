@@ -69,7 +69,7 @@ export function AuthPanel() {
   }
 
   const signOut = async () => {
-    await supabase?.auth.signOut()
+    await useHabitsStore.getState().signOut()
   }
 
   const handleCheckout = async (plan: 'monthly' | 'lifetime') => {

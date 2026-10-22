@@ -10,8 +10,9 @@ import { Leaderboard } from './components/Leaderboard'
 import { useHabitsStore } from './stores/useHabitsStore'
 import { Marquee } from './overlay/Marquee'
 import { Rocket, Download, Monitor, Check, ArrowLeft, CircleHelp, Eye, EyeOff } from 'lucide-react'
-import { hasSupabase } from './lib/supabaseClient'
 import { isTauri } from './lib/platform'
+import { useAccess } from './lib/useAccess'
+import { AccessGate } from './components/AccessGate'
 import { isOverlayVisible, onOverlayVisibilityChange, setOverlayVisible } from './lib/overlayWindow'
 import { applyUiTheme } from './lib/uiThemes'
 import './App.css'
@@ -158,11 +159,7 @@ function App() {
   const [tourOpen, setTourOpen] = useState(() => window.localStorage.getItem(ONBOARDING_COMPLETE_KEY) !== 'true')
   const setOverlay = useHabitsStore((s) => s.setOverlay)
   const paused = useHabitsStore((s) => s.overlay.paused)
-  const user = useHabitsStore((s) => s.user)
-  const authReady = useHabitsStore((s) => s.authReady)
-  const authInitializing = useHabitsStore((s) => s.authInitializing)
-  const subscriptionStatus = useHabitsStore((s) => s.subscriptionStatus)
-  const subscriptionLoading = useHabitsStore((s) => s.subscriptionLoading)
+  const access = useAccess()
   const hasHabits = useHabitsStore((s) => s.habits.length > 0)
   const uiThemeId = useHabitsStore((s) => s.theme.uiThemeId)
 
@@ -175,25 +172,7 @@ function App() {
     window.localStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true')
   }
 
-  // In browser mode, never require auth — let users try freely with local storage
-  const billingGateFlag = import.meta.env.VITE_BILLING_GATE
-  const billingGateEnabled = import.meta.env.DEV ? billingGateFlag === 'true' : billingGateFlag !== 'false'
-  const restoringSession = isTauri && hasSupabase && !authReady
-  const requiresAuth = isTauri && hasSupabase && authReady && !user
-  const hasPaidAccess =
-    subscriptionStatus === 'active' ||
-    subscriptionStatus === 'trialing' ||
-    subscriptionStatus === 'lifetime'
-  const checkingSubscription =
-    billingGateEnabled && isTauri && hasSupabase && authReady && !!user && subscriptionLoading
-  const requiresSubscription =
-    billingGateEnabled &&
-    isTauri &&
-    hasSupabase &&
-    authReady &&
-    !!user &&
-    !subscriptionLoading &&
-    !hasPaidAccess
+  const isOpen = access.kind === 'open'
 
   return (
     <div className="app-shell min-h-screen px-6 pb-10 text-white">
@@ -248,7 +227,7 @@ function App() {
               <p className="mt-2 max-w-xl text-sm text-white/70">
                 Keep your habits and reminders visible—all day, on your screen.
               </p>
-              {!requiresAuth && !restoringSession && (
+              {isOpen && (
                 <div className="mt-4 flex items-center gap-3" data-onboarding="ticker">
                   <OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} />
                   <OverlayVisibilityButton />
@@ -285,7 +264,7 @@ function App() {
                 <h1 className="min-w-0 text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                   Ambient reminders on your screen.
                 </h1>
-                {!requiresAuth && !restoringSession && (
+                {isOpen && (
                   <div className="shrink-0">
                     <div data-onboarding="ticker"><OverlayToggleButton paused={paused} onToggle={() => setOverlay({ paused: !paused })} /></div>
                   </div>
@@ -299,50 +278,9 @@ function App() {
         )}
       </header>
 
-      {restoringSession ? (
+      {access.kind !== 'open' ? (
         <main className="mx-auto mt-8 grid max-w-4xl gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/80">
-            <h2 className="text-lg font-semibold text-white">Restoring session</h2>
-            <p className="mt-2 text-sm text-white/70">
-              {authInitializing ? 'Reconnecting your account...' : 'Preparing your account state...'}
-            </p>
-          </div>
-        </main>
-      ) : requiresAuth ? (
-        <main className="mx-auto mt-8 grid max-w-4xl gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/80">
-            <h2 className="text-lg font-semibold text-white">Create your account</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Sign in to sync habits across devices and keep your data private.
-            </p>
-            <div className="mt-4">
-              <AuthPanel />
-            </div>
-          </div>
-        </main>
-      ) : checkingSubscription ? (
-        <main className="mx-auto mt-8 grid max-w-4xl gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/80">
-            <h2 className="text-lg font-semibold text-white">Checking subscription</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Verifying your billing status...
-            </p>
-          </div>
-        </main>
-      ) : requiresSubscription ? (
-        <main className="mx-auto mt-8 grid max-w-4xl gap-4">
-          <div className="rounded-2xl border border-glow-pink/25 bg-white/5 p-6 text-sm text-white/80">
-            <h2 className="text-lg font-semibold text-white">Subscription required</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Your account is signed in, but desktop access requires an active subscription.
-            </p>
-            <p className="mt-2 text-xs uppercase tracking-wide text-white/60">
-              Current status: {subscriptionStatus}
-            </p>
-            <div className="mt-4">
-              <AuthPanel />
-            </div>
-          </div>
+          <AccessGate decision={access} />
         </main>
       ) : (
         <main className="mx-auto mt-8 grid max-w-6xl gap-4 md:grid-cols-3">
@@ -391,7 +329,7 @@ function App() {
           ? 'Sync ready: Supabase Realtime. Overlay: Tauri always-on-top with click-through toggle.'
           : 'Browser preview mode — Download the desktop app for the full always-on-top overlay experience.'}
       </footer>
-      {!restoringSession && !requiresAuth && !checkingSubscription && !requiresSubscription && tourOpen && (
+      {isOpen && tourOpen && (
         <OnboardingTour open={tourOpen} steps={onboardingSteps} onClose={closeTour} />
       )}
     </div>

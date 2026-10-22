@@ -29,18 +29,31 @@ export const normalizeSubscriptionStatus = (value: unknown): SubscriptionStatus 
   }
 }
 
-export const getSubscriptionStatus = async (userId?: string): Promise<SubscriptionStatus> => {
-  if (!isSupabaseReady() || !userId) return 'free'
-  const { data, error } = await supabase!
-    .from('profiles')
-    .select('subscription_status')
-    .eq('user_id', userId)
-    .single()
-  if (error) {
-    console.warn('Failed to fetch subscription status:', error.message)
-    return 'free'
+export type SubscriptionCheckResult = { ok: true; status: SubscriptionStatus } | { ok: false }
+
+/**
+ * Asks the server for the user's subscription. `ok: false` means the answer is unknown (offline,
+ * no live session, server error) and must never be read as "unpaid".
+ */
+export const checkSubscriptionOnline = async (userId: string): Promise<SubscriptionCheckResult> => {
+  if (!isSupabaseReady()) return { ok: false }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return { ok: false }
+  if (!(await hasLiveSessionFor(userId))) return { ok: false }
+  try {
+    const { data, error } = await supabase!
+      .from('profiles')
+      .select('subscription_status')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) {
+      console.warn('Failed to fetch subscription status:', error.message)
+      return { ok: false }
+    }
+    return { ok: true, status: normalizeSubscriptionStatus(data?.subscription_status) }
+  } catch (err) {
+    console.warn('Failed to fetch subscription status:', err)
+    return { ok: false }
   }
-  return normalizeSubscriptionStatus(data?.subscription_status)
 }
 
 type HabitRow = {

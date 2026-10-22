@@ -80,3 +80,27 @@ Decisions:
 Owner must test by hand:
 - Signed in: add a reminder, then check it appears on a second device / in Supabase within a second or two.
 - Turn Wi-Fi off, add/delete/reorder, turn Wi-Fi on: changes reach Supabase without any error message.
+
+## Slice 3: offline license with 14-day grace
+
+Gate: build pass, lint pass, test pass (43 tests), cargo check pass.
+
+Shipped:
+- `src/lib/entitlement.ts`: caches `{ userId, email, status, checkedAt }` in `habitglo-entitlement-v1` after every successful online check (paid or not), and the pure access rule `evaluateAccess`.
+- Access rule: paid (`active` / `trialing` / `lifetime`) confirmed online, or a cached paid status for the same user checked within 14 days while the online check cannot complete. Otherwise one screen: "Connect to the internet to verify your HabitGlo subscription" + Retry, plus the sign-in panel when there is no cached user.
+- `checkSubscriptionOnline` returns "unknown" (never "free") when offline, without a live session, or on a server error. Before, any error read as `free` and locked paying users out.
+- Startup: if the stored Supabase session cannot be refreshed because of the network, the app opens as the cached user (`offlineSession`). When the connection returns, supabase-js refreshes the session and the app re-checks and syncs automatically.
+- `src/App.tsx` uses `useAccess()` + `AccessGate` instead of `requiresAuth` / `requiresSubscription`. `VITE_BILLING_GATE` behaviour is unchanged (dev: only gated if `true`; release: gated unless `false`).
+- Tests: the 5 required cases (online paid, online unpaid, offline within 14 days, offline after 14 days, never signed in) plus instant-open-while-checking, bad caches, and store-level offline starts (expired token + no network) including adding a reminder offline and signing out offline.
+
+Decisions:
+- With a fresh paid cache the app opens instantly and verifies in the background (no "Checking subscription" wait on every start). If the server then says unpaid, it switches to the subscribe screen.
+- A cache dated more than 1 day in the future is ignored (stops winding the clock back to extend the grace).
+- `INITIAL_SESSION` auth events are ignored: offline, supabase-js reports it as "no session" while still keeping the session, which used to sign people out.
+- Sign out now uses `scope: 'local'` (this PC only, not all devices). If the server can't be reached, the local session is removed anyway. Any real sign-out also clears the offline grace cache.
+- When the billing gate is off (dev builds), the desktop app no longer forces sign-in; the account is optional. Before, desktop always required sign-in when Supabase was configured.
+- The grace clock is re-evaluated every minute while the app is open.
+
+Owner must test by hand:
+- Signed in + paid: Wi-Fi off, quit from tray, relaunch: the app opens straight to the reminders.
+- Wi-Fi off with no account on a fresh Windows user: the connect screen with Retry and the sign-in form.
