@@ -690,3 +690,154 @@ pub fn set_overlay_size(window: Window, width: f64, height: f64) -> Result<(), S
         .set_size(PhysicalSize { width, height })
         .map_err(|e| e.to_string())
 }
+
+pub const OVERLAY_VISIBILITY_EVENT: &str = "habitglo:overlay-visibility";
+
+fn parse_edge(edge: &str) -> SnapEdge {
+    if edge.eq_ignore_ascii_case("bottom") {
+        SnapEdge::Bottom
+    } else {
+        SnapEdge::Top
+    }
+}
+
+/// Moves the overlay onto the primary monitor if it is somewhere else.
+fn ensure_on_primary_monitor(window: &Window) -> Result<(), String> {
+    let primary = match window.primary_monitor().map_err(|e| e.to_string())? {
+        Some(m) => m,
+        None => return Ok(()),
+    };
+    let current = window.current_monitor().map_err(|e| e.to_string())?;
+    let already_there = current
+        .map(|m| m.position() == primary.position() && m.size() == primary.size())
+        .unwrap_or(false);
+    if already_there {
+        return Ok(());
+    }
+    let height = window.outer_size().map_err(|e| e.to_string())?.height;
+    window
+        .set_size(PhysicalSize { width: primary.size().width, height })
+        .map_err(|e| e.to_string())?;
+    window
+        .set_position(PhysicalPosition { x: primary.position().x, y: primary.position().y })
+        .map_err(|e| e.to_string())
+}
+
+/// Unregisters the AppBar (reserved screen space) if one is active. Returns true if one was removed.
+#[cfg(windows)]
+fn release_appbar(window: &Window, snap_state: &State<SnapState>) -> Result<bool, String> {
+    let was_registered = *snap_state
+        .appbar_registered
+        .lock()
+        .map_err(|_| "snap state poisoned")?;
+    if !was_registered {
+        return Ok(false);
+    }
+    remove_appbar(window, snap_state)?;
+    *snap_state.appbar_edge.lock().map_err(|_| "snap state poisoned")? = None;
+    *snap_state
+        .last_appbar_removed
+        .lock()
+        .map_err(|_| "snap state poisoned")? = Some(Instant::now());
+    Ok(true)
+}
+
+/// Docks the overlay full-width at the stored edge of the primary monitor.
+/// `reserve_now` registers an AppBar so maximized windows do not cover the strip.
+fn apply_overlay_layout(window: &Window, snap_state: &State<SnapState>, reserve_now: bool) -> Result<(), String> {
+    let edge = snap_state
+        .snapped
+        .lock()
+        .map_err(|_| "snap state poisoned")?
+        .unwrap_or(SnapEdge::Top);
+
+    #[cfg(windows)]
+    {
+        if reserve_now {
+            ensure_on_primary_monitor(window)?;
+            let height = window.outer_size().map_err(|e| e.to_string())?.height as i32;
+            set_appbar_for_edge(window, snap_state, edge, height)?;
+            return Ok(());
+        }
+        if release_appbar(window, snap_state)? {
+            // Give the shell a moment to give the reserved area back before reading the work area.
+            std::thread::sleep(Duration::from_millis(100));
+        }
+    }
+
+    ensure_on_primary_monitor(window)?;
+    let size = window.outer_size().map_err(|e| e.to_string())?;
+
+    #[cfg(any(windows, target_os = "macos"))]
+    let work = get_work_area_for_window(window);
+    #[cfg(not(any(windows, target_os = "macos")))]
+    let work: Option<WorkArea> = None;
+
+    let work = match work {
+        Some(w) => w,
+        None => match window.current_monitor().map_err(|e| e.to_string())? {
+            Some(m) => WorkArea {
+                left: m.position().x,
+                top: m.position().y,
+                right: m.position().x + m.size().width as i32,
+                bottom: m.position().y + m.size().height as i32,
+            },
+            None => return Ok(()),
+        },
+    };
+
+    let width = (work.right - work.left).max(1) as u32;
+    let y = match edge {
+        SnapEdge::Top => work.top,
+        SnapEdge::Bottom => (work.bottom - size.height as i32).max(work.top),
+    };
+    window
+        .set_size(PhysicalSize { width, height: size.height })
+        .map_err(|e| e.to_string())?;
+    window
+        .set_position(PhysicalPosition { x: work.left, y })
+        .map_err(|e| e.to_string())
+}
+
+/// Stores the dock edge ("top" | "bottom") and reserve-space flag, then re-docks the overlay.
+#[tauri::command]
+pub fn dock_overlay(app: AppHandle, snap_state: State<SnapState>, edge: String, reserve: bool) -> Result<(), String> {
+    let overlay_window = app.get_window("overlay").ok_or("Overlay window not found")?;
+    *snap_state.snapped.lock().map_err(|_| "snap state poisoned")? = Some(parse_edge(&edge));
+    *snap_state.reserve_space.lock().map_err(|_| "snap state poisoned")? = reserve;
+    let visible = overlay_window.is_visible().unwrap_or(false);
+    apply_overlay_layout(&overlay_window, &snap_state, reserve && visible)
+}
+
+/// Shows or hides the LED strip. Hiding also gives reserved screen space back to other windows.
+pub fn set_overlay_visibility(app: &AppHandle, visible: bool) -> Result<(), String> {
+    let overlay_window = app.get_window("overlay").ok_or("Overlay window not found")?;
+    let snap_state = app.state::<SnapState>();
+    if visible {
+        let reserve = *snap_state.reserve_space.lock().map_err(|_| "snap state poisoned")?;
+        apply_overlay_layout(&overlay_window, &snap_state, reserve)?;
+        overlay_window.show().map_err(|e| e.to_string())?;
+    } else {
+        #[cfg(windows)]
+        release_appbar(&overlay_window, &snap_state)?;
+        overlay_window.hide().map_err(|e| e.to_string())?;
+    }
+    let _ = app.emit_all(OVERLAY_VISIBILITY_EVENT, visible);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_overlay_visible(app: AppHandle, visible: bool) -> Result<(), String> {
+    set_overlay_visibility(&app, visible)
+}
+
+/// Removes the AppBar before the process exits so Windows does not keep an empty reserved band.
+pub fn release_overlay_space(app: &AppHandle) {
+    #[cfg(windows)]
+    if let Some(overlay_window) = app.get_window("overlay") {
+        let snap_state = app.state::<SnapState>();
+        let _ = release_appbar(&overlay_window, &snap_state);
+    }
+    #[cfg(not(windows))]
+    let _ = app;
+}

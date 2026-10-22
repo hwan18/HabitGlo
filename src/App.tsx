@@ -12,6 +12,7 @@ import { Marquee } from './overlay/Marquee'
 import { Rocket, Download, Monitor, Check, ArrowLeft, CircleHelp, Eye, EyeOff } from 'lucide-react'
 import { hasSupabase } from './lib/supabaseClient'
 import { isTauri } from './lib/platform'
+import { isOverlayVisible, onOverlayVisibilityChange, setOverlayVisible } from './lib/overlayWindow'
 import { applyUiTheme } from './lib/uiThemes'
 import './App.css'
 
@@ -119,24 +120,21 @@ function OverlayVisibilityButton() {
   useEffect(() => {
     if (!isTauri) return
     let active = true
-    void import('@tauri-apps/api/window').then(async ({ WebviewWindow }) => {
-      const overlayWindow = WebviewWindow.getByLabel('overlay')
-      const isVisible = await overlayWindow?.isVisible().catch(() => true)
-      if (active && typeof isVisible === 'boolean') setVisible(isVisible)
+    void isOverlayVisible().then((isVisible) => {
+      if (active) setVisible(isVisible)
     })
-    return () => { active = false }
+    const unsubscribe = onOverlayVisibilityChange((isVisible) => setVisible(isVisible))
+    return () => {
+      active = false
+      unsubscribe()
+    }
   }, [])
 
   const toggleVisibility = async () => {
     setUpdating(true)
     try {
-      const { WebviewWindow } = await import('@tauri-apps/api/window')
-      const overlayWindow = WebviewWindow.getByLabel('overlay')
-      if (!overlayWindow) return
-      const isVisible = await overlayWindow.isVisible()
-      if (isVisible) await overlayWindow.hide()
-      else await overlayWindow.show()
-      setVisible(!isVisible)
+      const isVisible = await isOverlayVisible()
+      await setOverlayVisible(!isVisible)
     } finally {
       setUpdating(false)
     }

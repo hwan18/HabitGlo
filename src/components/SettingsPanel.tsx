@@ -13,13 +13,7 @@ import {
 } from 'lucide-react'
 import { uiThemesList } from '@/lib/uiThemes'
 import { isTauri } from '@/lib/platform'
-
-/** Dynamically import Tauri APIs only when running in Tauri */
-const tauriInvoke = async (...args: Parameters<typeof import('@tauri-apps/api/tauri').invoke>) => {
-  if (!isTauri) return
-  const { invoke } = await import('@tauri-apps/api/tauri')
-  return invoke(...args)
-}
+import { isOverlayVisible, setOverlayVisible } from '@/lib/overlayWindow'
 
 const getTauriOverlayWindow = async () => {
   if (!isTauri) return null
@@ -38,15 +32,9 @@ export function SettingsPanel() {
   const setTheme = useHabitsStore((s) => s.setTheme)
 
   const toggleOverlayVisibility = async () => {
-    const win = await getTauriOverlayWindow()
-    if (win) {
-      const visible = await win.isVisible()
-      if (visible) {
-        await win.hide()
-      } else {
-        await win.show()
-      }
-    }
+    if (!isTauri) return
+    const visible = await isOverlayVisible()
+    await setOverlayVisible(!visible)
   }
 
   const applyClickThrough = async (value: boolean) => {
@@ -67,10 +55,9 @@ export function SettingsPanel() {
     }
   }
 
-  const applyReserveSpace = async (value: boolean) => {
+  const applyReserveSpace = (value: boolean) => {
     if (!isTauri) return
     setOverlay({ reserveSpace: value })
-    await tauriInvoke('set_reserve_space', { enabled: value })
   }
 
   const desktopFeatureControls = (
@@ -101,7 +88,7 @@ export function SettingsPanel() {
           variant="ghost"
           size="sm"
           className="flex items-center gap-2 flex-1"
-          onClick={() => tauriInvoke('snap_to_top')}
+          onClick={() => setOverlay({ position: 'top' })}
           disabled={!isTauri}
         >
           <MoveUpRight size={14} />
@@ -111,7 +98,7 @@ export function SettingsPanel() {
           variant="ghost"
           size="sm"
           className="flex items-center gap-2 flex-1"
-          onClick={() => tauriInvoke('snap_to_bottom')}
+          onClick={() => setOverlay({ position: 'bottom' })}
           disabled={!isTauri}
         >
           <MoveDownRight size={14} />

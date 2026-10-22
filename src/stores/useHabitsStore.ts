@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
+import { isOverlayWindow } from '@/lib/platform'
 import {
   reorderHabits,
   listHabits,
@@ -109,8 +110,27 @@ const defaultOverlay: OverlaySettings = {
   spacing: 0,
   clickThrough: false,
   alwaysOnTop: true,
-  reserveSpace: false,
+  position: 'top',
+  reserveSpace: true,
   paused: false,
+}
+
+// Only the main window owns persisted state; the overlay window reads it but must never write it back,
+// otherwise a stale overlay snapshot can overwrite the user's latest changes.
+const persistStorage: StateStorage = {
+  getItem: (name) => window.localStorage.getItem(name),
+  setItem: (name, value) => {
+    if (isOverlayWindow) return
+    try {
+      window.localStorage.setItem(name, value)
+    } catch (err) {
+      console.warn('Failed to save HabitGlo state locally:', err)
+    }
+  },
+  removeItem: (name) => {
+    if (isOverlayWindow) return
+    window.localStorage.removeItem(name)
+  },
 }
 
 const isDateToday = (isoStr: string): boolean => {
@@ -559,6 +579,7 @@ export const useHabitsStore = create<StoreState>()(
     {
       name: 'habitglo-store',
       version: 2,
+      storage: createJSONStorage(() => persistStorage),
       partialize: (state) => ({
         // Always persist habits to localStorage so overlay window can read them
         // (overlay can't share Supabase auth session with dashboard)

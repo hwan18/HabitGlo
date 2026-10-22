@@ -59,6 +59,8 @@ const writeLocal = (habits: Habit[]) => {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(habits))
 }
 
+export const writeLocalHabits = writeLocal
+
 type HabitRow = {
   id: string
   user_id: string

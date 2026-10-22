@@ -34,7 +34,8 @@ fn main() {
                     }
                 }
                 "quit" => {
-                    std::process::exit(0);
+                    commands::release_overlay_space(app);
+                    app.exit(0);
                 }
                 _ => {}
             },
@@ -42,11 +43,19 @@ fn main() {
         })
         .on_window_event(|event| {
             if let WindowEvent::CloseRequested { api, .. } = event.event() {
-                let label = event.window().label();
-                if label == "main" {
-                    // Hide the main window instead of closing the app
-                    event.window().hide().unwrap_or_default();
-                    api.prevent_close();
+                let window = event.window();
+                match window.label() {
+                    "main" => {
+                        // Hide the main window instead of closing the app
+                        window.hide().unwrap_or_default();
+                        api.prevent_close();
+                    }
+                    "overlay" => {
+                        // Alt+F4 on the LED strip hides it (and frees reserved space) instead of destroying it
+                        api.prevent_close();
+                        let _ = commands::set_overlay_visibility(&window.app_handle(), false);
+                    }
+                    _ => {}
                 }
             }
         })
@@ -57,7 +66,9 @@ fn main() {
             commands::snap_to_top,
             commands::snap_to_bottom,
             commands::set_reserve_space,
-            commands::set_overlay_size
+            commands::set_overlay_size,
+            commands::dock_overlay,
+            commands::set_overlay_visible
         ])
         .setup(|_app| Ok(()))
         .run(tauri::generate_context!())

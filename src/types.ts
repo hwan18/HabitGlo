@@ -41,12 +41,15 @@ export type ThemeSettings = {
   showSeparator: boolean
 }
 
+export type OverlayPosition = 'top' | 'bottom'
+
 export type OverlaySettings = {
   speed: number
   gap: number
   spacing: number
   clickThrough: boolean
   alwaysOnTop: boolean
+  position: OverlayPosition
   reserveSpace: boolean
   paused: boolean
   monitorIndex?: number

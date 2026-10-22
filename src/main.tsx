@@ -5,9 +5,19 @@ import './index.css'
 import App from './App'
 import { applyUiTheme } from './lib/uiThemes'
 import { emitOverlaySync } from './lib/overlaySync'
+import { dockOverlay } from './lib/overlayWindow'
 import { isTauri } from './lib/platform'
+import { buildStarterHabits, claimFirstLaunchSeed } from './lib/starterReminders'
+import { writeLocalHabits } from './lib/db'
 import { useHabitsStore } from './stores/useHabitsStore'
 import './lib/posthog'
+
+if (claimFirstLaunchSeed(window.localStorage)) {
+  const { theme } = useHabitsStore.getState()
+  const starters = buildStarterHabits([theme.primary, theme.secondary, theme.accent])
+  writeLocalHabits(starters)
+  useHabitsStore.setState({ habits: starters })
+}
 
 const DEMO_RESET_QUERY_PARAM = 'demoReset'
 const LOCAL_HABITS_KEY = 'habitglo_local_habits'
@@ -84,6 +94,16 @@ if (isTauri) {
 
   syncOverlay()
   useHabitsStore.subscribe(syncOverlay)
+
+  // The overlay docks itself on startup; the main window re-docks it when the user changes placement.
+  let lastDock = `${useHabitsStore.getState().overlay.position}:${useHabitsStore.getState().overlay.reserveSpace}`
+  useHabitsStore.subscribe((state) => {
+    const { position, reserveSpace } = state.overlay
+    const nextDock = `${position}:${reserveSpace}`
+    if (nextDock === lastDock) return
+    lastDock = nextDock
+    void dockOverlay(position, reserveSpace)
+  })
 }
 
 createRoot(document.getElementById('root') as HTMLElement).render(
