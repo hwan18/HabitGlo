@@ -21,7 +21,7 @@ function App() {
       <div className="mx-auto flex max-w-xl flex-col gap-4 px-5 pb-8 pt-4">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/icons/favicon.png" alt="" className="h-6 w-6" />
+            <img src="/icons/habitglo-logo-32.png" alt="" className="h-6 w-6" />
             <h1 className="text-lg font-semibold">HabitGlo</h1>
           </div>
           {isOpen && (
