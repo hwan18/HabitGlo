@@ -1,5 +1,21 @@
 # Overnight log: simplify/core-v1
 
+## Good morning: summary (project manager, 03:30)
+
+Everything planned is done and pushed. Nothing was merged to `main` yet; that's your call.
+
+| Branch | What | State |
+| --- | --- | --- |
+| `simplify/core-v1` | Desktop app, slices 0–9 + new logo | Gate re-run by PM: build, lint, 67/67 tests, `cargo check` all pass |
+| `website/redesign` (folder `C:\Saas\HabitGlo-web`) | "After hours" redesign of every page + new logo | Pushed; log in `docs/website-redesign-log.md` there |
+
+- **Real desktop app tests:** smoke test pass, WebDriver UI tests 5/5, CPU scrolling 2.1% / paused 0.1% / hidden 0.02%.
+- **Both branches merge with no conflicts**, and the merged result builds and passes all 67 tests. Suggested order: merge `simplify/core-v1` into `main`, then `website/redesign`.
+- **Website copy was changed to match the simpler app**: habit packs, leaderboard, streaks, protocols and "10 themes" were removed from landing, pricing and checkout. Reread the pricing bullets; reword if you like.
+- **Check in Paddle:** the sandbox checkout charged $5.00 incl. VAT while the site says $4/month.
+- **Optional cleanup:** about 9.4 MB of website-only images in `public/` also ship inside the desktop app. Moving them out would shrink the installer.
+- Old icon files are still in `public/icons/` (unused) in case you want the old logo back.
+
 ## Morning checklist (owner)
 
 1. `git switch simplify/core-v1`, then `npm install`, then `npm run tauri:dev`.
