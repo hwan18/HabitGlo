@@ -1122,6 +1122,9 @@ button { font: inherit; color: inherit; }
 
 /* legal pages */
 .prose { max-width: 720px; }
+.prose .h-legal { font-size: clamp(2.6rem, 5vw, 4.2rem); line-height: 1.02; margin: 0 0 16px; text-wrap: balance; }
+.prose p + p { margin-top: 14px; }
+.legal-aside .chapter { margin-bottom: 18px; }
 .prose .meta-line { color: var(--paper-3); font-size: 0.92rem; margin-bottom: 36px; }
 .prose h2 { font-family: var(--serif); font-size: 1.75rem; line-height: 1.15; margin: 44px 0 12px; color: var(--paper); }
 .prose p { color: var(--paper-2); font-size: 1.02rem; line-height: 1.75; }
