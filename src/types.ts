@@ -13,6 +13,12 @@ export type UiThemeId = 'citrusPoster' | 'noirBloom' | 'midnightSignal' | 'magen
 export type LedShape = 'dot' | 'square' | 'scanline'
 export type LedFont = 'dotGothic' | 'silkscreen' | 'pressStart' | 'vt323'
 
+/** Minimal signed-in user shape; a Supabase `User` satisfies it, and so does a cached offline user. */
+export type AppUser = {
+  id: string
+  email?: string | null
+}
+
 export type Habit = {
   id: string
   user_id?: string

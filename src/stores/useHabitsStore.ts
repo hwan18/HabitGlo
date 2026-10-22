@@ -2,24 +2,21 @@ import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { isOverlayWindow } from '@/lib/platform'
 import {
-  reorderHabits,
-  listHabits,
-  upsertHabit,
-  setHabitActive,
-  deleteHabit,
-  subscribeHabits,
-  logHabit,
-  loadSettings,
-  saveSettings,
+  computeStreak,
+  fetchRemoteHabits,
   getSubscriptionStatus,
+  hasLiveSessionFor,
+  isSupabaseReady,
+  remoteHabitsApi,
+  subscribeHabits,
   type SubscriptionStatus,
 } from '@/lib/db'
+import { applyPendingOps, enqueue, flushQueue, readQueue, type SyncOp } from '@/lib/syncQueue'
 import { hasSupabase, supabase } from '@/lib/supabaseClient'
 import posthog, { identifyPostHogUser, isPostHogConfigured, resetPostHogUser } from '@/lib/posthog'
 import { defaultUiThemeId, getUiThemeOverlayPalette } from '@/lib/uiThemes'
 import { useLeaderboardStore } from './useLeaderboardStore'
-import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
-import type { User } from '@supabase/supabase-js'
+import type { AppUser, Habit, OverlaySettings, ThemeSettings } from '@/types'
 import { nanoid } from 'nanoid/non-secure'
 
 const palettes: Record<ThemeSettings['palette'], { primary: string; secondary: string; accent: string }> = {
@@ -54,6 +51,8 @@ const normalizeHabitColor = (habit: Habit, theme: ThemeSettings) => {
   return { ...habit, colorIndex, color }
 }
 
+const sortByPriority = (habits: Habit[]) => [...habits].sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+
 type CompletedEntry = {
   id: string
   text: string
@@ -61,28 +60,40 @@ type CompletedEntry = {
   loggedAt: string
 }
 
+/**
+ * Whose reminders the local list holds: a user id, `null` for signed-out (anonymous) data,
+ * or `'legacy'` for data saved by an app version that did not track ownership.
+ */
+export type HabitsOwner = string | null
+
+export const LEGACY_OWNER = 'legacy'
+const LEGACY_LOCAL_HABITS_KEY = 'habitglo_local_habits'
+export const MAX_REMINDER_LENGTH = 220
+
 type StoreState = {
-  user: User | null
+  user: AppUser | null
   authReady: boolean
   authInitializing: boolean
   subscriptionStatus: SubscriptionStatus
   subscriptionLoading: boolean
   habits: Habit[]
+  habitsOwner: HabitsOwner
   completedToday: CompletedEntry[]
-  loading: boolean
   theme: ThemeSettings
   overlay: OverlaySettings
   initializeAuth: () => Promise<void>
-  applyAuthState: (user: User | null, source?: string) => Promise<void>
-  setUser: (user: User | null) => Promise<void>
+  applyAuthState: (user: AppUser | null, source?: string) => Promise<void>
+  setUser: (user: AppUser | null) => Promise<void>
   refreshSubscriptionStatus: () => Promise<void>
   addHabit: (text: string, options?: Partial<Habit>) => Promise<void>
+  updateHabitText: (id: string, text: string) => Promise<void>
   toggleHabit: (id: string, active: boolean) => Promise<void>
   setHabitColor: (id: string, colorIndex: number) => Promise<void>
   removeHabit: (id: string) => Promise<void>
   clearAllHabits: () => Promise<void>
   reorder: (ids: string[]) => Promise<void>
   hydrate: () => Promise<void>
+  syncNow: (options?: { pull?: boolean }) => Promise<void>
   setTheme: (input: Partial<ThemeSettings>) => void
   setOverlay: (input: Partial<OverlaySettings>) => void
   markDone: (id: string) => Promise<void>
@@ -142,6 +153,17 @@ const isDateToday = (isoStr: string): boolean => {
 const pruneStaleCompleted = (entries: CompletedEntry[]): CompletedEntry[] =>
   entries.filter((e) => isDateToday(e.loggedAt))
 
+const readLegacyLocalHabits = (): Habit[] => {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(LEGACY_LOCAL_HABITS_KEY) ?? '[]') as unknown
+    return Array.isArray(parsed) ? (parsed as Habit[]).filter((h) => h && typeof h.id === 'string' && typeof h.text === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false
+
 const devAuthLog = (...args: unknown[]) => {
   if (import.meta.env.DEV) {
     console.info('[auth]', ...args)
@@ -152,6 +174,14 @@ let authListenerCleanup: (() => void) | null = null
 let authInitPromise: Promise<void> | null = null
 let authRequestEpoch = 0
 let habitsSubscriptionCleanup: (() => void) | null = null
+let onlineListenerInstalled = false
+let syncPromise: Promise<void> | null = null
+let lateRequest = false
+let latePull = false
+let flushTimer: ReturnType<typeof setTimeout> | null = null
+let pullTimer: ReturnType<typeof setTimeout> | null = null
+
+const MAX_SYNC_ROUNDS = 5
 
 export const useHabitsStore = create<StoreState>()(
   persist(
@@ -162,16 +192,47 @@ export const useHabitsStore = create<StoreState>()(
         habitsSubscriptionCleanup = null
       }
 
+      const cancelScheduledSync = () => {
+        if (flushTimer) clearTimeout(flushTimer)
+        if (pullTimer) clearTimeout(pullTimer)
+        flushTimer = null
+        pullTimer = null
+      }
+
+      const scheduleFlush = (delayMs = 400) => {
+        if (!get().user || !isSupabaseReady()) return
+        if (flushTimer) clearTimeout(flushTimer)
+        flushTimer = setTimeout(() => {
+          flushTimer = null
+          void get().syncNow({ pull: false })
+        }, delayMs)
+      }
+
+      const schedulePull = (delayMs = 800) => {
+        if (pullTimer) clearTimeout(pullTimer)
+        pullTimer = setTimeout(() => {
+          pullTimer = null
+          void get().syncNow({ pull: true })
+        }, delayMs)
+      }
+
+      /** Local write first (instant UI + localStorage), then queue the remote change for signed-in users. */
+      const commitHabits = (habits: Habit[], ops: SyncOp[]) => {
+        set({ habits })
+        const userId = get().user?.id
+        if (!userId || !hasSupabase || ops.length === 0) return
+        for (const op of ops) enqueue(userId, op)
+        scheduleFlush()
+      }
+
+      const upsertOp = (habit: Habit, isNew = false): SyncOp => ({ kind: 'upsert', habit, isNew })
+
       const isAuthEpochCurrent = (epoch: number, userId: string | null) => {
         const currentUserId = get().user?.id ?? null
         return authRequestEpoch === epoch && currentUserId === userId
       }
 
-      const runRefreshSubscriptionForUser = async (
-        userId: string,
-        epoch: number,
-        source: string,
-      ) => {
+      const runRefreshSubscriptionForUser = async (userId: string, epoch: number, source: string) => {
         set({ subscriptionLoading: true })
         devAuthLog('subscription:start', { source, userId, epoch })
         const subscriptionStatus = await getSubscriptionStatus(userId)
@@ -183,47 +244,38 @@ export const useHabitsStore = create<StoreState>()(
         devAuthLog('subscription:end', { source, userId, epoch, subscriptionStatus })
       }
 
-      const runHydrateForUser = async (userId: string, epoch: number, source: string) => {
-        set({ loading: true })
-        devAuthLog('hydrate:start', { source, userId, epoch })
+      /** Fetches the server list and merges still-pending local changes on top. */
+      const pullRemote = async (userId: string) => {
+        const remote = await fetchRemoteHabits(userId)
+        if (get().user?.id !== userId) return
+        const state = get()
 
-        const remote = await loadSettings(userId)
-        if (!isAuthEpochCurrent(epoch, userId)) {
-          devAuthLog('hydrate:stale:settings', { source, userId, epoch })
+        // First sign-in on this device with an empty account: keep the reminders made while signed out.
+        if (state.habitsOwner === null && remote.length === 0 && state.habits.length > 0) {
+          for (const habit of state.habits) enqueue(userId, upsertOp(habit, true))
+          set({ habitsOwner: userId })
           return
         }
 
-        if (remote) {
-          if (remote.theme) set({ theme: { ...get().theme, ...remote.theme } })
-          if (remote.overlay) set({ overlay: { ...get().overlay, ...remote.overlay } })
+        const merged = applyPendingOps(remote, readQueue(userId)).map((habit) => normalizeHabitColor(habit, state.theme))
+        if (JSON.stringify(merged) !== JSON.stringify(state.habits) || state.habitsOwner !== userId) {
+          set({ habits: merged, habitsOwner: userId })
         }
+      }
 
-        const habits = await listHabits(userId)
-        if (!isAuthEpochCurrent(epoch, userId)) {
-          devAuthLog('hydrate:stale:habits', { source, userId, epoch })
-          return
-        }
-
-        const sorted = habits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-        const theme = get().theme
-        set({
-          habits: sorted.map((habit) => normalizeHabitColor(habit, theme)),
-          loading: false,
-        })
-
+      const startRealtime = (userId: string) => {
         cleanupHabitsSubscription()
-        habitsSubscriptionCleanup = subscribeHabits(userId, async () => {
-          if (get().user?.id !== userId) return
-          const remoteHabits = await listHabits(userId)
-          if (get().user?.id !== userId) return
-          const sortedRemote = remoteHabits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-          const currentTheme = get().theme
-          set({
-            habits: sortedRemote.map((habit) => normalizeHabitColor(habit, currentTheme)),
-          })
+        habitsSubscriptionCleanup = subscribeHabits(userId, () => {
+          if (get().user?.id === userId) schedulePull()
         })
-        void useLeaderboardStore.getState().refresh(userId)
-        devAuthLog('hydrate:end', { source, userId, epoch })
+      }
+
+      const installOnlineListener = () => {
+        if (onlineListenerInstalled || typeof window === 'undefined') return
+        onlineListenerInstalled = true
+        window.addEventListener('online', () => {
+          void get().syncNow({ pull: true })
+        })
       }
 
       return {
@@ -233,8 +285,8 @@ export const useHabitsStore = create<StoreState>()(
         subscriptionStatus: 'free',
         subscriptionLoading: false,
         habits: [],
+        habitsOwner: null,
         completedToday: [],
-        loading: false,
         theme: defaultTheme,
         overlay: defaultOverlay,
 
@@ -251,11 +303,11 @@ export const useHabitsStore = create<StoreState>()(
                 authInitializing: false,
                 subscriptionStatus: 'free',
                 subscriptionLoading: false,
-                loading: false,
               })
-              await get().hydrate()
               return
             }
+
+            installOnlineListener()
 
             if (!authListenerCleanup) {
               const { data } = supabase.auth.onAuthStateChange((event, session) => {
@@ -296,7 +348,10 @@ export const useHabitsStore = create<StoreState>()(
 
           if (prevUserId === nextUserId && get().authReady && source !== 'setUser') {
             set({ authInitializing: false, authReady: true })
+            if (user && user.email !== get().user?.email) set({ user })
             devAuthLog('apply:no-op', { source, userId: nextUserId })
+            // A refreshed or restored session is a good moment to push anything queued while offline.
+            if (user) void get().syncNow({ pull: source.endsWith('SIGNED_IN') })
             return
           }
 
@@ -306,30 +361,39 @@ export const useHabitsStore = create<StoreState>()(
           if (!user) {
             if (prevUserId) resetPostHogUser()
             cleanupHabitsSubscription()
+            cancelScheduledSync()
+            const owner = get().habitsOwner
+            // Signing out removes that account's reminders from this screen. Its unsynced changes stay queued.
+            const clearLocal = Boolean(prevUserId) || (owner !== null && owner !== LEGACY_OWNER)
             set({
               user: null,
               authReady: true,
               authInitializing: false,
               subscriptionStatus: 'free',
               subscriptionLoading: false,
-              loading: false,
+              ...(clearLocal ? { habits: [], habitsOwner: null, completedToday: [] } : {}),
             })
-            await get().hydrate()
             return
           }
 
           if (prevUserId && prevUserId !== user.id) resetPostHogUser()
           identifyPostHogUser(user)
 
+          const owner = get().habitsOwner
+          // Never show another account's reminders while this account's list loads.
+          const foreignList = owner !== null && owner !== LEGACY_OWNER && owner !== user.id
           set({
             user,
             authReady: true,
             authInitializing: false,
+            ...(foreignList ? { habits: [], habitsOwner: null, completedToday: [] } : {}),
           })
 
+          startRealtime(user.id)
+          void useLeaderboardStore.getState().refresh(user.id)
           await Promise.all([
             runRefreshSubscriptionForUser(user.id, epoch, `${source}:refresh`),
-            runHydrateForUser(user.id, epoch, `${source}:hydrate`),
+            get().syncNow({ pull: true }),
           ])
         },
 
@@ -347,253 +411,258 @@ export const useHabitsStore = create<StoreState>()(
         },
 
         hydrate: async () => {
-          const userId = get().user?.id ?? null
-          const epoch = authRequestEpoch
-
-          if (!userId) {
-            cleanupHabitsSubscription()
-            set({ loading: true })
-            const habits = await listHabits(undefined)
-            if (authRequestEpoch !== epoch) return
-            const sorted = habits.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-            const theme = get().theme
-            set({
-              habits: sorted.map((habit) => normalizeHabitColor(habit, theme)),
-              loading: false,
-            })
-            return
-          }
-
-          await runHydrateForUser(userId, epoch, 'manual_hydrate')
+          await get().syncNow({ pull: true })
         },
 
-      addHabit: async (text, options) => {
-        const userId = get().user?.id
-        const paletteColors = paletteColorsForTheme(get().theme)
-        const inferredIndex =
-          options?.colorIndex ??
-          (options?.color ? paletteColors.findIndex((c) => c.toLowerCase() === options.color?.toLowerCase()) : 0)
-        const colorIndex = inferredIndex >= 0 ? inferredIndex : 0
-        const resolvedColor = options?.color ?? paletteColors[colorIndex]
-        const payload: Partial<Habit> & { text: string } = {
-          id: options?.id ?? nanoid(),
-          text,
-          color: resolvedColor,
-          colorIndex,
-          is_active: options?.is_active ?? true,
-          priority: options?.priority ?? get().habits.length,
-          user_id: userId,
-        }
-        const saved = await upsertHabit(payload)
-        const normalized = normalizeHabitColor({ ...saved, color: resolvedColor, colorIndex }, get().theme)
-        set((state) => ({
-          habits: [...state.habits, normalized].sort((a, b) => a.priority - b.priority),
-        }))
-        if (isPostHogConfigured) {
-          posthog.capture('habit_created', { has_custom_options: Boolean(options) })
-        }
-      },
+        syncNow: async (options) => {
+          const userId = get().user?.id
+          if (!userId || !isSupabaseReady()) return
+          if (syncPromise) {
+            // Served by the running sync's next round (or rescheduled when it ends).
+            lateRequest = true
+            latePull = latePull || Boolean(options?.pull)
+            return syncPromise
+          }
+          lateRequest = false
+          latePull = false
+          let pull = Boolean(options?.pull)
+          let exhausted = false
 
-      toggleHabit: async (id, active) => {
-        const userId = get().user?.id
-        await setHabitActive(id, active, userId)
-        set((state) => ({ habits: state.habits.map((h) => (h.id === id ? { ...h, is_active: active } : h)) }))
-        if (isPostHogConfigured) {
-          posthog.capture('habit_activation_changed', { is_active: active })
-        }
-      },
+          syncPromise = (async () => {
+            for (let round = 0; round < MAX_SYNC_ROUNDS; round += 1) {
+              if (isOffline()) return
+              if (!(await hasLiveSessionFor(userId))) return
+              if (get().user?.id !== userId) return
 
-      setHabitColor: async (id, colorIndex) => {
-        const found = get().habits.find((h) => h.id === id)
-        if (!found) return
-        const theme = get().theme
-        const paletteColors = paletteColorsForTheme(theme)
-        const normalizedIndex = Math.max(0, Math.min(2, Math.round(colorIndex)))
-        const color = paletteColors[normalizedIndex] ?? paletteColors[0]
-        const userId = get().user?.id
-        const saved = await upsertHabit({
-          ...found,
-          color,
-          colorIndex: normalizedIndex,
-          user_id: userId,
-        })
-        const normalized = normalizeHabitColor({ ...saved, color, colorIndex: normalizedIndex }, theme)
-        set((state) => ({
-          habits: state.habits.map((h) => (h.id === id ? normalized : h)),
-        }))
-        if (isPostHogConfigured) {
-          posthog.capture('habit_color_changed', { color_index: normalizedIndex })
-        }
-      },
+              const result = await flushQueue(userId, remoteHabitsApi)
+              if (!result.ok || get().user?.id !== userId) return
 
-      removeHabit: async (id) => {
-        const userId = get().user?.id
-        await deleteHabit(id, userId)
-        set((state) => ({ habits: state.habits.filter((h) => h.id !== id) }))
-        if (isPostHogConfigured) {
-          posthog.capture('habit_deleted')
-        }
-      },
+              if (pull || latePull) {
+                pull = false
+                latePull = false
+                try {
+                  await pullRemote(userId)
+                } catch (err) {
+                  console.warn('Background sync could not fetch reminders:', err)
+                  return
+                }
+              }
 
-      clearAllHabits: async () => {
-        const userId = get().user?.id
-        const all = get().habits
-        for (const habit of all) {
-          await deleteHabit(habit.id, userId)
-        }
-        set({ habits: [] })
-        if (isPostHogConfigured) {
-          posthog.capture('habits_cleared', { habit_count: all.length })
-        }
-      },
+              const moreWork = readQueue(userId).length > 0 || lateRequest || latePull
+              lateRequest = false
+              if (!moreWork) return
+            }
+            exhausted = true
+          })().finally(() => {
+            // Only requests that arrived during this run are retried, and only after a pause,
+            // so an offline/no-session state or a change the server keeps bouncing cannot spin.
+            const unserved = !exhausted && (lateRequest || latePull) && !isOffline()
+            const retryPull = latePull
+            syncPromise = null
+            lateRequest = false
+            latePull = false
+            if (unserved) {
+              if (retryPull) schedulePull(2000)
+              else scheduleFlush(2000)
+            }
+          })
+          return syncPromise
+        },
 
-      reorder: async (ids) => {
-        const userId = get().user?.id
-        const prevHabits = get().habits
+        addHabit: async (text, options) => {
+          const trimmed = text.trim().slice(0, MAX_REMINDER_LENGTH)
+          if (!trimmed) return
+          const { habits, theme } = get()
+          const paletteColors = paletteColorsForTheme(theme)
+          const inferredIndex =
+            options?.colorIndex ??
+            (options?.color ? paletteColors.findIndex((c) => c.toLowerCase() === options.color?.toLowerCase()) : 0)
+          const colorIndex = inferredIndex >= 0 ? inferredIndex : 0
+          const nextPriority = habits.reduce((max, h) => Math.max(max, h.priority ?? 0), -1) + 1
+          const habit: Habit = {
+            id: options?.id ?? nanoid(),
+            text: trimmed,
+            color: options?.color ?? paletteColors[colorIndex],
+            colorIndex,
+            is_active: options?.is_active ?? true,
+            priority: options?.priority ?? nextPriority,
+            last_done_at: null,
+            streak_current: 0,
+            streak_best: 0,
+            show_on_leaderboard: false,
+          }
+          commitHabits(sortByPriority([...habits, habit]), [upsertOp(habit, true)])
+          if (isPostHogConfigured) {
+            posthog.capture('habit_created', { has_custom_options: Boolean(options) })
+          }
+        },
 
-        // Optimistic update: reorder immediately in UI
-        set({
-          habits: ids
-            .map((id, idx) => {
-              const found = prevHabits.find((h) => h.id === id)
-              return found ? { ...found, priority: idx } : null
-            })
-            .filter(Boolean) as Habit[],
-        })
+        updateHabitText: async (id, text) => {
+          const trimmed = text.trim().slice(0, MAX_REMINDER_LENGTH)
+          const found = get().habits.find((h) => h.id === id)
+          if (!found || !trimmed || trimmed === found.text) return
+          const updated = { ...found, text: trimmed }
+          commitHabits(get().habits.map((h) => (h.id === id ? updated : h)), [upsertOp(updated)])
+        },
 
-        // Persist to backend
-        try {
-          await reorderHabits(ids, userId)
+        toggleHabit: async (id, active) => {
+          const found = get().habits.find((h) => h.id === id)
+          if (!found || found.is_active === active) return
+          const updated = { ...found, is_active: active }
+          commitHabits(get().habits.map((h) => (h.id === id ? updated : h)), [upsertOp(updated)])
+          if (isPostHogConfigured) {
+            posthog.capture('habit_activation_changed', { is_active: active })
+          }
+        },
+
+        setHabitColor: async (id, colorIndex) => {
+          const found = get().habits.find((h) => h.id === id)
+          if (!found) return
+          const paletteColors = paletteColorsForTheme(get().theme)
+          const normalizedIndex = Math.max(0, Math.min(2, Math.round(colorIndex)))
+          const updated = { ...found, colorIndex: normalizedIndex, color: paletteColors[normalizedIndex] ?? paletteColors[0] }
+          commitHabits(get().habits.map((h) => (h.id === id ? updated : h)), [upsertOp(updated)])
+          if (isPostHogConfigured) {
+            posthog.capture('habit_color_changed', { color_index: normalizedIndex })
+          }
+        },
+
+        removeHabit: async (id) => {
+          if (!get().habits.some((h) => h.id === id)) return
+          commitHabits(
+            get().habits.filter((h) => h.id !== id),
+            [{ kind: 'delete', id }],
+          )
+          if (isPostHogConfigured) {
+            posthog.capture('habit_deleted')
+          }
+        },
+
+        clearAllHabits: async () => {
+          const all = get().habits
+          if (all.length === 0) return
+          commitHabits([], all.map((h) => ({ kind: 'delete', id: h.id }) as SyncOp))
+          if (isPostHogConfigured) {
+            posthog.capture('habits_cleared', { habit_count: all.length })
+          }
+        },
+
+        reorder: async (ids) => {
+          const prev = get().habits
+          const byId = new Map(prev.map((h) => [h.id, h] as const))
+          const ordered = ids.map((id) => byId.get(id)).filter((h): h is Habit => Boolean(h))
+          const missing = sortByPriority(prev.filter((h) => !ids.includes(h.id)))
+          const next = [...ordered, ...missing].map((h, index) => (h.priority === index ? h : { ...h, priority: index }))
+          const changed = next.filter((h) => byId.get(h.id) !== h)
+          if (changed.length === 0) return
+          commitHabits(next, changed.map((h) => upsertOp(h)))
           if (isPostHogConfigured) {
             posthog.capture('habits_reordered', { habit_count: ids.length })
           }
-        } catch (err) {
-          console.error('Failed to persist reorder:', err)
-          // Rollback to previous order on failure
-          set({ habits: prevHabits })
-        }
-      },
+        },
 
-      setTheme: (input) => {
-        const prevTheme = get().theme
-        const uiThemeId = input.uiThemeId ?? prevTheme.uiThemeId ?? defaultUiThemeId
-        const palette = input.palette ?? prevTheme.palette
-        const paletteColors = palettes[palette]
-        const overlayPalette = getUiThemeOverlayPalette(uiThemeId)
-        const paletteChanged = input.palette !== undefined && input.palette !== prevTheme.palette
-        const uiThemeSelected = input.uiThemeId !== undefined
-        const nextTheme: ThemeSettings = {
-          ...prevTheme,
-          ...input,
-          uiThemeId,
-          primary:
-            input.primary ??
-            (uiThemeSelected ? overlayPalette.primary : undefined) ??
-            (paletteChanged ? paletteColors.primary : prevTheme.primary),
-          secondary:
-            input.secondary ??
-            (uiThemeSelected ? overlayPalette.secondary : undefined) ??
-            (paletteChanged ? paletteColors.secondary : prevTheme.secondary),
-          accent:
-            input.accent ??
-            (uiThemeSelected ? overlayPalette.accent : undefined) ??
-            (paletteChanged ? paletteColors.accent : prevTheme.accent),
-          palette,
-          showSeparator: input.showSeparator ?? prevTheme.showSeparator ?? true,
-        }
-        const nextPaletteColors = paletteColorsForTheme(nextTheme)
-        const updatedHabits = get().habits.map((habit) => {
-          const normalized = normalizeHabitColor(habit, prevTheme)
-          const colorIndex = normalized.colorIndex ?? 0
-          const color = nextPaletteColors[colorIndex] ?? nextPaletteColors[0]
-          return { ...habit, colorIndex, color }
-        })
-        set({ theme: nextTheme, habits: updatedHabits })
-        const userId = get().user?.id
-        updatedHabits.forEach((habit) => {
-          void upsertHabit({ ...habit, user_id: userId, text: habit.text, color: habit.color })
-        })
-        // Sync settings to Supabase
-        if (userId) {
-          void saveSettings(userId, { theme: nextTheme, overlay: get().overlay })
-        }
-      },
-
-      setOverlay: (input) => {
-        const nextOverlay = { ...get().overlay, ...input }
-        set({ overlay: nextOverlay })
-        // Sync settings to Supabase
-        const userId = get().user?.id
-        if (userId) {
-          void saveSettings(userId, { theme: get().theme, overlay: nextOverlay })
-        }
-      },
-
-      markDone: async (id) => {
-        const userId = get().user?.id
-        const found = get().habits.find((h) => h.id === id)
-        if (found) {
-          const { streak_current, streak_best, alreadyLoggedToday } = await logHabit(id, userId, {
-            last_done_at: found.last_done_at,
-            streak_current: found.streak_current ?? 0,
-            streak_best: found.streak_best ?? 0,
-          })
-          if (alreadyLoggedToday) {
-            return
+        setTheme: (input) => {
+          const prevTheme = get().theme
+          const uiThemeId = input.uiThemeId ?? prevTheme.uiThemeId ?? defaultUiThemeId
+          const palette = input.palette ?? prevTheme.palette
+          const paletteColors = palettes[palette]
+          const overlayPalette = getUiThemeOverlayPalette(uiThemeId)
+          const paletteChanged = input.palette !== undefined && input.palette !== prevTheme.palette
+          const uiThemeSelected = input.uiThemeId !== undefined
+          const nextTheme: ThemeSettings = {
+            ...prevTheme,
+            ...input,
+            uiThemeId,
+            primary:
+              input.primary ??
+              (uiThemeSelected ? overlayPalette.primary : undefined) ??
+              (paletteChanged ? paletteColors.primary : prevTheme.primary),
+            secondary:
+              input.secondary ??
+              (uiThemeSelected ? overlayPalette.secondary : undefined) ??
+              (paletteChanged ? paletteColors.secondary : prevTheme.secondary),
+            accent:
+              input.accent ??
+              (uiThemeSelected ? overlayPalette.accent : undefined) ??
+              (paletteChanged ? paletteColors.accent : prevTheme.accent),
+            palette,
+            showSeparator: input.showSeparator ?? prevTheme.showSeparator ?? true,
           }
+          const nextPaletteColors = paletteColorsForTheme(nextTheme)
+          const ops: SyncOp[] = []
+          const updatedHabits = get().habits.map((habit) => {
+            const colorIndex = normalizeHabitColor(habit, prevTheme).colorIndex ?? 0
+            const color = nextPaletteColors[colorIndex] ?? nextPaletteColors[0]
+            if (habit.color === color && habit.colorIndex === colorIndex) return habit
+            const updated = { ...habit, colorIndex, color }
+            ops.push(upsertOp(updated))
+            return updated
+          })
+          set({ theme: nextTheme })
+          commitHabits(updatedHabits, ops)
+        },
+
+        setOverlay: (input) => {
+          set({ overlay: { ...get().overlay, ...input } })
+        },
+
+        markDone: async (id) => {
+          const found = get().habits.find((h) => h.id === id)
+          if (!found) return
+          const { streak_current, streak_best, alreadyLoggedToday } = computeStreak(
+            found.last_done_at,
+            found.streak_current ?? 0,
+            found.streak_best ?? 0,
+          )
+          if (alreadyLoggedToday) return
           const loggedAt = new Date().toISOString()
+          const updated = { ...found, last_done_at: loggedAt, streak_current, streak_best }
+          commitHabits(get().habits.map((h) => (h.id === id ? updated : h)), [upsertOp(updated)])
           set((state) => ({
-            habits: state.habits.map((h) =>
-              h.id === id ? { ...h, last_done_at: loggedAt, streak_current, streak_best } : h
-            ),
             completedToday: pruneStaleCompleted([
               ...state.completedToday,
               { id: found.id, text: found.text, streak: streak_current, loggedAt },
             ]),
           }))
-          // Refresh leaderboards after logging a habit
-          if (userId) {
-            void useLeaderboardStore.getState().refresh(userId)
-          }
           if (isPostHogConfigured) {
             posthog.capture('habit_completion_logged', { streak_current, streak_best })
           }
-        }
-      },
+        },
 
         toggleLeaderboardSharing: async (enabled) => {
-          const userId = get().user?.id
           const updatedHabits = get().habits.map((h) => ({ ...h, show_on_leaderboard: enabled }))
-          set({ habits: updatedHabits })
-          // Persist to database
-          for (const habit of updatedHabits) {
-            await upsertHabit({ ...habit, user_id: userId, text: habit.text })
-          }
-          // Refresh leaderboard after toggling
-          if (userId) {
-            void useLeaderboardStore.getState().refresh(userId)
-          }
+          commitHabits(updatedHabits, updatedHabits.map((h) => upsertOp(h)))
         },
       }
     },
     {
       name: 'habitglo-store',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => persistStorage),
       partialize: (state) => ({
-        // Always persist habits to localStorage so overlay window can read them
-        // (overlay can't share Supabase auth session with dashboard)
         habits: state.habits,
+        habitsOwner: state.habitsOwner,
         completedToday: pruneStaleCompleted(state.completedToday),
         theme: state.theme,
         overlay: state.overlay,
       }),
-      migrate: (persistedState) => {
+      migrate: (persistedState, version) => {
         const persisted = (persistedState ?? {}) as Record<string, unknown>
         const next = { ...persisted }
         delete next.user
         delete next.subscriptionStatus
         delete next.subscriptionLoading
+        delete next.loading
+        if (version < 3) {
+          const habits = Array.isArray(next.habits) ? (next.habits as Habit[]) : []
+          if (habits.length > 0) {
+            next.habitsOwner = LEGACY_OWNER
+          } else {
+            // Signed-out users of older versions kept their list in a separate key.
+            next.habits = readLegacyLocalHabits()
+            next.habitsOwner = null
+          }
+        }
         return next
       },
       merge: (persistedState, currentState) => {
@@ -601,6 +670,8 @@ export const useHabitsStore = create<StoreState>()(
         return {
           ...currentState,
           ...persisted,
+          habits: Array.isArray(persisted?.habits) ? sortByPriority(persisted.habits) : currentState.habits,
+          habitsOwner: persisted?.habitsOwner ?? null,
           completedToday: pruneStaleCompleted(persisted?.completedToday ?? []),
           theme: {
             ...currentState.theme,

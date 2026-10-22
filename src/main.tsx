@@ -8,15 +8,13 @@ import { emitOverlaySync } from './lib/overlaySync'
 import { dockOverlay } from './lib/overlayWindow'
 import { isTauri } from './lib/platform'
 import { buildStarterHabits, claimFirstLaunchSeed } from './lib/starterReminders'
-import { writeLocalHabits } from './lib/db'
 import { useHabitsStore } from './stores/useHabitsStore'
 import './lib/posthog'
 
 if (claimFirstLaunchSeed(window.localStorage)) {
   const { theme } = useHabitsStore.getState()
   const starters = buildStarterHabits([theme.primary, theme.secondary, theme.accent])
-  writeLocalHabits(starters)
-  useHabitsStore.setState({ habits: starters })
+  useHabitsStore.setState({ habits: starters, habitsOwner: null })
 }
 
 const DEMO_RESET_QUERY_PARAM = 'demoReset'
