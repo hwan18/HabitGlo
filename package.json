@@ -30,6 +30,7 @@
     "lucide-react": "^0.460.0",
     "nanoid": "^5.0.9",
     "papaparse": "^5.4.1",
+    "posthog-js": "^1.434.17",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^2.5.4",

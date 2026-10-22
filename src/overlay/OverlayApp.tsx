@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Marquee } from './Marquee'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { applyUiTheme } from '@/lib/uiThemes'
+import { identifyPostHogUser, resetPostHogUser } from '@/lib/posthog'
 import { OVERLAY_SYNC_EVENT, type OverlaySyncPayload } from '@/lib/overlaySync'
 import { listen } from '@tauri-apps/api/event'
 import { WebviewWindow } from '@tauri-apps/api/window'
@@ -23,8 +24,15 @@ export default function OverlayApp() {
 
   useEffect(() => {
     let unlisten: (() => void) | undefined
+    let identifiedUserId: string | null = null
 
     void listen<OverlaySyncPayload>(OVERLAY_SYNC_EVENT, ({ payload }) => {
+      if (payload.userId !== identifiedUserId) {
+        if (identifiedUserId) resetPostHogUser()
+        if (payload.userId) identifyPostHogUser({ id: payload.userId })
+        identifiedUserId = payload.userId
+      }
+
       applyUiTheme(payload.theme.uiThemeId)
       useHabitsStore.setState({
         theme: payload.theme,

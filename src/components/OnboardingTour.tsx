@@ -1,6 +1,7 @@
 import { useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react'
+import posthog, { isPostHogConfigured } from '@/lib/posthog'
 
 export type OnboardingStep = {
   selector: string
@@ -64,7 +65,12 @@ export function OnboardingTour({ open, steps, onClose }: Props) {
 
   if (!open || !step) return null
 
-  const finish = () => onClose(true)
+  const finish = () => {
+    if (isPostHogConfigured) {
+      posthog.capture('onboarding_completed', { step_count: steps.length })
+    }
+    onClose(true)
+  }
   const close = () => onClose(false)
   const isLast = stepIndex === steps.length - 1
 

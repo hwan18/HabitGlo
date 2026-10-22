@@ -6,6 +6,7 @@ import OverlayApp from './OverlayApp'
 import { applyUiTheme } from '@/lib/uiThemes'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { WebviewWindow } from '@tauri-apps/api/window'
+import '../lib/posthog'
 
 useHabitsStore.getState().hydrate()
 applyUiTheme(useHabitsStore.getState().theme.uiThemeId)

@@ -15,8 +15,8 @@
       {
         "label": "main",
         "title": "HabitGlo",
-        "width": 1280,
-        "height": 860,
+        "width": 1150,
+        "height": 870,
         "resizable": true,
         "fullscreen": false,
         "decorations": true
@@ -49,7 +49,7 @@
       ]
     },
     "security": {
-      "csp": "default-src 'self' tauri://* data: blob:; script-src 'self' tauri://* https://cdn.paddle.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://cdn.paddle.com https://checkout.paddle.com https://sandbox-checkout.paddle.com https://habitglo.com ws://localhost:*"
+      "csp": "default-src 'self' tauri://* data: blob:; script-src 'self' tauri://* https://cdn.paddle.com https://*.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://cdn.paddle.com https://checkout.paddle.com https://sandbox-checkout.paddle.com https://habitglo.com https://*.posthog.com ws://localhost:*; worker-src blob:"
     },
     "allowlist": {
       "all": false,

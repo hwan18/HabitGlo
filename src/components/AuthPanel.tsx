@@ -8,6 +8,7 @@ import {
   openWebsitePricing,
   startCheckout as startBillingCheckout,
 } from '@/lib/billing'
+import posthog, { isPostHogConfigured } from '@/lib/posthog'
 
 export function AuthPanel() {
   const [email, setEmail] = useState('')
@@ -34,6 +35,9 @@ export function AuthPanel() {
       return
     }
     setStatus('Check your email for the login link.')
+    if (isPostHogConfigured) {
+      posthog.capture('magic_link_requested')
+    }
   }
 
   const signInWithPassword = async () => {
@@ -45,6 +49,9 @@ export function AuthPanel() {
       return
     }
     setStatus(null)
+    if (isPostHogConfigured) {
+      posthog.capture('sign_in_completed', { authentication_method: 'password' })
+    }
   }
 
   const signUpWithPassword = async () => {
@@ -56,6 +63,9 @@ export function AuthPanel() {
       return
     }
     setStatus('Check your email to confirm your account.')
+    if (isPostHogConfigured) {
+      posthog.capture('account_created', { authentication_method: 'password' })
+    }
   }
 
   const signOut = async () => {
@@ -69,6 +79,9 @@ export function AuthPanel() {
       const result = await startBillingCheckout(plan, { email: user?.email ?? null, userId: user?.id ?? null })
       if (result.action === 'checkout_opened') {
         setStatus('Checkout opened. Complete payment, then click "Refresh billing status".')
+        if (isPostHogConfigured) {
+          posthog.capture('checkout_started', { billing_plan: plan })
+        }
         return
       }
       if (result.action === 'portal_opened') {
@@ -90,6 +103,9 @@ export function AuthPanel() {
       setStatus(`Opening ${billingProviderLabel} billing portal...`)
       await openBillingPortal()
       setStatus('Billing portal opened.')
+      if (isPostHogConfigured) {
+        posthog.capture('billing_portal_opened')
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to open billing portal'
       setStatus(message)

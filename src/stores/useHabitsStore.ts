@@ -14,6 +14,7 @@ import {
   type SubscriptionStatus,
 } from '@/lib/db'
 import { hasSupabase, supabase } from '@/lib/supabaseClient'
+import posthog, { identifyPostHogUser, isPostHogConfigured, resetPostHogUser } from '@/lib/posthog'
 import { defaultUiThemeId, getUiThemeOverlayPalette } from '@/lib/uiThemes'
 import { useLeaderboardStore } from './useLeaderboardStore'
 import type { Habit, OverlaySettings, ThemeSettings } from '@/types'
@@ -283,6 +284,7 @@ export const useHabitsStore = create<StoreState>()(
           devAuthLog('apply', { source, prevUserId, nextUserId, epoch })
 
           if (!user) {
+            if (prevUserId) resetPostHogUser()
             cleanupHabitsSubscription()
             set({
               user: null,
@@ -295,6 +297,9 @@ export const useHabitsStore = create<StoreState>()(
             await get().hydrate()
             return
           }
+
+          if (prevUserId && prevUserId !== user.id) resetPostHogUser()
+          identifyPostHogUser(user)
 
           set({
             user,
@@ -364,12 +369,18 @@ export const useHabitsStore = create<StoreState>()(
         set((state) => ({
           habits: [...state.habits, normalized].sort((a, b) => a.priority - b.priority),
         }))
+        if (isPostHogConfigured) {
+          posthog.capture('habit_created', { has_custom_options: Boolean(options) })
+        }
       },
 
       toggleHabit: async (id, active) => {
         const userId = get().user?.id
         await setHabitActive(id, active, userId)
         set((state) => ({ habits: state.habits.map((h) => (h.id === id ? { ...h, is_active: active } : h)) }))
+        if (isPostHogConfigured) {
+          posthog.capture('habit_activation_changed', { is_active: active })
+        }
       },
 
       setHabitColor: async (id, colorIndex) => {
@@ -390,12 +401,18 @@ export const useHabitsStore = create<StoreState>()(
         set((state) => ({
           habits: state.habits.map((h) => (h.id === id ? normalized : h)),
         }))
+        if (isPostHogConfigured) {
+          posthog.capture('habit_color_changed', { color_index: normalizedIndex })
+        }
       },
 
       removeHabit: async (id) => {
         const userId = get().user?.id
         await deleteHabit(id, userId)
         set((state) => ({ habits: state.habits.filter((h) => h.id !== id) }))
+        if (isPostHogConfigured) {
+          posthog.capture('habit_deleted')
+        }
       },
 
       clearAllHabits: async () => {
@@ -405,6 +422,9 @@ export const useHabitsStore = create<StoreState>()(
           await deleteHabit(habit.id, userId)
         }
         set({ habits: [] })
+        if (isPostHogConfigured) {
+          posthog.capture('habits_cleared', { habit_count: all.length })
+        }
       },
 
       reorder: async (ids) => {
@@ -424,6 +444,9 @@ export const useHabitsStore = create<StoreState>()(
         // Persist to backend
         try {
           await reorderHabits(ids, userId)
+          if (isPostHogConfigured) {
+            posthog.capture('habits_reordered', { habit_count: ids.length })
+          }
         } catch (err) {
           console.error('Failed to persist reorder:', err)
           // Rollback to previous order on failure
@@ -511,6 +534,9 @@ export const useHabitsStore = create<StoreState>()(
           // Refresh leaderboards after logging a habit
           if (userId) {
             void useLeaderboardStore.getState().refresh(userId)
+          }
+          if (isPostHogConfigured) {
+            posthog.capture('habit_completion_logged', { streak_current, streak_best })
           }
         }
       },

@@ -3,6 +3,7 @@ import { Package, Lock } from 'lucide-react'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { habitPacks, type HabitPack } from '@/data/habitPacks'
 import { isTauri } from '@/lib/platform'
+import posthog, { isPostHogConfigured } from '@/lib/posthog'
 
 /** Pack IDs available in browser preview mode */
 const BROWSER_FREE_PACKS = new Set(['biohacker'])
@@ -21,6 +22,9 @@ export function HabitPacks() {
     }
     setApplying(null)
     setApplied(pack.id)
+    if (isPostHogConfigured) {
+      posthog.capture('habit_pack_applied', { pack_id: pack.id, habit_count: pack.habits.length })
+    }
     setTimeout(() => setApplied(null), 2000)
   }
 

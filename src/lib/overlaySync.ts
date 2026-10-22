@@ -7,6 +7,7 @@ export type OverlaySyncPayload = {
   theme: ThemeSettings
   overlay: OverlaySettings
   habits: Habit[]
+  userId: string | null
 }
 
 export const emitOverlaySync = async (payload: OverlaySyncPayload) => {

@@ -7,6 +7,7 @@ import { applyUiTheme } from './lib/uiThemes'
 import { emitOverlaySync } from './lib/overlaySync'
 import { isTauri } from './lib/platform'
 import { useHabitsStore } from './stores/useHabitsStore'
+import './lib/posthog'
 
 const DEMO_RESET_QUERY_PARAM = 'demoReset'
 const LOCAL_HABITS_KEY = 'habitglo_local_habits'
@@ -73,6 +74,7 @@ if (isTauri) {
       theme: state.theme,
       overlay: state.overlay,
       habits: state.habits,
+      userId: state.user?.id ?? null,
     }
     const nextSerialized = JSON.stringify(payload)
     if (nextSerialized === lastOverlaySync) return

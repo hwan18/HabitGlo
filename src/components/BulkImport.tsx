@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import Papa from 'papaparse'
 import { Button } from './Button'
 import { useHabitsStore } from '@/stores/useHabitsStore'
+import posthog, { isPostHogConfigured } from '@/lib/posthog'
 
 export function BulkImport() {
   const fileRef = useRef<HTMLInputElement | null>(null)
@@ -13,7 +14,7 @@ export function BulkImport() {
       file.text().then((text) => {
         try {
           const arr = JSON.parse(text)
-          if (Array.isArray(arr)) importEntries(arr)
+          if (Array.isArray(arr)) void importEntries(arr, 'json')
         } catch {
           setMessage('Invalid JSON')
         }
@@ -22,13 +23,13 @@ export function BulkImport() {
       Papa.parse(file, {
         complete: (results) => {
           const rows = (results.data as string[][]).flat().filter(Boolean)
-          importEntries(rows)
+          void importEntries(rows, 'csv')
         },
       })
     }
   }
 
-  const importEntries = async (entries: string[]) => {
+  const importEntries = async (entries: string[], importFormat: 'csv' | 'json') => {
     let count = 0
     for (const text of entries) {
       if (typeof text !== 'string' || !text.trim()) continue
@@ -36,6 +37,9 @@ export function BulkImport() {
       count++
     }
     setMessage(`Imported ${count} habits`)
+    if (isPostHogConfigured) {
+      posthog.capture('habits_imported', { import_format: importFormat, habit_count: count })
+    }
   }
 
   return (
