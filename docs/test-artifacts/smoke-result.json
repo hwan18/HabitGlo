@@ -1,0 +1,17 @@
+{
+    "ranAt":  "2026-10-23T03:18:04",
+    "pass":  true,
+    "checks":  {
+                   "overlayVisible":  true,
+                   "stripBounds":  "0,0 2560x96",
+                   "screenBounds":  "0,0 2560x1440",
+                   "workArea":  "0,96 2560x1296",
+                   "dockedAtTop":  true,
+                   "fullWidth":  true,
+                   "spaceReserved":  true,
+                   "stripMoved":  true,
+                   "stripDiffRatio":  0.1721,
+                   "workAreaAfterQuit":  "0,0 2560x1392",
+                   "spaceReleased":  true
+               }
+}

@@ -208,14 +208,64 @@ Gate: build pass, lint pass, test pass (62 tests), cargo check pass.
 - `docs/instruction-manual.md` rewritten to under one page for the new single screen (it described packs, streaks, leaderboards, themes, fonts, click-through and Ctrl/Alt drag, which are all gone).
 
 Decision: the tray item starts as "Show LED" because the strip window is created hidden. The overlay page shows itself about a second after launch, and the label then switches to "Hide LED".
+
 ## Slice 8: finish
 
 Gate on `574c01a` + this log: build pass, lint pass, test pass (10 files, 62 tests), cargo check pass (no warnings).
 
 | `dist/` | Baseline (slice 0) | Now |
 | --- | --- | --- |
-| Total | 17,712,188 bytes (66 files) | 13,486,518 bytes (52 files), -24% |
+| Total | 17,712,188 bytes (66 files) | 13,997,506 bytes (58 files), -21% (corrected in slice 9) |
 | Shared vendor chunk `overlaySync-*.js` | 841,969 | 705,840 |
 | `main-*.js` | 114,347 | 77,600 |
 
 What is left is mostly `public/` artwork shared with the website: five `habitglo-*icon*` PNGs (about 9.4 MB) that the desktop app never loads. I did not remove them because the website worktree owns `public/`. Recommendation: move website-only images out of the app's `public/` (or exclude them from the Tauri bundle) in a coordinated change, which would bring `dist/` to about 4 MB.
+## Slice 9: automated testing of the real desktop app
+
+Gate on the final commit: build pass, lint pass (now also lints `e2e/*.mjs`), test pass (13 files, 67 tests), cargo check pass (no warnings).
+
+Correction: the `dist/` size I logged in slices 6 and 8 (13,486,518 bytes, 52 files) does not reproduce. Rebuilding commit `c69a5b7` gives 13,997,506 bytes (58 files), and `public/` has no untracked files, so the earlier number was a measurement slip. The verified final size is **13,998,876 bytes (58 files), 21% below the 17,712,188-byte baseline**. Slice 9 itself adds about 1.4 KB.
+
+How every desktop test keeps the owner's data safe:
+- Each run uses a throwaway WebView2 profile in `%TEMP%`: `WEBVIEW2_USER_DATA_FOLDER` for the scripts, msedgedriver's own `scoped_dir` for WebDriver. Reminders, sign-in and settings in `com.habitglo.app` are never read or written. The e2e spec checks this before doing anything and refuses to run otherwise.
+- The test dev server runs with `VITE_BILLING_GATE=false` (`.env` has it `true`, which would stop at sign-in) and PostHog pointed at an unreachable address, so no analytics events are sent.
+- Every script refuses to start if a real HabitGlo is running or port 4173 is busy. It always closes the strip first (which gives the reserved screen space back), then ends the app and dev server. I checked after every run: no `habitglo`, `tauri-driver` or `msedgedriver` left, port free, work area back to the full screen minus the taskbar.
+- The debug app is built with `cargo build --no-default-features` (no `custom-protocol`), so it loads the Vite dev server exactly like `tauri dev`.
+
+### Launch + screenshot smoke test: `scripts/smoke-desktop.ps1`: PASS
+- Both windows appear about 4 s after launch. The strip is docked at the top, full width (2560×96 at 0,0), and the work area starts at y=96, so the space is reserved. After quit the work area is back to y=0.
+- The strip crops at 2 s and 5 s differ in 17.7% of pixels, so the strip is scrolling. I looked at both: red, amber and green dot-matrix text with the separators, as designed.
+- The main-window capture (`PrintWindow`, so other windows can't cover it) shows the 5 starter reminders, the live preview, and Pause / Hide LED.
+- Artifacts: `docs/test-artifacts/smoke-strip-2s.png`, `smoke-strip-5s.png`, `smoke-main-window.png`, `smoke-result.json`. Full-screen shots are saved locally but git-ignored, because they capture whatever else is on the desktop.
+
+### CPU / memory: `scripts/perf-desktop.ps1`: PASS
+Share of the whole machine (12 logical cores, 144 Hz monitor), 60 s per state, habitglo.exe plus all its WebView2 processes. The window is minimized while measuring, as it is while someone works.
+
+| State | Avg CPU | Median | Max | Memory | Target |
+| --- | --- | --- | --- | --- | --- |
+| Paused | 0.10% | 0% | 1.71% | 536 MB | < 0.5% ✓ |
+| Scrolling | 2.13% | 2.54% | 3.68% | 538 MB | < 3% ✓ |
+| LED hidden | 0.02% | 0% | 0.39% | 540 MB | < 0.5% ✓ |
+| Scrolling, window in tray | 2.14% | 2.50% | 4.32% | 543 MB | < 3% ✓ |
+
+Where scrolling CPU goes: WebView2's GPU process about 19% of one core, the strip's renderer about 6%. That is the cost of composing a 2560-px-wide transparent window at 144 frames per second. The page does no script, layout or style work per frame (checked with DevTools: 0 ms script, 0 layouts, 1 animation).
+
+What I found and changed while measuring:
+- **The in-window preview kept animating all day whenever the window was open, even behind other apps.** It now only moves while the HabitGlo window is the active window (`src/lib/useLedRunning.ts`). The signal is Tauri's native focus (`appWindow.onFocusChanged` / `isFocused`), because WebView2 reports the page as focused even when its window never was. The browser preview uses page focus. The real strip is not affected. Tests: `useLedRunning.test.ts`, `useLedRunning.tauri.test.ts`. The manual says so in one line.
+- Fresh-profile noise: every test run starts a brand-new WebView2 profile, and WebView2 then spends 10–150 s on one-time work (GPU shader cache, first-run components), with bursts up to a full core. A real install does this once. The perf script now waits for 5 quiet seconds before measuring and records how long that took (6 s in the passing run). One earlier run never went quiet (an extra tenth WebView2 process, +300 MB) and failed. Paused + minimized was 0% in a targeted re-check, so I treat it as that one-time work, but it is the first thing to look at if the owner's own Task Manager check disagrees.
+- Tried and rejected (measured, no reliable gain within run-to-run noise, reverted): whole-pixel `steps()` scrolling, an opaque strip window, and removing the rounded clip around the moving text.
+
+### UI tests with WebDriver: `npm run test:e2e`: PASS (5/5, first attach worked)
+WebdriverIO 10 + `tauri-driver` + msedgedriver 155.0.4283.62 (matches WebView2 155.0.4283.62, from `C:\Users\Hwan\.cursor-tools\msedgedriver\`). Tests, all against the real app windows:
+1. Opens with the 5 starter reminders.
+2. Adds "E2E 물 마시기 ✓" with the input + Enter; it appears in the list and on the strip.
+3. Turns it off (it leaves the strip), then deletes it.
+4. Settings: Fast and Bottom. The strip's animation gets faster and the strip window moves to the bottom of the screen.
+5. Hide LED stops the strip's animation, and Show LED starts it again.
+
+Not part of `npm test`. Needs Windows, Rust and `cargo install tauri-driver`. `MSEDGEDRIVER_PATH` overrides the driver location.
+
+### Offline simulation (unit/integration): PASS
+`src/App.offline.test.tsx` renders the whole app as the desktop build: billing gate on, Supabase configured, `navigator.onLine = false`, every Supabase call failing.
+- With a paid check 3 days old, the app opens and a reminder added through the real input appears in the list and is queued for sync.
+- With a check 15 days old, it shows "Connect to the internet to verify your HabitGlo subscription" and no input.

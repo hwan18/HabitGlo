@@ -20,4 +20,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['e2e/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2024,
+      // Node + mocha for the runner; browser globals for code passed to browser.execute(); WebdriverIO globals.
+      globals: { ...globals.node, ...globals.mocha, ...globals.browser, browser: 'readonly', $: 'readonly', $$: 'readonly', expect: 'readonly' },
+    },
+  },
 ])

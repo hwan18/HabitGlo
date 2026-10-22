@@ -23,3 +23,6 @@ src-tauri/target
 *.njsproj
 *.sln
 *.sw?
+
+# Full-screen test screenshots can show other apps on the desktop; only crops are committed
+docs/test-artifacts/*-full-*.png

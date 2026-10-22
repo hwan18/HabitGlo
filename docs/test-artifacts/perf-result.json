@@ -1,0 +1,53 @@
+{
+    "ranAt":  "2026-10-23T03:12:33",
+    "cores":  12,
+    "seconds":  60,
+    "pass":  true,
+    "warmupSeconds":  6,
+    "states":  [
+                   {
+                       "state":  "paused",
+                       "cpuAvg":  0.098,
+                       "cpuMedian":  0,
+                       "cpuMax":  1.708,
+                       "memAvgMB":  535.8,
+                       "processes":  9,
+                       "topProcesses":  "msedgewebview2.exe 0.7, renderer 0.2, renderer 0.1",
+                       "target":  0.5,
+                       "met":  true
+                   },
+                   {
+                       "state":  "scrolling",
+                       "cpuAvg":  2.125,
+                       "cpuMedian":  2.541,
+                       "cpuMax":  3.675,
+                       "memAvgMB":  537.8,
+                       "processes":  9,
+                       "topProcesses":  "gpu-process 19.3, renderer 5.8, msedgewebview2.exe 0.3",
+                       "target":  3,
+                       "met":  true
+                   },
+                   {
+                       "state":  "led-hidden",
+                       "cpuAvg":  0.023,
+                       "cpuMedian":  0,
+                       "cpuMax":  0.394,
+                       "memAvgMB":  540.2,
+                       "processes":  9,
+                       "topProcesses":  "msedgewebview2.exe 0.2, gpu-process 0.1, renderer 0.0",
+                       "target":  0.5,
+                       "met":  true
+                   },
+                   {
+                       "state":  "scrolling-window-in-tray",
+                       "cpuAvg":  2.138,
+                       "cpuMedian":  2.504,
+                       "cpuMax":  4.318,
+                       "memAvgMB":  542.6,
+                       "processes":  9,
+                       "topProcesses":  "gpu-process 19.3, renderer 5.6, msedgewebview2.exe 0.5",
+                       "target":  3,
+                       "met":  true
+                   }
+               ]
+}

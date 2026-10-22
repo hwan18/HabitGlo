@@ -52,3 +52,27 @@ export const onOverlayVisibilityChange = (callback: (visible: boolean) => void) 
 /** Main window hidden to the tray or shown again. */
 export const onMainVisibilityChange = (callback: (visible: boolean) => void) =>
   onVisibilityEvent(MAIN_VISIBILITY_EVENT, callback)
+
+/**
+ * Whether this window is the active OS window. WebView2's own focus state is unreliable here: the WebView starts
+ * focused even when its window never was, so `window` blur never fires.
+ */
+export const onWindowFocusChange = (callback: (focused: boolean) => void): (() => void) => {
+  if (!isTauri) return () => {}
+  let disposed = false
+  let unlisten: (() => void) | undefined
+  void import('@tauri-apps/api/window').then(async ({ appWindow }) => {
+    const dispose = await appWindow.onFocusChanged(({ payload }) => callback(Boolean(payload)))
+    if (disposed) {
+      dispose()
+      return
+    }
+    unlisten = dispose
+    const focused = await appWindow.isFocused().catch(() => true)
+    if (!disposed) callback(focused)
+  })
+  return () => {
+    disposed = true
+    unlisten?.()
+  }
+}

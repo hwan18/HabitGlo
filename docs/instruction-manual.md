@@ -10,7 +10,7 @@ The LED strip appears docked at the top of your main monitor with five starter r
 
 From top to bottom:
 
-- **LED preview.** Shows exactly what the strip shows.
+- **LED preview.** Shows exactly what the strip shows. It only moves while the HabitGlo window is active, to save power; the strip itself keeps scrolling.
   - **Start / Pause** freezes or resumes the scrolling.
   - **Show LED / Hide LED** puts the strip on screen or takes it away.
 - **Add a reminder.** Type and press **Enter** (220 characters max; any language works).
