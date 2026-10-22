@@ -188,3 +188,14 @@ Tests: `src/lib/overlaySync.test.ts`: a burst of changes gives 1 message, change
 Decisions:
 - The strip starts at the left edge (the old 32 px inner padding is gone, so the loop maths stays exact).
 - CPU numbers on the real desktop app are measured in slice 9 (`scripts/perf-desktop.ps1`).
+
+## Slice 7: tray
+
+Gate: build pass, lint pass, test pass (62 tests), cargo check pass.
+
+- Tray menu is now **Open HabitGlo**, **Show LED / Hide LED**, separator, **Quit**. Left-click and double-click open the window.
+- The LED item's label follows the real strip state. `set_overlay_visibility` (the single path for the window button, the tray item and Alt+F4 on the strip) updates the tray title and emits `habitglo:overlay-visibility`, so the in-app button and the tray never disagree.
+- Closing the main window hides it to the tray (slice 6 already emits `habitglo:main-visibility`, so the preview stops animating). Quit releases the reserved screen space before exiting.
+- `docs/instruction-manual.md` rewritten to under one page for the new single screen (it described packs, streaks, leaderboards, themes, fonts, click-through and Ctrl/Alt drag, which are all gone).
+
+Decision: the tray item starts as "Show LED" because the strip window is created hidden. The overlay page shows itself about a second after launch, and the label then switches to "Hide LED".

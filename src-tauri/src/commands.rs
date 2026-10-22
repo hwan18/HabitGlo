@@ -548,8 +548,23 @@ pub fn set_overlay_visibility(app: &AppHandle, visible: bool) -> Result<(), Stri
         release_appbar(&overlay_window, &snap_state)?;
         overlay_window.hide().map_err(|e| e.to_string())?;
     }
+    let _ = app
+        .tray_handle()
+        .get_item(TRAY_TOGGLE_LED)
+        .set_title(if visible { "Hide LED" } else { "Show LED" });
     let _ = app.emit_all(OVERLAY_VISIBILITY_EVENT, visible);
     Ok(())
+}
+
+pub const TRAY_OPEN: &str = "open";
+pub const TRAY_TOGGLE_LED: &str = "toggle_led";
+pub const TRAY_QUIT: &str = "quit";
+
+/// Tray "Show LED" / "Hide LED".
+pub fn toggle_overlay_visibility(app: &AppHandle) -> Result<(), String> {
+    let overlay_window = app.get_window("overlay").ok_or("Overlay window not found")?;
+    let visible = overlay_window.is_visible().map_err(|e| e.to_string())?;
+    set_overlay_visibility(app, !visible)
 }
 
 #[tauri::command]

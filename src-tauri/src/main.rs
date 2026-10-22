@@ -3,13 +3,16 @@
 mod commands;
 
 use tauri::{
-    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, WindowEvent,
+    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem, WindowEvent,
 };
 
 fn main() {
+    // The LED item starts as "Show LED" (the strip window starts hidden); it follows the real state after that.
     let tray_menu = SystemTrayMenu::new()
-        .add_item(CustomMenuItem::new("show", "Show HabitGlo"))
-        .add_item(CustomMenuItem::new("quit", "Quit"));
+        .add_item(CustomMenuItem::new(commands::TRAY_OPEN, "Open HabitGlo"))
+        .add_item(CustomMenuItem::new(commands::TRAY_TOGGLE_LED, "Show LED"))
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(CustomMenuItem::new(commands::TRAY_QUIT, "Quit"));
 
     let system_tray = SystemTray::new()
         .with_menu(tray_menu)
@@ -22,8 +25,11 @@ fn main() {
                 commands::show_main_window(app);
             }
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-                "show" => commands::show_main_window(app),
-                "quit" => {
+                commands::TRAY_OPEN => commands::show_main_window(app),
+                commands::TRAY_TOGGLE_LED => {
+                    let _ = commands::toggle_overlay_visibility(app);
+                }
+                commands::TRAY_QUIT => {
                     commands::release_overlay_space(app);
                     app.exit(0);
                 }
