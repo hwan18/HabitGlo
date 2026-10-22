@@ -1030,6 +1030,8 @@ button { font: inherit; color: inherit; }
 .flow-steps li { font-size: 1.02rem; }
 .flow-steps li[aria-current='step'] { color: var(--paper); }
 .flow-steps li[aria-current='step'] b { color: var(--amber); text-shadow: 0 0 12px rgba(255, 176, 0, 0.6); }
+.flow-steps li.is-done { color: var(--paper-3); }
+.flow-steps li.is-done b { color: var(--green); text-shadow: 0 0 10px rgba(91, 255, 107, 0.45); }
 .split-copy .flow-steps + .mini-sign { margin-top: 40px; }
 @media (min-width: 940px) { .split { padding-top: 24px; } }
 .pg-auth .loader.hidden { display: none; }
