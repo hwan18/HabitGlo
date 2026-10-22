@@ -1,5 +1,14 @@
 # Overnight log: simplify/core-v1
 
+## Morning checklist (owner)
+
+1. `git switch simplify/core-v1`, then `npm install`, then `npm run tauri:dev`.
+2. Fresh first launch: clear local storage (in the HabitGlo window right-click > Inspect > Application > Local Storage > Clear, then restart), or use a new Windows user. Confirm the 5 starter reminders and the LED strip docked at the top.
+3. Turn Wi-Fi off, relaunch, add a reminder, and confirm the LED strip shows it.
+4. Watch the CPU of the HabitGlo / WebView2 processes in Task Manager for a minute while it scrolls (expect low single-digit %), then press Pause (expect about 0).
+5. Right-click the tray icon: Open HabitGlo, Show/Hide LED (the label should flip), Quit (the reserved space at the top should go away).
+6. Settings (gear): Fast + Bottom should move the strip to the bottom immediately; Color presets should change the strip colours.
+
 Runbook: `docs/overnight-simplify-runbook.md`.
 
 ## Slice 0: baseline
@@ -199,3 +208,14 @@ Gate: build pass, lint pass, test pass (62 tests), cargo check pass.
 - `docs/instruction-manual.md` rewritten to under one page for the new single screen (it described packs, streaks, leaderboards, themes, fonts, click-through and Ctrl/Alt drag, which are all gone).
 
 Decision: the tray item starts as "Show LED" because the strip window is created hidden. The overlay page shows itself about a second after launch, and the label then switches to "Hide LED".
+## Slice 8: finish
+
+Gate on `574c01a` + this log: build pass, lint pass, test pass (10 files, 62 tests), cargo check pass (no warnings).
+
+| `dist/` | Baseline (slice 0) | Now |
+| --- | --- | --- |
+| Total | 17,712,188 bytes (66 files) | 13,486,518 bytes (52 files), -24% |
+| Shared vendor chunk `overlaySync-*.js` | 841,969 | 705,840 |
+| `main-*.js` | 114,347 | 77,600 |
+
+What is left is mostly `public/` artwork shared with the website: five `habitglo-*icon*` PNGs (about 9.4 MB) that the desktop app never loads. I did not remove them because the website worktree owns `public/`. Recommendation: move website-only images out of the app's `public/` (or exclude them from the Tauri bundle) in a coordinated change, which would bring `dist/` to about 4 MB.
