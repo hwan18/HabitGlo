@@ -58,14 +58,12 @@ dialog::backdrop {
   background: rgb(0 0 0 / 0.6);
 }
 
-.burnin {
+/* Static LED pixel grid drawn over the moving text (no blend modes, so scrolling stays on the GPU). */
+.led-grid {
   background-image:
-    radial-gradient(circle, hsl(var(--foreground) / 0.12) 0.9px, transparent 1.2px),
-    radial-gradient(circle, hsl(var(--background) / 0.72) 0.9px, transparent 1.2px);
-  background-size: 5px 5px;
-  background-position: 0 0, 2.5px 2.5px;
-  mix-blend-mode: screen;
-  pointer-events: none;
+    linear-gradient(to right, rgb(0 0 0 / 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.45) 1px, transparent 1px);
+  background-size: 3px 3px;
 }
 
 .led-panel {

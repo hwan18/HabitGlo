@@ -21,7 +21,6 @@
     "@supabase/supabase-js": "^2.48.0",
     "@tauri-apps/api": "^1.6.0",
     "clsx": "^2.1.1",
-    "framer-motion": "^11.11.17",
     "lucide-react": "^0.460.0",
     "nanoid": "^5.0.9",
     "posthog-js": "^1.434.17",

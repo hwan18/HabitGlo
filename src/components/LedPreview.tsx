@@ -4,6 +4,7 @@ import { Marquee } from '@/overlay/Marquee'
 import { useHabitsStore } from '@/stores/useHabitsStore'
 import { isTauri } from '@/lib/platform'
 import { isOverlayVisible, onOverlayVisibilityChange, setOverlayVisible } from '@/lib/overlayWindow'
+import { useLedRunning } from '@/lib/useLedRunning'
 
 function useOverlayVisibility() {
   const [visible, setVisible] = useState(true)
@@ -29,6 +30,7 @@ export function LedPreview() {
   const setOverlay = useHabitsStore((s) => s.setOverlay)
   const hasActive = useHabitsStore((s) => s.habits.some((h) => h.is_active && h.text))
   const visible = useOverlayVisibility()
+  const running = useLedRunning('main')
   const [updating, setUpdating] = useState(false)
 
   const toggleVisibility = async () => {
@@ -43,7 +45,7 @@ export function LedPreview() {
   return (
     <section aria-label="LED preview" className="rounded-xl border border-app-border bg-app-card p-3">
       <div className="relative h-20 overflow-hidden rounded-lg bg-black">
-        <Marquee />
+        <Marquee running={running} />
         {!hasActive && (
           <p className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-app-muted">
             Your reminders will scroll here.

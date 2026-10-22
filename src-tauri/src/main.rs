@@ -19,20 +19,10 @@ fn main() {
         .system_tray(system_tray)
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::LeftClick { .. } | SystemTrayEvent::DoubleClick { .. } => {
-                if let Some(win) = app.get_window("main") {
-                    let _ = win.show();
-                    let _ = win.unminimize();
-                    let _ = win.set_focus();
-                }
+                commands::show_main_window(app);
             }
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-                "show" => {
-                    if let Some(win) = app.get_window("main") {
-                        let _ = win.show();
-                        let _ = win.unminimize();
-                        let _ = win.set_focus();
-                    }
-                }
+                "show" => commands::show_main_window(app),
                 "quit" => {
                     commands::release_overlay_space(app);
                     app.exit(0);
@@ -47,8 +37,8 @@ fn main() {
                 match window.label() {
                     "main" => {
                         // Hide the main window instead of closing the app
-                        window.hide().unwrap_or_default();
                         api.prevent_close();
+                        commands::hide_main_window(window);
                     }
                     "overlay" => {
                         // Alt+F4 on the LED strip hides it (and frees reserved space) instead of destroying it

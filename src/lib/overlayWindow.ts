@@ -2,6 +2,7 @@ import { isTauri } from './platform'
 import type { OverlayPosition } from '@/types'
 
 export const OVERLAY_VISIBILITY_EVENT = 'habitglo:overlay-visibility'
+export const MAIN_VISIBILITY_EVENT = 'habitglo:main-visibility'
 
 /** Docks the LED strip full-width at the top or bottom of the primary monitor. */
 export const dockOverlay = async (position: OverlayPosition, reserveSpace: boolean) => {
@@ -28,13 +29,12 @@ export const isOverlayVisible = async (): Promise<boolean> => {
   return overlayWindow.isVisible().catch(() => true)
 }
 
-/** Subscribes to show/hide changes from any source (app button, tray, Alt+F4). Returns an unsubscribe. */
-export const onOverlayVisibilityChange = (callback: (visible: boolean) => void): (() => void) => {
+const onVisibilityEvent = (event: string, callback: (visible: boolean) => void): (() => void) => {
   if (!isTauri) return () => {}
   let disposed = false
   let unlisten: (() => void) | undefined
   void import('@tauri-apps/api/event').then(({ listen }) =>
-    listen<boolean>(OVERLAY_VISIBILITY_EVENT, ({ payload }) => callback(Boolean(payload))).then((dispose) => {
+    listen<boolean>(event, ({ payload }) => callback(Boolean(payload))).then((dispose) => {
       if (disposed) dispose()
       else unlisten = dispose
     }),
@@ -44,3 +44,11 @@ export const onOverlayVisibilityChange = (callback: (visible: boolean) => void):
     unlisten?.()
   }
 }
+
+/** Subscribes to show/hide changes from any source (app button, tray, Alt+F4). Returns an unsubscribe. */
+export const onOverlayVisibilityChange = (callback: (visible: boolean) => void) =>
+  onVisibilityEvent(OVERLAY_VISIBILITY_EVENT, callback)
+
+/** Main window hidden to the tray or shown again. */
+export const onMainVisibilityChange = (callback: (visible: boolean) => void) =>
+  onVisibilityEvent(MAIN_VISIBILITY_EVENT, callback)

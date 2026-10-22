@@ -557,6 +557,24 @@ pub fn set_overlay_visible(app: AppHandle, visible: bool) -> Result<(), String> 
     set_overlay_visibility(&app, visible)
 }
 
+pub const MAIN_VISIBILITY_EVENT: &str = "habitglo:main-visibility";
+
+/// Shows and focuses the main window; its LED preview resumes when it hears the event.
+pub fn show_main_window(app: &AppHandle) {
+    if let Some(win) = app.get_window("main") {
+        let _ = win.show();
+        let _ = win.unminimize();
+        let _ = win.set_focus();
+    }
+    let _ = app.emit_all(MAIN_VISIBILITY_EVENT, true);
+}
+
+/// Hides the main window (the app keeps running in the tray); its LED preview stops animating.
+pub fn hide_main_window(window: &Window) {
+    let _ = window.hide();
+    let _ = window.app_handle().emit_all(MAIN_VISIBILITY_EVENT, false);
+}
+
 /// Removes the AppBar before the process exits so Windows does not keep an empty reserved band.
 pub fn release_overlay_space(app: &AppHandle) {
     #[cfg(windows)]

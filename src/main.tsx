@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './fonts'
 import './index.css'
 import App from './App'
-import { emitOverlaySync } from './lib/overlaySync'
+import { startOverlaySync, tauriTransport } from './lib/overlaySync'
 import { dockOverlay } from './lib/overlayWindow'
 import { isTauri } from './lib/platform'
 import { buildStarterHabits, claimFirstLaunchSeed } from './lib/starterReminders'
@@ -69,22 +69,7 @@ if (shouldResetBrowserDemo()) {
 void useHabitsStore.getState().initializeAuth()
 
 if (isTauri) {
-  let lastOverlaySync = ''
-  const syncOverlay = () => {
-    const state = useHabitsStore.getState()
-    const payload = {
-      overlay: state.overlay,
-      habits: state.habits,
-      userId: state.user?.id ?? null,
-    }
-    const nextSerialized = JSON.stringify(payload)
-    if (nextSerialized === lastOverlaySync) return
-    lastOverlaySync = nextSerialized
-    void emitOverlaySync(payload)
-  }
-
-  syncOverlay()
-  useHabitsStore.subscribe(syncOverlay)
+  startOverlaySync(useHabitsStore, tauriTransport)
 
   // The overlay docks itself on startup; the main window re-docks it when the user changes placement.
   let lastDock = `${useHabitsStore.getState().overlay.position}:${useHabitsStore.getState().overlay.reserveSpace}`

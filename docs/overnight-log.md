@@ -157,3 +157,34 @@ Size: dist 17,712,188 → 13,597,327 bytes (66 → 52 files). The main-window sc
 Decisions:
 - The strip is never click-through. With "Keep windows from covering it" on (the default), nothing sits under it anyway.
 - The `shadcn` dev dependency stays (owner tooling for the shadcn MCP server).
+
+Note: commit `2ec25de` only contains the file deletions (a bad `git add` path stopped the rest from being staged). `12f127e` completes slice 5 and passed the gate. Do not check out `2ec25de` on its own.
+
+## Slice 6: smooth overlay
+
+Gate: build pass, lint pass, test pass (62 tests), cargo check pass.
+
+Before:
+- Marquee: framer-motion `useAnimationFrame` ran a JavaScript callback on every display frame, forever. When paused it still woke up every frame and returned early, and it kept running while the strip or the main window was hidden.
+- Each frame wrote a motion value, a `drop-shadow` filter was on the whole moving row, and a `mix-blend-mode: screen` layer sat on top. Both force extra compositing work every frame.
+- Sync: the overlay polled localStorage every 200 ms (JSON parse of the whole store plus two JSON stringify compares, 5 times a second, even when hidden). The main window also sent the full state on every store change with no debounce.
+
+After:
+- `src/overlay/Marquee.tsx`: one Web Animations API animation (`translate3d(0) → translate3d(-copyWidth)`, linear, infinite) on a `will-change: transform` row. It runs on the compositor, with no JavaScript and no React state per frame.
+- The animation is rebuilt only when the measured copy width (text, font size, fonts loaded) or the speed changes, and it keeps the current scroll position. Window resizes only change how many copies are rendered.
+- Adding, editing or reordering reminders keeps the same DOM row: no flicker, no remount, no jump.
+- Pause: `useLedRunning` pauses the animation when it is paused, when the page is hidden or minimized (`visibilitychange`), when the strip is hidden (`habitglo:overlay-visibility`), or when the main window is hidden to the tray (new Rust event `habitglo:main-visibility`). A paused Web Animation does no work.
+- LED look: the glow is now a per-reminder `text-shadow` (rasterised once). The dot grid is a static overlay without blend modes, and the separator is a neutral dim dot that suits all 4 colour presets.
+- Sync (`src/lib/overlaySync.ts`): the main window sends only what the strip draws (overlay settings + id/text/on/order per reminder + user id), debounced to 80 ms, and skips sends when nothing visible changed. The overlay announces `habitglo:overlay-ready` when it starts listening and gets the current state back. The 200 ms poll is gone; a `storage` event (no polling) rehydrates as a fallback.
+- `framer-motion` uninstalled. The shared vendor chunk went from 816 KB to 706 KB, and dist from 13,597,327 to 13,486,518 bytes.
+
+Verified in a real browser (Chromium, `/app`):
+- `document.getAnimations()` shows exactly 1 animation, advancing at the preset speed (90 px/s measured on Fast).
+- Pause: `playState` is "paused", `currentTime` stays frozen, and 0 `requestAnimationFrame` calls happen in 1 second.
+- Adding a reminder while scrolling: same row element, position continues from −1106 px to −1132 px (no reset), still 1 animation.
+
+Tests: `src/lib/overlaySync.test.ts`: a burst of changes gives 1 message, changes the strip does not show give none, and a starting overlay always gets the state.
+
+Decisions:
+- The strip starts at the left edge (the old 32 px inner padding is gone, so the loop maths stays exact).
+- CPU numbers on the real desktop app are measured in slice 9 (`scripts/perf-desktop.ps1`).
