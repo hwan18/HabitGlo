@@ -116,6 +116,7 @@ button { font: inherit; color: inherit; }
 .h-sub { font-size: clamp(1.9rem, 3.4vw, 2.75rem); line-height: 1.04; }
 
 .lede {
+  text-wrap: pretty;
   font-size: clamp(1.05rem, 1.35vw, 1.2rem);
   line-height: 1.6;
   color: var(--paper-2);
@@ -978,6 +979,10 @@ button { font: inherit; color: inherit; }
 .page-main { flex: 1; padding: clamp(40px, 6vw, 80px) 0 clamp(64px, 8vw, 110px); }
 .page-head { max-width: 720px; margin-bottom: clamp(36px, 5vw, 60px); }
 .page-head .lede { margin-top: 20px; }
+.page-head .h-section { margin-top: 18px; }
+.page-head-split { max-width: none; display: grid; gap: 32px; align-items: end; }
+@media (min-width: 900px) { .page-head-split { grid-template-columns: 1fr minmax(320px, 440px); gap: 64px; } }
+.footer-support { margin: 0; }
 .page-foot { padding: 30px 0 36px; border-top: 1px solid var(--line); font-size: 0.86rem; color: var(--paper-3); }
 .page-foot .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px 24px; }
 .page-foot nav { display: flex; flex-wrap: wrap; gap: 8px 22px; }
