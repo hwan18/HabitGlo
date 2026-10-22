@@ -215,7 +215,7 @@ Gate on `574c01a` + this log: build pass, lint pass, test pass (10 files, 62 tes
 
 | `dist/` | Baseline (slice 0) | Now |
 | --- | --- | --- |
-| Total | 17,712,188 bytes (66 files) | 13,997,506 bytes (58 files), -21% (corrected in slice 9) |
+| Total | 17,712,188 bytes (66 files) | 13,486,518 bytes (52 files), -24% |
 | Shared vendor chunk `overlaySync-*.js` | 841,969 | 705,840 |
 | `main-*.js` | 114,347 | 77,600 |
 
@@ -224,7 +224,9 @@ What is left is mostly `public/` artwork shared with the website: five `habitglo
 
 Gate on the final commit: build pass, lint pass (now also lints `e2e/*.mjs`), test pass (13 files, 67 tests), cargo check pass (no warnings).
 
-Correction: the `dist/` size I logged in slices 6 and 8 (13,486,518 bytes, 52 files) does not reproduce. Rebuilding commit `c69a5b7` gives 13,997,506 bytes (58 files), and `public/` has no untracked files, so the earlier number was a measurement slip. The verified final size is **13,998,876 bytes (58 files), 21% below the 17,712,188-byte baseline**. Slice 9 itself adds about 1.4 KB.
+Another agent committed `2bfa19a` "New After hours logo for app icon, tray, favicon and header" to this branch at 02:21, between slice 8 and slice 9. It changed `index.html`, the header logo in `src/App.tsx`, the Tauri icons, added `scripts/make-logo.ps1`, and added six logo files to `public/icons/` (about 511 KB). I kept it as is; the slice 9 gate and all desktop tests ran with it included.
+
+Final `dist/`: **13,998,876 bytes (58 files), 21% below the 17,712,188-byte baseline.** Of that, 13,486,518 bytes is the slimmed app from slice 8, about 511 KB is the new logo set, and slice 9 adds about 1.4 KB.
 
 How every desktop test keeps the owner's data safe:
 - Each run uses a throwaway WebView2 profile in `%TEMP%`: `WEBVIEW2_USER_DATA_FOLDER` for the scripts, msedgedriver's own `scoped_dir` for WebDriver. Reminders, sign-in and settings in `com.habitglo.app` are never read or written. The e2e spec checks this before doing anything and refuses to run otherwise.
