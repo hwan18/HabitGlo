@@ -42,7 +42,7 @@
     "bundle": {
       "identifier": "com.habitglo.app",
       "active": true,
-      "targets": "msi",
+      "targets": ["msi", "updater"],
       "windows": {
         "digestAlgorithm": "sha256"
       },
