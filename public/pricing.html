@@ -4,332 +4,102 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HabitGlo - Pricing</title>
-  <link rel="icon" type="image/png" href="/icons/favicon.png" />
-  <link rel="apple-touch-icon" href="/icons/app-icon-192.png" />
+  <meta name="theme-color" content="#0d0b09" />
+  <link rel="icon" type="image/png" href="/icons/habitglo-logo-32.png" />
+  <link rel="apple-touch-icon" href="/icons/habitglo-logo-180.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" />
+  <link rel="stylesheet" href="/site.css" />
+  <script>document.documentElement.classList.add('js')</script>
   <script src="/download/config.js"></script>
-  <style>
-    :root {
-      color-scheme: dark;
-      --background: 150 80% 4%;
-      --foreground: 45 100% 95%;
-      --card: 150 70% 8%;
-      --popover: 150 70% 8%;
-      --primary: 150 100% 48%;
-      --accent: 35 100% 58%;
-      --glow-blue: 320 100% 70%;
-      --border: 45 100% 95%;
-      --panel: hsl(var(--card) / 0.84);
-      --panel-strong: hsl(var(--popover) / 0.9);
-      --card-border: hsl(var(--border) / 0.14);
-      --text: hsl(var(--foreground));
-      --soft-text: hsl(var(--foreground) / 0.68);
-      --muted: hsl(var(--foreground) / 0.46);
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background:
-        radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
-        radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
-        linear-gradient(180deg, hsl(var(--background)), hsl(150 100% 2%));
-      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: var(--text);
-      padding: 48px 24px 40px;
-      -webkit-font-smoothing: antialiased;
-    }
-    .back-link {
-      position: fixed;
-      top: 20px;
-      left: 24px;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.875rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: var(--text); }
-    .logo-wrap {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 24px;
-    }
-    .logo-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: block;
-      box-shadow: 0 0 20px hsl(var(--primary) / 0.22), 0 0 28px hsl(var(--glow-blue) / 0.14);
-    }
-    .page-header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    .page-header h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-      letter-spacing: -0.02em;
-    }
-    .page-header p {
-      color: var(--soft-text);
-      font-size: 1rem;
-      line-height: 1.6;
-      max-width: 420px;
-      margin: 0 auto;
-    }
-    .plans {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      width: 100%;
-      max-width: 760px;
-      margin-bottom: 40px;
-    }
-    .plan-card {
-      background:
-        linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 38%),
-        linear-gradient(315deg, hsl(var(--glow-blue) / 0.08), transparent 46%),
-        var(--panel);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 32px 28px;
-      position: relative;
-      transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
-      box-shadow:
-        0 0 0 1px hsl(var(--primary) / 0.04),
-        0 18px 60px rgba(0, 0, 0, 0.28);
-    }
-    .plan-card:hover {
-      border-color: hsl(var(--glow-blue) / 0.32);
-      transform: translateY(-2px);
-    }
-    .plan-card.popular {
-      border-color: hsl(var(--primary) / 0.32);
-      box-shadow:
-        0 0 0 1px hsl(var(--primary) / 0.08),
-        0 24px 80px rgba(0, 0, 0, 0.38),
-        0 0 34px hsl(var(--primary) / 0.12);
-    }
-    .popular-badge {
-      position: absolute;
-      top: -11px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text);
-      background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--glow-blue) / 0.72));
-      padding: 4px 16px;
-      border-radius: 20px;
-    }
-    .plan-name {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-    .plan-price {
-      margin-bottom: 6px;
-    }
-    .plan-price .amount {
-      font-size: 2.5rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .plan-price .period {
-      font-size: 1rem;
-      color: var(--soft-text);
-      font-weight: 400;
-    }
-    .plan-desc {
-      font-size: 0.85rem;
-      color: var(--soft-text);
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-    .plan-features {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 28px;
-      display: grid;
-      gap: 11px;
-    }
-    .plan-features li {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.875rem;
-      color: var(--soft-text);
-    }
-    .check-icon {
-      flex-shrink: 0;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: hsl(var(--primary) / 0.12);
-      color: hsl(var(--primary));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .plan-cta {
-      display: block;
-      width: 100%;
-      text-align: center;
-      text-decoration: none;
-      padding: 13px 0;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
-    }
-    .plan-cta:hover { opacity: 0.94; }
-    .plan-cta:active { transform: scale(0.99); }
-    .plan-cta.primary {
-      background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--glow-blue) / 0.72));
-      color: var(--text);
-      box-shadow: 0 12px 30px hsl(var(--primary) / 0.18);
-    }
-    .plan-cta.primary:hover {
-      box-shadow: 0 16px 34px hsl(var(--primary) / 0.24), 0 0 24px hsl(var(--glow-blue) / 0.14);
-    }
-    .plan-cta.secondary {
-      background: transparent;
-      border: 1px solid hsl(var(--border) / 0.14);
-      color: var(--text);
-    }
-    .plan-cta.secondary:hover {
-      border-color: hsl(var(--glow-blue) / 0.42);
-      box-shadow: 0 0 20px hsl(var(--glow-blue) / 0.08);
-    }
-    .footer-section {
-      text-align: center;
-      max-width: 760px;
-      width: 100%;
-    }
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px 24px;
-      margin-bottom: 20px;
-    }
-    .footer-link {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: color 0.2s;
-    }
-    .footer-link:hover { color: var(--text); }
-    .footer-support {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-    @media (max-width: 640px) {
-      .plans {
-        grid-template-columns: 1fr;
-        max-width: 420px;
-      }
-      body { padding: 32px 16px; }
-      .back-link { position: static; margin-bottom: 16px; }
-      .page-header h1 { font-size: 1.6rem; }
-    }
-  </style>
 </head>
-<body>
-  <a class="back-link" href="/">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Home
-  </a>
+<body class="page">
+  <a class="skip-link" href="#main">Skip to content</a>
 
-  <div class="logo-wrap">
-    <img class="logo-icon" src="/icons/app-icon-192.png" alt="" />
-  </div>
-
-  <header class="page-header">
-    <h1>Choose your plan</h1>
-    <p>Habit streak tracking, overlay reminders, and cloud sync for Windows 10+.</p>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/" aria-label="HabitGlo home">
+        <img class="brand-mark" src="/media/led-h.svg" alt="" width="30" height="26" />
+        <span class="brand-name">HabitGlo</span>
+      </a>
+      <a class="back" href="/">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Home
+      </a>
+    </div>
   </header>
 
-  <section class="plans">
-    <article class="plan-card popular">
-      <span class="popular-badge">Most Popular</span>
-      <p class="plan-name">Monthly</p>
-      <div class="plan-price">
-        <span class="amount">$4</span>
-        <span class="period"> / month</span>
+  <main id="main" class="page-main">
+    <div class="wrap">
+      <div class="page-head page-head-split">
+        <div>
+          <p class="chapter">Pricing</p>
+          <h1 class="display h-section">Choose your <em>plan.</em></h1>
+          <p class="lede">An always-on LED reminder strip that works offline, with cloud sync, for Windows 10+.</p>
+        </div>
+        <div class="mini-sign" aria-hidden="true">
+          <canvas data-led='[{"text":"DONE IS BETTER THAN PERFECT"},{"text":"FOLLOW UP WITH LEADS TODAY"},{"text":"DRINK WATER","color":"green"}]' data-led-rows="9" data-led-speed="16"></canvas>
+        </div>
       </div>
-      <p class="plan-desc">Full access with flexibility. Cancel anytime.</p>
-      <ul class="plan-features">
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          Unlimited habits and streak tracking
-        </li>
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          All themes and habit packs
-        </li>
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          Cloud sync and leaderboard
-        </li>
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          Cancel anytime, no commitment
-        </li>
-      </ul>
-      <a class="plan-cta primary" href="/purchase.html?plan=monthly&source=website_pricing">Start Monthly Plan</a>
-    </article>
 
-    <article class="plan-card">
-      <p class="plan-name">Lifetime</p>
-      <div class="plan-price">
-        <span class="amount">$29</span>
-        <span class="period"> one-time</span>
-      </div>
-      <p class="plan-desc">Pay once. Own it forever.</p>
-      <ul class="plan-features">
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          One payment, lifetime access
-        </li>
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          Includes all current features
-        </li>
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          All future updates included
-        </li>
-        <li>
-          <span class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          No recurring billing ever
-        </li>
-      </ul>
-      <a class="plan-cta secondary" href="/purchase.html?plan=lifetime&source=website_pricing">Buy Lifetime</a>
-    </article>
-  </section>
+      <section class="plans" aria-label="Plans">
+        <article class="plan featured">
+          <div class="plan-top">
+            <h2 class="plan-name">Monthly</h2>
+            <span class="plan-flag"><span class="lit-dot amber" aria-hidden="true"></span> Most Popular</span>
+          </div>
+          <p class="plan-sub">Full access with flexibility. Cancel anytime.</p>
+          <p class="price"><span class="amt">$5</span><span class="per">/ month</span></p>
+          <ul class="ticks">
+            <li>Unlimited reminders on your LED strip</li>
+            <li>Works offline, syncs when you&rsquo;re back</li>
+            <li>Cloud sync across devices</li>
+            <li>Cancel anytime, no commitment</li>
+          </ul>
+          <a class="btn btn-primary btn-block" href="/purchase.html?plan=monthly&source=website_pricing">Start Monthly Plan</a>
+        </article>
 
-  <footer class="footer-section">
-    <nav class="footer-links">
-      <a class="footer-link" href="/">Home</a>
-      <a class="footer-link" href="/terms">Terms</a>
-      <a class="footer-link" href="/privacy">Privacy</a>
-      <a class="footer-link" href="/refund">Refund Policy</a>
-      <a class="footer-link" href="/download/windows.html">Download App</a>
-      <a class="footer-link" href="/app?demoReset=1">Try Browser Demo</a>
-    </nav>
-    <p id="support-text" class="footer-support"></p>
+        <article class="plan">
+          <div class="plan-top">
+            <h2 class="plan-name">Lifetime</h2>
+          </div>
+          <p class="plan-sub">Pay once. Own it forever.</p>
+          <p class="price"><span class="amt">$29</span><span class="per">one-time</span></p>
+          <ul class="ticks">
+            <li>One payment, lifetime access</li>
+            <li>Includes all current features</li>
+            <li>All future updates included</li>
+            <li>No recurring billing ever</li>
+          </ul>
+          <a class="btn btn-ghost btn-block" href="/purchase.html?plan=lifetime&source=website_pricing">Buy Lifetime</a>
+        </article>
+
+        <aside class="plan-aside" aria-labelledby="buy-title">
+          <h2 id="buy-title" class="display">How buying works</h2>
+          <ol class="buy-steps">
+            <li><b>1</b><span>Sign in or create your HabitGlo account.</span></li>
+            <li><b>2</b><span>Pay securely through Paddle, our merchant of record.</span></li>
+            <li><b>3</b><span>Download the Windows installer and you&rsquo;re live.</span></li>
+          </ol>
+          <p class="body-s">Want to look first? <a class="text-link" href="/app?demoReset=1">Try the browser demo</a>.</p>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <footer class="page-foot">
+    <div class="wrap">
+      <nav aria-label="Footer">
+        <a href="/">Home</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/refund">Refund Policy</a>
+        <a href="/download/windows.html">Download App</a>
+        <a href="/app?demoReset=1">Try Browser Demo</a>
+      </nav>
+      <p id="support-text" class="footer-support"></p>
+    </div>
   </footer>
 
   <script>
@@ -341,5 +111,7 @@
       document.getElementById('support-text').textContent = 'Support: ' + supportEmail;
     })();
   </script>
+  <script src="/js/led.js" defer></script>
+  <script src="/js/site.js" defer></script>
 </body>
 </html>

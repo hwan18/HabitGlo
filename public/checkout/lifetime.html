@@ -4,341 +4,85 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HabitGlo – Lifetime Checkout</title>
-  <link rel="icon" type="image/png" href="/icons/favicon.png" />
-  <link rel="apple-touch-icon" href="/icons/app-icon-192.png" />
+  <meta name="theme-color" content="#0d0b09" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="/icons/habitglo-logo-32.png" />
+  <link rel="apple-touch-icon" href="/icons/habitglo-logo-180.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" />
+  <link rel="stylesheet" href="/site.css" />
+  <script>document.documentElement.classList.add('js')</script>
   <script src="/download/config.js"></script>
-  <style>
-    :root {
-      color-scheme: dark;
-      --background: 150 80% 4%;
-      --foreground: 45 100% 95%;
-      --card: 150 70% 8%;
-      --popover: 150 70% 8%;
-      --primary: 150 100% 48%;
-      --accent: 35 100% 58%;
-      --glow-blue: 320 100% 70%;
-      --border: 45 100% 95%;
-      --panel: hsl(var(--card) / 0.84);
-      --panel-strong: hsl(var(--popover) / 0.9);
-      --card-border: hsl(var(--border) / 0.14);
-      --text: hsl(var(--foreground));
-      --soft-text: hsl(var(--foreground) / 0.68);
-      --muted: hsl(var(--foreground) / 0.46);
-      --warn-bg: hsl(var(--accent) / 0.11);
-      --warn-border: hsl(var(--accent) / 0.32);
-      --warn-text: hsl(var(--foreground) / 0.92);
-      --success: hsl(var(--primary));
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at top, hsl(var(--primary) / 0.22), transparent 34%),
-        radial-gradient(circle at 84% 12%, hsl(var(--accent) / 0.16), transparent 24%),
-        linear-gradient(180deg, hsl(var(--background)), hsl(150 100% 2%));
-      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: var(--text);
-      padding: 24px;
-      -webkit-font-smoothing: antialiased;
-    }
-    .back-link {
-      position: fixed;
-      top: 20px;
-      left: 24px;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.875rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: var(--text); }
-    .card {
-      width: 100%;
-      max-width: 460px;
-      background:
-        linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 38%),
-        linear-gradient(315deg, hsl(var(--glow-blue) / 0.08), transparent 46%),
-        var(--panel);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 40px 32px 32px;
-      box-shadow:
-        0 0 0 1px hsl(var(--primary) / 0.08),
-        0 24px 80px rgba(0, 0, 0, 0.38),
-        0 0 34px hsl(var(--primary) / 0.12);
-      backdrop-filter: blur(18px);
-    }
-    .logo-wrap {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 24px;
-    }
-    .logo-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: block;
-      box-shadow: 0 0 20px hsl(var(--primary) / 0.22), 0 0 28px hsl(var(--glow-blue) / 0.14);
-    }
-    .plan-badge {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 8px;
-    }
-    .plan-badge span {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: hsl(var(--accent));
-      background: hsl(var(--accent) / 0.1);
-      border: 1px solid hsl(var(--accent) / 0.22);
-      padding: 4px 14px;
-      border-radius: 20px;
-    }
-    h1 {
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: 800;
-      margin-bottom: 4px;
-      letter-spacing: -0.01em;
-    }
-    .price-display {
-      text-align: center;
-      margin-bottom: 6px;
-    }
-    .price-amount {
-      font-size: 2.5rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .price-period {
-      font-size: 1rem;
-      color: var(--soft-text);
-      font-weight: 400;
-    }
-    .price-note {
-      text-align: center;
-      font-size: 0.82rem;
-      color: var(--soft-text);
-      margin-bottom: 24px;
-    }
-    .features {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 28px;
-      display: grid;
-      gap: 12px;
-    }
-    .features li {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.9rem;
-      color: var(--soft-text);
-    }
-    .check-icon {
-      flex-shrink: 0;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: hsl(var(--primary) / 0.12);
-      color: hsl(var(--primary));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .checkout-btn {
-      width: 100%;
-      background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--glow-blue) / 0.72));
-      color: var(--text);
-      border: none;
-      border-radius: 10px;
-      padding: 14px 0;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
-      text-decoration: none;
-      display: block;
-      text-align: center;
-      box-shadow: 0 12px 30px hsl(var(--primary) / 0.18);
-    }
-    .checkout-btn:hover {
-      opacity: 0.94;
-      box-shadow: 0 16px 34px hsl(var(--primary) / 0.24), 0 0 24px hsl(var(--glow-blue) / 0.14);
-    }
-    .checkout-btn:active { transform: scale(0.99); }
-    .checkout-btn[aria-disabled="true"] {
-      opacity: 0.45;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-    .status-msg {
-      text-align: center;
-      font-size: 0.82rem;
-      margin-top: 14px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      display: none;
-    }
-    .status-msg.visible { display: block; }
-    .status-msg.info { color: var(--soft-text); background: transparent; }
-    .status-msg.warn {
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-border);
-      color: var(--warn-text);
-    }
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 20px 0;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: hsl(var(--border) / 0.12);
-    }
-    .divider-text {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-    .secondary-links {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px 20px;
-    }
-    .ghost-link {
-      color: var(--soft-text);
-      text-decoration: none;
-      font-size: 0.82rem;
-      transition: color 0.2s;
-    }
-    .ghost-link:hover { color: var(--text); }
-    .session-banner {
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      background: hsl(var(--accent) / 0.08);
-      border: 1px solid hsl(var(--accent) / 0.18);
-      border-radius: 10px;
-      padding: 10px 14px;
-      margin-bottom: 20px;
-      font-size: 0.82rem;
-    }
-    .session-banner.visible { display: flex; }
-    .session-email {
-      color: var(--soft-text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .session-email strong {
-      color: var(--text);
-      font-weight: 600;
-    }
-    .session-signout {
-      flex-shrink: 0;
-      color: var(--muted);
-      font-size: 0.78rem;
-      text-decoration: none;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .session-signout:hover { color: var(--text); }
-    .secure-note {
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    @media (max-width: 480px) {
-      .card { padding: 32px 20px 24px; }
-      .back-link { position: static; margin-bottom: 16px; }
-      body { justify-content: flex-start; padding-top: 16px; }
-    }
-  </style>
 </head>
-<body>
-  <a class="back-link" href="/pricing">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Back
-  </a>
-
-  <main class="card">
-    <div class="logo-wrap">
-      <img class="logo-icon" src="/icons/app-icon-192.png" alt="" />
+<body class="page pg-checkout">
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/" aria-label="HabitGlo home">
+        <img class="brand-mark" src="/media/led-h.svg" alt="" width="30" height="26" />
+        <span class="brand-name">HabitGlo</span>
+      </a>
+      <a class="back-link back" href="/pricing">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back
+      </a>
     </div>
+  </header>
 
-    <div id="session-banner" class="session-banner">
-      <span class="session-email">Signed in as <strong id="session-email-text"></strong></span>
-      <a id="session-signout" class="session-signout">Not you?</a>
+  <div class="page-main">
+    <div class="wrap split">
+      <div class="split-copy">
+        <p class="display split-title">One decision, <em>no recurring decision fatigue.</em></p>
+        <p class="chapter">How buying works</p>
+        <ol class="buy-steps flow-steps">
+          <li class="is-done"><b>1</b><span>Sign in or create your HabitGlo account.</span></li>
+          <li aria-current="step"><b>2</b><span>Pay securely through Paddle, our merchant of record.</span></li>
+          <li><b>3</b><span>Download the Windows installer and you&rsquo;re live.</span></li>
+        </ol>
+        <div class="mini-sign" aria-hidden="true">
+          <canvas data-led='[{"text":"EVERY MINUTE COUNTS"},{"text":"BLINK","color":"green"}]' data-led-rows="9" data-led-speed="16"></canvas>
+        </div>
+      </div>
+
+      <main class="card panel">
+        <div id="session-banner" class="session-banner">
+          <span class="session-email">Signed in as <strong id="session-email-text"></strong></span>
+          <a id="session-signout" class="session-signout">Not you?</a>
+        </div>
+
+        <div class="plan-badge"><span class="lit-dot amber" aria-hidden="true"></span><span>Lifetime Plan</span></div>
+        <div class="price-display">
+          <span class="price-amount">$29</span>
+          <span class="price-period"> one-time</span>
+        </div>
+        <p class="price-note">Pay once, own it forever. No recurring charges.</p>
+
+        <ul class="features">
+          <li>One payment, lifetime access</li>
+          <li>All current features included</li>
+          <li>All future updates included</li>
+          <li>No recurring billing ever</li>
+        </ul>
+
+        <a id="checkout-link" class="checkout-btn btn btn-primary btn-block" href="#">Continue to Secure Checkout</a>
+
+        <p id="status" class="status-msg"></p>
+
+        <div class="divider"><span class="divider-text">or</span></div>
+
+        <div class="secondary-links">
+          <a id="purchase-link" class="ghost-link" href="/purchase.html?plan=lifetime&source=website_checkout">Sign In First</a>
+          <a class="ghost-link" href="/download/windows.html?plan=lifetime">Download App</a>
+          <a class="ghost-link" href="/pricing">View Pricing</a>
+        </div>
+
+        <div class="secure-note">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="3" y="6" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 6V4.5a2 2 0 0 1 4 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Secured by Paddle. Payments are encrypted and PCI-compliant.
+        </div>
+      </main>
     </div>
-
-    <div class="plan-badge"><span>Lifetime Plan</span></div>
-    <div class="price-display">
-      <span class="price-amount">$29</span>
-      <span class="price-period"> one-time</span>
-    </div>
-    <p class="price-note">Pay once, own it forever. No recurring charges.</p>
-
-    <ul class="features">
-      <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        One payment, lifetime access
-      </li>
-      <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        All current features included
-      </li>
-      <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        All future updates included
-      </li>
-      <li>
-        <span class="check-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        No recurring billing ever
-      </li>
-    </ul>
-
-    <a id="checkout-link" class="checkout-btn" href="#">Continue to Secure Checkout</a>
-
-    <p id="status" class="status-msg"></p>
-
-    <div class="divider"><span class="divider-text">or</span></div>
-
-    <div class="secondary-links">
-      <a id="purchase-link" class="ghost-link" href="/purchase.html?plan=lifetime&source=website_checkout">Sign In First</a>
-      <a class="ghost-link" href="/download/windows.html?plan=lifetime">Download App</a>
-      <a class="ghost-link" href="/pricing">View Pricing</a>
-    </div>
-
-    <div class="secure-note">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="6" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 6V4.5a2 2 0 0 1 4 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-      Secured by Paddle. Payments are encrypted and PCI-compliant.
-    </div>
-  </main>
+  </div>
 
   <script>
     (function () {
@@ -598,5 +342,7 @@
       });
     })();
   </script>
+  <script src="/js/led.js" defer></script>
+  <script src="/js/site.js" defer></script>
 </body>
 </html>
