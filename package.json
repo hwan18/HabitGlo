@@ -8,6 +8,7 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "build": "tsc -b && vite build",
+    "build:desktop": "tsc -b && vite build --mode desktop",
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "wdio run e2e/wdio.conf.mjs",

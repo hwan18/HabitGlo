@@ -6,9 +6,9 @@
   },
   "build": {
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build:desktop",
     "devPath": "http://localhost:4173/app",
-    "distDir": "../dist"
+    "distDir": "../dist-desktop"
   },
   "tauri": {
     "windows": [
@@ -66,6 +66,14 @@
     "systemTray": {
       "iconPath": "icons/icon.png",
       "iconAsTemplate": false
+    },
+    "updater": {
+      "active": true,
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMwQ0RGNEM5Mzc2NzIyMzEKUldReEltYzN5ZlROTUVkUS9MSE9wbDc3YXpLcXBFOXJRSWdad3VEUXBqK0QrSXYraXR6ZHhwSksK",
+      "endpoints": [
+        "https://github.com/hwan18/HabitGlo/releases/latest/download/latest.json"
+      ]
     }
   }
 }

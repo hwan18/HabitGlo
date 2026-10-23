@@ -32,7 +32,8 @@ $resolvedTargetPath = (Resolve-Path -LiteralPath $TargetPath).Path
 $thumbprint = ($env:HABITGLO_CERT_THUMBPRINT -replace '\s', '').ToUpperInvariant()
 
 if ([string]::IsNullOrWhiteSpace($thumbprint)) {
-  throw 'HABITGLO_CERT_THUMBPRINT is required (SHA1 thumbprint of the installed code-signing cert).'
+  Write-Host 'Skipping code signing: HABITGLO_CERT_THUMBPRINT is not set.'
+  exit 0
 }
 if ($thumbprint -notmatch '^[A-F0-9]{40}$') {
   throw 'HABITGLO_CERT_THUMBPRINT must be a 40-character SHA1 hex thumbprint.'

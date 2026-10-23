@@ -1,5 +1,6 @@
-import { defineConfig, type PreviewServer, type ViteDevServer } from 'vite'
+import { defineConfig, type Plugin, type PreviewServer, type ViteDevServer } from 'vite'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 const staticRouteMap: Record<string, string> = {
@@ -34,9 +35,34 @@ function installLegalRouteRewrite(server: ViteDevServer | PreviewServer): void {
   })
 }
 
-export default defineConfig({
+/**
+ * `vite build --mode desktop` (Tauri's beforeBuildCommand) writes dist-desktop/ with only what index.html and
+ * overlay.html load: no landing entry, and only the public/ files listed in desktop-public-files.json
+ * (download/windows.html stays because Paddle's in-app checkout redirects there after payment).
+ * WebView2 always loads the woff2 source of each @font-face, so the woff fallbacks are dropped too.
+ */
+function desktopBundle(): Plugin {
+  const files: string[] = JSON.parse(readFileSync(resolve(__dirname, 'desktop-public-files.json'), 'utf8'))
+  return {
+    name: 'desktop-bundle',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      for (const fileName of files) {
+        this.emitFile({ type: 'asset', fileName, source: readFileSync(resolve(__dirname, 'public', fileName)) })
+      }
+      for (const name of Object.keys(bundle)) {
+        if (name.endsWith('.woff')) delete bundle[name]
+      }
+    },
+  }
+}
+
+export default defineConfig(({ mode }) => {
+  const desktop = mode === 'desktop'
+  return {
   plugins: [
     react(),
+    ...(desktop ? [desktopBundle()] : []),
     {
       name: 'legal-route-rewrite',
       configureServer(server) {
@@ -53,6 +79,7 @@ export default defineConfig({
     },
   },
   envPrefix: ['VITE_', 'TAURI_'],
+  ...(desktop && { publicDir: false as const }),
   server: {
     port: 4173,
     strictPort: true,
@@ -64,12 +91,14 @@ export default defineConfig({
     target: process.env.TAURI_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
     minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
     sourcemap: !!process.env.TAURI_DEBUG,
+    ...(desktop && { outDir: 'dist-desktop' }),
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        landing: resolve(__dirname, 'landing.html'),
+        ...(!desktop && { landing: resolve(__dirname, 'landing.html') }),
         overlay: resolve(__dirname, 'overlay.html'),
       },
     },
   },
+  }
 })
