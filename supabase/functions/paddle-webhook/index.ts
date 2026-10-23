@@ -138,7 +138,8 @@ const cancelPaddleSubscriptionImmediately = async (
     | 'duplicate_monthly_subscription_event'
     | 'upgrade_to_lifetime'
     | 'monthly_transaction_after_lifetime'
-    | 'monthly_subscription_event_after_lifetime',
+    | 'monthly_subscription_event_after_lifetime'
+    | 'full_refund_or_chargeback',
 ) => {
   try {
     await paddleApiRequest(`/subscriptions/${subscriptionId}/cancel`, {
@@ -306,6 +307,44 @@ const handleSubscriptionEvent = async (data: unknown) => {
   })
 }
 
+// Paddle sends refunds as `pending_approval` first; only an approved full refund or a chargeback revokes access.
+const handleAdjustmentEvent = async (data: unknown) => {
+  const payload = readObject(data)
+  if (!payload) return
+
+  const action = readString(payload, 'action')
+  const status = readString(payload, 'status')
+  const type = readString(payload, 'type')
+  const revokes = (action === 'refund' && type === 'full') || action === 'chargeback'
+  if (!revokes || status !== 'approved') return
+
+  const customerId = readString(payload, 'customer_id')
+  const subscriptionId = readString(payload, 'subscription_id')
+  const userId = await resolveUserId({ customerId, subscriptionId })
+  if (!userId) return
+
+  const currentProfile = await getProfileForUser(userId)
+
+  if (!subscriptionId) {
+    if (!isLifetimeProfile(currentProfile)) return
+    await updateProfileBilling(userId, {
+      subscription_status: 'free',
+      subscription_plan: 'free',
+      subscription_current_period_end: null,
+    })
+    console.log('Revoked lifetime access after refund', { userId, action })
+    return
+  }
+
+  if (currentProfile?.paddle_subscription_id !== subscriptionId) return
+  await cancelPaddleSubscriptionImmediately(subscriptionId, 'full_refund_or_chargeback')
+  await updateProfileBilling(userId, {
+    subscription_status: 'canceled',
+    subscription_current_period_end: null,
+  })
+  console.log('Canceled monthly access after refund', { userId, action, subscriptionId })
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -354,6 +393,8 @@ serve(async (req) => {
       await handleTransactionCompleted(event.data)
     } else if (eventType.startsWith('subscription.')) {
       await handleSubscriptionEvent(event.data)
+    } else if (eventType === 'adjustment.created' || eventType === 'adjustment.updated') {
+      await handleAdjustmentEvent(event.data)
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Webhook handler failed'
