@@ -19,11 +19,11 @@
     download: {
       windows: {
         // Update these on each release
-        version: '0.1.0',
-        fileName: 'HabitGlo_0.1.0_x64_en-US.msi',
-        directUrl: 'https://github.com/hwan18/HabitGlo/releases/download/v0.1.0/HabitGlo_0.1.0_x64_en-US.msi',
+        version: '1.0.0',
+        fileName: 'HabitGlo_1.0.0_x64_en-US.msi',
+        directUrl: 'https://github.com/hwan18/HabitGlo/releases/download/v1.0.0/HabitGlo_1.0.0_x64_en-US.msi',
         releasePageUrl: 'https://github.com/hwan18/HabitGlo/releases/latest',
-        sha256: '03C32185DF55208008CAABA55F03C4A43140F7042F32F9D5F376E75F01BEDC3A',
+        sha256: '5B9DB010DAE6F6D0BDAEF3DD89DBC72CAF199BE84E4210D4FE828E78828C163F',
         minOs: 'Windows 10+',
       },
     },
