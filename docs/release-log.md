@@ -1,5 +1,15 @@
 # HabitGlo 1.0.0 release
 
+## Went live (24 Oct 2026, about 2:40 AM)
+
+- `master` is the simplified app plus the redesigned site. Pushed to GitHub.
+- The installer is public: https://github.com/hwan18/HabitGlo/releases/tag/v1.0.0
+- The download page points at that file. Checksum `5B9DB010DAE6F6D0BDAEF3DD89DBC72CAF199BE84E4210D4FE828E78828C163F`.
+- Paddle is still sandbox. A live checkout was not switched on, because a full sandbox purchase could not be run from this PC (the saved Paddle API key is rejected).
+- Still yours: back up `C:\Users\Hwan\.tauri\habitglo-updater.key` and `habitglo-updater.password.txt` somewhere that is not this PC. Install the MSI once yourself. When a sandbox buy and refund both behave, switch `public/download/config.js` from `sandbox` to `production` with the live token and price IDs.
+
+
+
 Published release: https://github.com/hwan18/HabitGlo/releases/tag/v1.0.0 (tag `v1.0.0`). The installer was rebuilt from the cut-corner UI commit before it was published.
 
 ## Installer
