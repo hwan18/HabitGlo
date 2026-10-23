@@ -6,15 +6,15 @@ const config: Config = {
     extend: {
       colors: {
         app: {
-          bg: '#0d0f14',
-          card: '#151922',
-          raised: '#1d2230',
-          border: '#2b3142',
-          text: '#f4f4f5',
-          muted: '#a6a8b4',
+          bg: '#0d0b09',
+          card: '#16130f',
+          raised: '#221e18',
+          border: '#3a332b',
+          text: '#f2ebdd',
+          muted: '#a1978a',
           accent: '#ffb000',
-          'accent-text': '#1a1200',
-          danger: '#ff7b72',
+          'accent-text': '#1c1303',
+          danger: '#ff6b63',
         },
       },
     },

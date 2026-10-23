@@ -38,7 +38,7 @@ function ReminderText({ habit }: { habit: Habit }) {
         }}
         title="Click to edit"
         className={clsx(
-          'min-w-0 flex-1 rounded px-1 py-0.5 text-left text-sm leading-snug [overflow-wrap:anywhere] line-clamp-3 hover:bg-app-raised',
+          'min-w-0 flex-1 px-1 py-0.5 text-left text-sm leading-snug [overflow-wrap:anywhere] line-clamp-3 hover:text-app-text',
           habit.is_active ? 'text-app-text' : 'text-app-muted line-through decoration-app-muted/60',
         )}
       >
@@ -71,7 +71,7 @@ function ReminderText({ habit }: { habit: Habit }) {
           e.currentTarget.blur()
         }
       }}
-      className="h-8 min-w-0 flex-1 rounded border border-app-accent bg-app-bg px-2 text-sm text-app-text focus:outline-none"
+      className="chamfer chamfer-field h-8 min-w-0 flex-1 px-2 text-sm"
     />
   )
 }
@@ -89,8 +89,8 @@ const ReminderRow = memo(function ReminderRow({ habit }: { habit: Habit }) {
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={clsx(
-        'flex items-center gap-2 rounded-lg border border-app-border bg-app-card px-2 py-2',
-        isDragging && 'relative z-10 shadow-lg shadow-black/50',
+        'flex items-center gap-2 border-b border-app-border px-1 py-2',
+        isDragging && 'relative z-10 bg-app-card',
       )}
     >
       <button
@@ -156,9 +156,7 @@ export function ReminderList() {
 
   if (habits.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-app-border px-4 py-8 text-center text-sm text-app-muted">
-        Add something you want to see all day.
-      </p>
+      <p className="corner-tick py-6 text-sm text-app-muted">Add something you want to see all day.</p>
     )
   }
 

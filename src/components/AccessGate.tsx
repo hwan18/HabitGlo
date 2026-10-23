@@ -9,7 +9,7 @@ type Props = { decision: Exclude<AccessDecision, { kind: 'open' }> }
 
 function Card({ children, busy }: { children: ReactNode; busy?: boolean }) {
   return (
-    <section aria-busy={busy || undefined} className="rounded-xl border border-app-border bg-app-card p-5">
+    <section aria-busy={busy || undefined} className="chamfer chamfer-panel p-5">
       {children}
     </section>
   )

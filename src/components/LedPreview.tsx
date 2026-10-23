@@ -43,8 +43,8 @@ export function LedPreview() {
   }
 
   return (
-    <section aria-label="LED preview" className="rounded-xl border border-app-border bg-app-card p-3">
-      <div className="relative h-20 overflow-hidden rounded-lg bg-black">
+    <section aria-label="LED preview" className="chamfer chamfer-panel p-3">
+      <div className="relative h-20 overflow-hidden bg-black">
         <Marquee running={running} />
         {!hasActive && (
           <p className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-app-muted">
@@ -57,7 +57,7 @@ export function LedPreview() {
           type="button"
           onClick={() => setOverlay({ paused: !paused })}
           aria-pressed={!paused}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-app-accent text-base font-semibold text-app-accent-text transition-colors hover:bg-[#ffc23d]"
+          className="chamfer chamfer-primary flex h-12 flex-1 items-center justify-center gap-2 text-base font-medium transition-colors"
         >
           {paused ? <Play size={20} aria-hidden /> : <Pause size={20} aria-hidden />}
           {paused ? 'Start' : 'Pause'}
@@ -67,7 +67,7 @@ export function LedPreview() {
           onClick={() => void toggleVisibility()}
           disabled={!isTauri || updating}
           title={isTauri ? undefined : 'The LED strip on your desktop needs the HabitGlo app'}
-          className="flex h-12 items-center justify-center gap-2 rounded-lg border border-app-border bg-app-raised px-4 text-sm font-medium text-app-text transition-colors hover:border-app-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+          className="chamfer chamfer-btn flex h-12 items-center justify-center gap-2 px-4 text-sm font-medium transition-colors"
         >
           {visible ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
           {visible ? 'Hide LED' : 'Show LED'}

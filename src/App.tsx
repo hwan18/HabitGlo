@@ -18,7 +18,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-app-bg text-app-text">
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-5 pb-8 pt-4">
+      <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 pb-8 pt-5">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/icons/habitglo-logo-32.png" alt="" className="h-6 w-6" />
@@ -30,7 +30,7 @@ function App() {
               onClick={() => setSettingsOpen(true)}
               aria-label="Settings"
               title="Settings"
-              className="rounded-lg p-2 text-app-muted hover:bg-app-raised hover:text-app-text"
+              className="p-2 text-app-muted hover:text-app-text"
             >
               <Settings size={20} aria-hidden />
             </button>
@@ -38,7 +38,7 @@ function App() {
         </header>
 
         {!isTauri && (
-          <p className="rounded-lg border border-app-border bg-app-card px-3 py-2 text-xs text-app-muted">
+          <p className="text-xs text-app-muted">
             Browser preview. The LED strip on your desktop needs the{' '}
             <a href="/pricing" className="text-app-accent underline">
               HabitGlo app
@@ -48,14 +48,12 @@ function App() {
         )}
 
         {isOpen ? (
-          <main className="flex flex-col gap-4">
+          <main className="flex flex-col gap-6">
             <LedPreview />
             <ReminderInput />
             <section aria-label="Reminders" className="flex flex-col gap-2">
               {reminderCount > 0 && (
-                <h2 className="text-xs font-medium uppercase tracking-wide text-app-muted">
-                  Your reminders ({reminderCount})
-                </h2>
+                <h2 className="text-sm text-app-muted">Your reminders, {reminderCount}</h2>
               )}
               <ReminderList />
             </section>

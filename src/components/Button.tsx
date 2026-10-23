@@ -10,11 +10,9 @@ export function Button({ className, variant = 'primary', size = 'md', ...props }
   return (
     <button
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-lg border font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-        size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
-        variant === 'primary'
-          ? 'border-transparent bg-app-accent text-app-accent-text hover:bg-[#ffc23d]'
-          : 'border-app-border bg-app-raised text-app-text hover:border-app-muted/60',
+        'chamfer inline-flex items-center justify-center gap-2 font-medium transition-colors disabled:cursor-not-allowed',
+        size === 'sm' ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm',
+        variant === 'primary' ? 'chamfer-primary' : 'chamfer-btn',
         className,
       )}
       type="button"

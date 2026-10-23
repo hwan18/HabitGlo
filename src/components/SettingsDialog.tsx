@@ -26,7 +26,7 @@ function Segmented<T extends string>({
   columns: number
 }) {
   return (
-    <fieldset disabled={disabled} className="disabled:opacity-50">
+    <fieldset disabled={disabled}>
       <legend className="mb-2 text-sm font-medium text-app-text">{legend}</legend>
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
         {options.map((option) => (
@@ -43,11 +43,8 @@ function Segmented<T extends string>({
             />
             <span
               className={clsx(
-                'flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-2 text-sm transition-colors',
-                'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-app-accent',
-                value === option.id
-                  ? 'border-app-accent bg-app-accent/15 text-app-text'
-                  : 'border-app-border bg-app-raised text-app-muted hover:text-app-text',
+                'chamfer flex h-10 items-center justify-center gap-2 whitespace-nowrap px-2 text-sm transition-colors',
+                value === option.id ? 'chamfer-selected' : 'chamfer-btn text-app-muted hover:text-app-text',
               )}
             >
               {option.label}
@@ -79,7 +76,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      className="m-auto max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto rounded-xl border border-app-border bg-app-card p-0 text-app-text shadow-2xl shadow-black/60"
+      className="chamfer chamfer-panel m-auto max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto p-0 text-app-text"
     >
       {open && (
         <div className="flex flex-col gap-5 p-5">
@@ -150,7 +147,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                       <span
                         key={color}
                         className="h-3 w-3 rounded-full ring-1 ring-black/40"
-                        style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
+                        style={{ backgroundColor: color }}
                       />
                     ))}
                   </span>

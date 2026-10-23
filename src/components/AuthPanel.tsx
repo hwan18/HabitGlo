@@ -22,7 +22,7 @@ const PLAN_LABELS: Record<SubscriptionStatus, string> = {
 }
 
 const inputClass =
-  'h-10 w-full rounded-lg border border-app-border bg-app-bg px-3 text-sm text-app-text placeholder:text-app-muted focus:border-app-accent focus:outline-none'
+  'chamfer chamfer-field h-10 w-full px-3 text-sm placeholder:text-app-muted'
 
 function SignInForm() {
   const [email, setEmail] = useState('')
