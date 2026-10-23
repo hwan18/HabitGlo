@@ -1,14 +1,14 @@
 # Launch + screenshot smoke test for the real desktop app.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/smoke-desktop.ps1 [-SkipBuild]
 # Output: docs/test-artifacts/smoke-*.png and smoke-result.json. Exit code 0 = pass.
-param([switch]$SkipBuild)
+param([switch]$SkipBuild, [string]$Exe)
 
 . (Join-Path $PSScriptRoot 'desktop-test-common.ps1')
 
 $ctx = $null
 $result = [ordered]@{ ranAt = (Get-Date).ToString('s'); pass = $false; checks = [ordered]@{} }
 try {
-  $ctx = Start-HabitGloTestApp -SkipBuild:$SkipBuild
+  $ctx = Start-HabitGloTestApp -SkipBuild:$SkipBuild -Exe $Exe
   $main = Wait-AppWindow $ctx 'HabitGlo' -Visible
   $overlay = Wait-AppWindow $ctx 'HabitGlo Overlay' -Visible
   Write-Step 'Both windows are visible'

@@ -127,12 +127,17 @@ $script:TestEnv = [ordered]@{
 }
 
 function Start-HabitGloTestApp {
-  param([switch]$SkipBuild, [switch]$NoApp)
+  param([switch]$SkipBuild, [switch]$NoApp, [string]$Exe)
 
+  if ($Exe) {
+    $script:AppExe = (Resolve-Path -LiteralPath $Exe).Path
+    $SkipBuild = $true
+  }
+  $script:UseDevServer = $script:AppExe -notmatch '[\\/]release[\\/]'
   if (Get-Process -Name habitglo -ErrorAction SilentlyContinue) {
     throw 'HabitGlo is already running. Quit it from the tray first; the test will not touch a real session.'
   }
-  if (Test-PortListening $script:DevPort) {
+  if ($script:UseDevServer -and (Test-PortListening $script:DevPort)) {
     throw "Port $($script:DevPort) is already in use. Stop the other dev server first."
   }
   if (-not $SkipBuild) { Build-HabitGloDebug }
@@ -151,6 +156,7 @@ function Start-HabitGloTestApp {
 
   $ctx = [pscustomobject]@{ App = $null; Dev = $null; Profile = $profileDir; SavedEnv = $saved; DevLog = (Join-Path $profileDir 'vite.log') }
   try {
+    if ($script:UseDevServer) {
     Write-Step "Starting Vite dev server on port $($script:DevPort)"
     # CreateNoWindow instead of -WindowStyle Hidden: Windows Terminal ignores the latter and opens a visible tab.
     $psi = New-Object System.Diagnostics.ProcessStartInfo 'cmd.exe', "/c npm run dev > `"$($ctx.DevLog)`" 2>&1"
@@ -166,6 +172,7 @@ function Start-HabitGloTestApp {
       } catch { }
       if ((Get-Date) -gt $deadline) { throw "Dev server did not answer on $($script:DevUrl) within 90s" }
       Start-Sleep -Milliseconds 500
+    }
     }
 
     if (-not $NoApp) {
