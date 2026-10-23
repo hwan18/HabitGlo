@@ -247,7 +247,7 @@ Three authentication methods:
 After signing in, the Account panel shows your current subscription status (Free, Active, Trialing, or Lifetime).
 
 ### Plans
-- **Monthly ($4/mo)** — full access, cancel anytime
+- **Monthly ($5/mo)** — full access, cancel anytime
 - **Lifetime ($29 one-time)** — pay once, use forever
 
 ### Billing Actions

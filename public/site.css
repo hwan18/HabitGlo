@@ -840,7 +840,7 @@ button { font: inherit; color: inherit; }
 .person-led canvas { width: 100%; height: 44px; }
 .person-body { padding: 26px 26px 24px; display: flex; flex-direction: column; flex: 1; }
 .person-tag { display: inline-flex; align-items: center; gap: 10px; font-size: 0.76rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--paper-2); margin-bottom: 18px; }
-.person blockquote { margin: 0 0 26px; font-family: var(--serif); font-size: 1.42rem; line-height: 1.28; color: var(--paper); flex: 1; }
+.person blockquote, .person-lede { margin: 0 0 26px; font-family: var(--serif); font-size: 1.42rem; line-height: 1.28; color: var(--paper); flex: 1; }
 .person mark {
   color: var(--paper);
   background: linear-gradient(transparent 62%, rgba(255, 176, 0, 0.32) 62%, rgba(255, 176, 0, 0.32) 92%, transparent 92%);
@@ -1152,3 +1152,8 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+.install-note { margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; font-size: 0.88rem; line-height: 1.5; color: var(--paper-2); }
+.install-note p + p { margin-top: 8px; color: var(--paper-3); }
+.install-note b { color: var(--paper); font-weight: 600; }
+

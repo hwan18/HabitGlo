@@ -52,6 +52,10 @@
           <dd id="sha256">-</dd>
         </dl>
         <a id="download-link" class="primary btn btn-primary btn-block" href="#">Download Installer</a>
+        <div class="install-note">
+          <p><b>Seeing &ldquo;Windows protected your PC&rdquo;?</b> HabitGlo is a new app from a small studio, so Windows doesn&rsquo;t recognise it yet. Click <b>More info</b>, then <b>Run anyway</b>.</p>
+          <p>To check the file is the real one, compare its SHA-256 above with <code>Get-FileHash</code> in PowerShell.</p>
+        </div>
         <div class="actions secondary-links">
           <a class="ghost-link" href="/">Back to Home</a>
           <a class="ghost-link" href="/pricing">Back to Pricing</a>
@@ -93,7 +97,7 @@
 
       if (directUrl) {
         downloadLink.href = directUrl;
-        status.textContent = 'Direct installer link is configured.';
+        status.textContent = 'Ready to download.';
         return;
       }
 
