@@ -1,6 +1,6 @@
 # HabitGlo 1.0.0 release
 
-Draft GitHub release: https://github.com/hwan18/HabitGlo/releases/tag/untagged-f842eedba548426fbb01 (tag `v1.0.0` on `simplify/core-v1`). **Do not publish until you have checked the installer.** After you publish, the public URLs below start working.
+Published release: https://github.com/hwan18/HabitGlo/releases/tag/v1.0.0 (tag `v1.0.0`). The installer was rebuilt from the cut-corner UI commit before it was published.
 
 ## Installer
 
@@ -8,7 +8,7 @@ Draft GitHub release: https://github.com/hwan18/HabitGlo/releases/tag/untagged-f
 | --- | --- |
 | File | `HabitGlo_1.0.0_x64_en-US.msi` |
 | Size | 4.50 MB (was 16.8 MB for 0.1.0) |
-| SHA-256 | `BFFB292A30096C66A8802DD05A0A13DC2E143AE5133AE3EBCE657BACA87E753E` |
+| SHA-256 | `5B9DB010DAE6F6D0BDAEF3DD89DBC72CAF199BE84E4210D4FE828E78828C163F` |
 | Direct URL (after publish) | https://github.com/hwan18/HabitGlo/releases/download/v1.0.0/HabitGlo_1.0.0_x64_en-US.msi |
 | Signed | No. Windows SmartScreen will show “More info” → “Run anyway”. |
 
@@ -44,7 +44,7 @@ A live smoke test of the release exe was skipped because HabitGlo was already ru
 
 ## What still needs the owner
 
-1. Publish the draft release when you are happy with the installer.
-2. Then update `public/download/config.js` on the live site (already staged on `website/redesign`).
+1. The release is published. The download page on `website/redesign` points at this file.
+2. Try the installer once on this PC before sending it to anyone else.
 3. Paddle is still in sandbox. Switch to live keys only after a full checkout test.
 4. Code signing later: set `HABITGLO_CERT_THUMBPRINT` and add `signCommand` in `tauri.conf.json` pointing at `src-tauri/scripts/sign-windows.ps1`. Without the thumbprint the script now exits 0 and skips signing.
