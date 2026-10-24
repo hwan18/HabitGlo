@@ -1,5 +1,13 @@
 # HabitGlo 1.0.0 release
 
+## While you were out (24 Oct 2026, daytime)
+
+Checked without touching your open HabitGlo window or Paddle.
+
+- Pricing, sign-in, and the download config on https://www.habitglo.com are the new site. Monthly is $5, lifetime is $29, and the installer link is 1.0.0.
+- The landing footer still said v0.1.0. It now says v1.0.0.
+- Did not install the MSI, quit the running app, or turn on live Paddle. Those still need you.
+
 ## Went live (24 Oct 2026, about 2:40 AM)
 
 - `master` is the simplified app plus the redesigned site. Pushed to GitHub.
